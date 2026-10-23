@@ -1,0 +1,410 @@
+[
+  {
+    "chapter": "qc-workflow",
+    "index": 1,
+    "asset": "assets/figures/qc-01.png",
+    "alt": "QC metric violin panels"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 2,
+    "asset": "assets/figures/qc-02.png",
+    "alt": "Sample outlier scores"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 3,
+    "asset": "assets/figures/qc-03.png",
+    "alt": "Sample outlier scores colored by compound"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 4,
+    "asset": "assets/figures/qc-04.png",
+    "alt": "Per-well UMI density"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 5,
+    "asset": "assets/figures/qc-05.png",
+    "alt": "Per-well detected-gene density"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 6,
+    "asset": "assets/figures/qc-06.png",
+    "alt": "Plate layout colored by detected UMI count"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 7,
+    "asset": "assets/figures/qc-07.png",
+    "alt": "Plate layout colored by detected gene count"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 8,
+    "asset": "assets/figures/qc-08.png",
+    "alt": "Plate layout colored by compound"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 9,
+    "asset": "assets/figures/qc-09.png",
+    "alt": "Plate layout labeled by well ID"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 10,
+    "asset": "assets/figures/qc-10.png",
+    "alt": "Spatial FN1 expression"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 11,
+    "asset": "assets/figures/qc-11.png",
+    "alt": "Spatial FN1/CDH2 gene-set expression"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 12,
+    "asset": "assets/figures/qc-12.png",
+    "alt": "UMI totals per Ensembl ID"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 13,
+    "asset": "assets/figures/qc-13.png",
+    "alt": "UMI totals per gene symbol"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 14,
+    "asset": "assets/figures/qc-14.png",
+    "alt": "MDA-MB-231 marker expression by treatment and plate"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 15,
+    "asset": "assets/figures/qc-15.png",
+    "alt": "Marker-expression dot plot"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 16,
+    "asset": "assets/figures/qc-16.png",
+    "alt": "Marker-expression violin plot"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 17,
+    "asset": "assets/figures/qc-17.png",
+    "alt": "STARsolo read-level QC"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 18,
+    "asset": "assets/figures/qc-18.png",
+    "alt": "STAR matched reads per well"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 19,
+    "asset": "assets/figures/qc-19.png",
+    "alt": "STAR read saturation: Ensembl IDs"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 20,
+    "asset": "assets/figures/qc-20.png",
+    "alt": "STAR read saturation: gene symbols"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 21,
+    "asset": "assets/figures/qc-21.png",
+    "alt": "Split saturation: Ensembl IDs"
+  },
+  {
+    "chapter": "qc-workflow",
+    "index": 22,
+    "asset": "assets/figures/qc-22.png",
+    "alt": "Split saturation: gene symbols"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 1,
+    "asset": "assets/figures/species-01.png",
+    "alt": "Mix-species technical QC metrics"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 2,
+    "asset": "assets/figures/species-02.png",
+    "alt": "Two-species barnyard plot (human\u2013mouse example)"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 3,
+    "asset": "assets/figures/species-03.png",
+    "alt": "Species-purity plot"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 4,
+    "asset": "assets/figures/species-04.png",
+    "alt": "Cross-contamination in both directions"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 5,
+    "asset": "assets/figures/species-05.png",
+    "alt": "Expected versus observed species"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 6,
+    "asset": "assets/figures/species-06.png",
+    "alt": "Species fractions by expected label"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 7,
+    "asset": "assets/figures/species-07.png",
+    "alt": "Human-specific gene-set expression by well"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 8,
+    "asset": "assets/figures/species-08.png",
+    "alt": "Mouse-specific gene-set expression by well"
+  },
+  {
+    "chapter": "mix-species-workflow",
+    "index": 9,
+    "asset": "assets/figures/species-09.png",
+    "alt": "Species-specific gene-set expression distributions"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 1,
+    "asset": "assets/figures/comparison-01.png",
+    "alt": "QC distributions across plates"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 2,
+    "asset": "assets/figures/comparison-02.png",
+    "alt": "Cross-plate DMSO audit"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 3,
+    "asset": "assets/figures/comparison-03.png",
+    "alt": "PCA before correction"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 4,
+    "asset": "assets/figures/comparison-04.png",
+    "alt": "PCA after limma batch regression"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 5,
+    "asset": "assets/figures/comparison-05.png",
+    "alt": "PCA before correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 6,
+    "asset": "assets/figures/comparison-06.png",
+    "alt": "PCA after correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 7,
+    "asset": "assets/figures/comparison-07.png",
+    "alt": "UMAP before correction"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 8,
+    "asset": "assets/figures/comparison-08.png",
+    "alt": "UMAP after limma batch regression"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 9,
+    "asset": "assets/figures/comparison-09.png",
+    "alt": "UMAP before correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 10,
+    "asset": "assets/figures/comparison-10.png",
+    "alt": "UMAP after correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 11,
+    "asset": "assets/figures/comparison-11.png",
+    "alt": "t-SNE before correction"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 12,
+    "asset": "assets/figures/comparison-12.png",
+    "alt": "t-SNE after limma batch regression"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 13,
+    "asset": "assets/figures/comparison-13.png",
+    "alt": "t-SNE before correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 14,
+    "asset": "assets/figures/comparison-14.png",
+    "alt": "t-SNE after correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 15,
+    "asset": "assets/figures/comparison-15.png",
+    "alt": "MDS before correction"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 16,
+    "asset": "assets/figures/comparison-16.png",
+    "alt": "MDS after limma batch regression"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 17,
+    "asset": "assets/figures/comparison-17.png",
+    "alt": "MDS before correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 18,
+    "asset": "assets/figures/comparison-18.png",
+    "alt": "MDS after correction, split by plate and colored by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 19,
+    "asset": "assets/figures/comparison-19.png",
+    "alt": "Within-plate repeatability separated by compound"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 20,
+    "asset": "assets/figures/comparison-20.png",
+    "alt": "First-plate DMSO replicate scatter plots"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 21,
+    "asset": "assets/figures/comparison-21.png",
+    "alt": "Second-plate DMSO replicate scatter plots"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 22,
+    "asset": "assets/figures/comparison-22.png",
+    "alt": "First-plate DMSO replicate heatmap"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 23,
+    "asset": "assets/figures/comparison-23.png",
+    "alt": "Second-plate DMSO replicate heatmap"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 24,
+    "asset": "assets/figures/comparison-24.png",
+    "alt": "Sample 1 Drug14 single-plate volcano"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 25,
+    "asset": "assets/figures/comparison-25.png",
+    "alt": "Sample 2 Drug14 single-plate volcano"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 26,
+    "asset": "assets/figures/comparison-26.png",
+    "alt": "Sample 1 Drug14 DEG-signature plate layout"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 27,
+    "asset": "assets/figures/comparison-27.png",
+    "alt": "Sample 2 Drug14 DEG-signature plate layout"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 28,
+    "asset": "assets/figures/comparison-28.png",
+    "alt": "Sample 1 Drug14 top-DEG heatmap"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 29,
+    "asset": "assets/figures/comparison-29.png",
+    "alt": "Sample 2 Drug14 top-DEG heatmap"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 30,
+    "asset": "assets/figures/comparison-30.png",
+    "alt": "Cross-plate treatment-effect reproducibility"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 31,
+    "asset": "assets/figures/comparison-31.png",
+    "alt": "Plate-specific log2FC concordance"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 32,
+    "asset": "assets/figures/comparison-32.png",
+    "alt": "Plate-specific log10 mean-UMI concordance"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 33,
+    "asset": "assets/figures/comparison-33.png",
+    "alt": "Plate-specific normalized-expression concordance"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 34,
+    "asset": "assets/figures/comparison-34.png",
+    "alt": "Plate-adjusted DEG counts"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 35,
+    "asset": "assets/figures/comparison-35.png",
+    "alt": "Drug14 plate-adjusted volcano"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 36,
+    "asset": "assets/figures/comparison-36.png",
+    "alt": "Drug14 upregulated DEG enrichment"
+  },
+  {
+    "chapter": "multi-plate-comparison",
+    "index": 37,
+    "asset": "assets/figures/comparison-37.png",
+    "alt": "Drug14 downregulated DEG enrichment"
+  }
+]

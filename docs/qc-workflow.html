@@ -1,0 +1,1924 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quality-control workflow · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/qc-workflow.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html" aria-current="page"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / QUALITY CONTROL</div><article><h1 id="quality-control-workflow">Quality-control workflow</h1>
+<p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Prepare inputs</a> · <a href="api-reference.html">API reference</a></p>
+<blockquote>
+<p><strong>Before you start:</strong> complete <a href="getting-started.html">Getting started</a>. Run code blocks in order from the repository root. “Sample 1–4” identify example plate datasets; each observation is one well. This chapter uses <strong>Sample 3 and Sample 4</strong>. Worked results are shown for interpretation. The separately supplied synthetic practice inputs will produce different numbers.</p>
+</blockquote>
+<p>Load aligned expression and metadata, inspect every physical well, understand library-quality metrics, and connect optional STARsolo read statistics to the count matrix. The procedure applies to arbitrary plates and sample counts.</p>
+<p><a id="overview"></a></p>
+<h2 id="overview-1">Overview</h2>
+<p>This page presents a reusable QC workflow for Drug-seq and related high-throughput transcriptomics experiments. Sample 3 and Sample 4 are used only as a worked example with real expression, metadata, and optional STARsolo input.</p>
+<p>Worked figures and result tables illustrate an analyzed example with standardized sample labels. The synthetic practice dataset produces different values; compare the interpretation and output structure, not exact numbers.</p>
+<p><a id="input"></a></p>
+<h2 id="1-input-and-metadata">1. Input and metadata</h2>
+<p>The standard expression input is a gene-by-sample table or a dedicated <code>matrix/</code> directory containing only <code>matrix.mtx.gz</code>, <code>features.tsv.gz</code>, and <code>barcodes.tsv.gz</code>. Metadata remain beside that directory and can be CSV, tab-delimited text, or Excel. At minimum, provide identifiers that match the count barcodes plus <code>plate_id</code>, <code>well_id</code>, and experimental labels such as <code>compound</code>, <code>dose</code>, and <code>time</code>.</p>
+<h3 id="example-input-directories">Example input directories</h3>
+<p>Each example plate directory contains a raw-count matrix bundle and one metadata table. The historical worked analysis used filtered STARsolo bundles; the synthetic practice bundle follows the same file contract. Sample 3 and Sample 4 have the same schema:</p>
+<pre><code class="language-text">data/
+├── sample_3/
+│   ├── metadata.csv
+│   └── matrix/
+│       ├── matrix.mtx.gz
+│       ├── features.tsv.gz
+│       └── barcodes.tsv.gz
+├── sample_4/
+│   ├── metadata.csv
+│   └── matrix/  (same three files)
+└── star_results/  (optional; supply separately)
+    ├── Sample 3/Solo.out/Gene/
+    └── Sample 4/Solo.out/Gene/
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents and relationship</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>matrix.mtx.gz</code></td>
+<td>Compressed Matrix Market sparse count matrix. Rows correspond to <code>features.tsv.gz</code>; columns correspond to <code>barcodes.tsv.gz</code>.</td>
+</tr>
+<tr>
+<td><code>features.tsv.gz</code></td>
+<td>Feature annotation in matrix-row order. The example contains an Ensembl gene ID, gene symbol, and feature type such as <code>Gene Expression</code>.</td>
+</tr>
+<tr>
+<td><code>barcodes.tsv.gz</code></td>
+<td>One sample barcode per matrix column. These values are joined to the metadata <code>barcode</code> column.</td>
+</tr>
+<tr>
+<td><code>metadata.csv</code></td>
+<td>Plate and experimental annotations for all nominal wells. Only barcodes shared with the filtered expression matrix are retained in the DrugSeqData object.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="metadata-preview">Metadata preview</h3>
+<p>This anonymized metadata preview illustrates the worked example. Use the synthetic bundle or your own input tables when running the code:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>barcode</th>
+<th>well_id</th>
+<th>compound</th>
+<th>dose</th>
+<th>time</th>
+<th>total_well</th>
+<th>x</th>
+<th>y</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>TAACAGCCAA</td>
+<td>Well-dT-1</td>
+<td>water</td>
+<td>NA</td>
+<td>24h</td>
+<td>96</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>CTAAGAGTCC</td>
+<td>Well-dT-2</td>
+<td>231</td>
+<td>NA</td>
+<td>24h</td>
+<td>96</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>TTACTGCCTT</td>
+<td>Well-dT-3</td>
+<td>3T3</td>
+<td>NA</td>
+<td>24h</td>
+<td>96</td>
+<td>1</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>CGCTGAATTC</td>
+<td>Well-dT-4</td>
+<td>231</td>
+<td>NA</td>
+<td>24h</td>
+<td>96</td>
+<td>1</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>TGACGTCCTT</td>
+<td>Well-dT-5</td>
+<td>3T3</td>
+<td>NA</td>
+<td>24h</td>
+<td>96</td>
+<td>1</td>
+<td>5</td>
+</tr>
+</tbody>
+</table></div>
+<p>Worked metadata preview with the schema used by <code>data/sample_3/metadata.csv</code>. The example value <code>NA</code> represents missing dose information.</p>
+<h3 id="metadata-column-definitions">Metadata column definitions</h3>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plate_id</code></td>
+<td>Plate or processing-batch identifier. It is used for grouping, faceting, filename labels, and construction of a globally unique sample ID.</td>
+</tr>
+<tr>
+<td><code>barcode</code></td>
+<td>Sample barcode matched to an entry in <code>barcodes.tsv.gz</code>. A terminal <code>-1</code> is removed during matching when present.</td>
+</tr>
+<tr>
+<td><code>well_id</code></td>
+<td>Physical well identifier. Parseable Well-dT values determine the canonical plate position; numbering runs down an 8-row column before moving to the next column.</td>
+</tr>
+<tr>
+<td><code>compound</code></td>
+<td>Experimental material or treatment label. In the Sample 3/Sample 4 example, <code>231</code>, <code>3T3</code>, and <code>water</code> also describe expected sample identity.</td>
+</tr>
+<tr>
+<td><code>dose</code></td>
+<td>Treatment dose. It may be numeric or text and may be absent; <code>NA</code> in this example is treated as missing when the metadata are loaded.</td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td>Treatment or collection duration, including its unit, such as <code>24h</code>. It contributes to the generated treatment label.</td>
+</tr>
+<tr>
+<td><code>total_well</code></td>
+<td>Nominal number of wells on the plate. The layout code uses it to complete the physical grid and display filtered or absent wells as empty positions.</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>Original input-layout x coordinate. It is retained for auditing and serves as a fallback only when <code>well_id</code> cannot be parsed.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>Original input-layout y coordinate. It is retained for auditing and serves as a fallback only when <code>well_id</code> cannot be parsed.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Coordinate precedence.</strong> When <code>well_id</code> is parseable, it defines the canonical plate row and column. The source <code>x</code>/<code>y</code> fields remain available for auditing and are used only as a fallback. This parsing convention does not validate the experimental layout. Check the result against the physical design, especially when barcode numbering differs from position.</p>
+<h3 id="coordinate-check-before-plotting">Coordinate check before plotting</h3>
+<p>Read the <a href="input-preparation.html#4-verify-physical-plate-positions">physical-coordinate check</a> before using these plate maps. Parseable <code>well_id</code> values take precedence over <code>x</code> and <code>y</code>; if the physical layout disagrees, preserve the original label and assign verified A1-style positions.</p>
+<h3 id="columns-created-during-import">Columns created during import</h3>
+<p><strong><code>sample_id</code></strong> — Created automatically by joining <code>plate_id</code> and <code>barcode</code> with an underscore. Assign it to <code>obj.adata.obs_names</code> before merging, as shown below; the extra metadata column alone does not rename observations.</p>
+<p><strong><code>treatment</code></strong> — Created automatically by joining non-empty <code>compound</code>, <code>dose</code>, and <code>time</code> values. Missing components are skipped rather than written as literal “nan”.</p>
+<p><strong>Count orientation</strong> — Files are read as genes × samples; the constructed AnnData is samples × genes. Raw counts are retained in <code>adata.layers['counts']</code>.</p>
+<h3 id="load-the-example">Load the example</h3>
+<pre><code class="language-python">from pathlib import Path
+import pandas as pd
+import drugseqpy as ds
+
+# Run from the tutorial repository root.
+objects = []
+for number in (3, 4):
+    folder = Path("data") / f"sample_{number}"
+    obj = ds.create_drugseq_from_files(
+        folder / "matrix", folder / "metadata.csv",
+        metadata_key="barcode", min_overlap=1.0,
+    )
+    obj.adata.obs_names = obj.obs["sample_id"].astype(str)
+    assert obj.obs_names.is_unique
+    objects.append(obj)
+
+dsd = ds.merge_drugseq_objects(*objects, batch_key="source_plate")
+assert dsd.obs_names.is_unique
+for folder in ("qc", "species", "batch", "reproducibility", "comparison"):
+    (Path("results") / folder).mkdir(parents=True, exist_ok=True)
+print(dsd)
+</code></pre>
+<p><strong>Worked output (illustration):</strong></p>
+<pre><code class="language-text">DrugSeqData
+  Samples   : 184
+  Genes     : 157233
+  Plates    : 2
+  Compounds : 2
+  QC done   : False
+  Normalized: no
+  DE results: 0 compound(s)
+</code></pre>
+<p><strong>Matched samples only.</strong> Sample 3/Sample 4 metadata contain 192 wells, while 184 barcodes are present in the copied filtered matrices. The object intentionally keeps the intersection. This is why “metadata rows” and “retained samples” differ.</p>
+<p><a id="run"></a></p>
+<h2 id="2-essential-qc-metrics-and-distributions">2. Essential QC metrics and distributions</h2>
+<p>Start by validating metadata and calculating the sample-level metrics once. <code>audit</code> is an ordinary Python dictionary returned by <code>ds.validate_metadata()</code>: <code>audit['ok']</code> reports whether every requested check passed, while <code>audit['issues']</code> lists each item that needs review. It is a diagnostic result, not a filtered dataset and not an instruction to remove samples.</p>
+<pre><code class="language-python">audit = ds.validate_metadata(dsd, verbose=False)
+ds.compute_qc_metrics(
+    dsd,
+    mito_prefixes=("MT-", "mt-"),
+    ribo_prefixes=("RPL", "RPS", "rpl", "rps"),
+    inplace=True,
+)
+audit
+</code></pre>
+<p><strong>Worked output (illustration):</strong></p>
+<pre><code class="language-text">{'ok': False, 'issues': ["Column 'dose' has 184 NA value(s)."]}
+</code></pre>
+<p><strong>Reading this example audit.</strong> The Sample 3/Sample 4 result reports missing <code>dose</code> values because that field is part of the package’s default metadata contract. These species-mixture wells do not have doses, so the warning is expected. For a design where dose is optional, call <code>ds.validate_metadata(dsd, required_cols=["plate_id", "well_id", "compound", "sample_type"])</code>.</p>
+<h3 id="essential-sample-qc-metrics">Essential sample QC metrics</h3>
+<p><strong><code>total_umi</code></strong> — Total raw UMI count in each well; this measures library yield.</p>
+<p><strong><code>n_genes_det</code></strong> — Number of genes with at least one UMI; this measures observed library complexity.</p>
+<p><strong><code>pct_mito</code> / <code>mt.pct</code></strong> — Percentage of UMIs assigned to mitochondrial genes. The shorter name is a plotting alias.</p>
+<p><strong><code>pct_ribo</code> / <code>ribo.pct</code></strong> — Percentage of UMIs assigned to ribosomal-protein genes. The shorter name is a plotting alias.</p>
+<p><strong><code>outlier_score</code></strong> — Robust multivariate MAD score across key metrics. It ranks unusual wells but does not automatically reject them.</p>
+<h3 id="mitochondrial-and-ribosomal-gene-definitions">Mitochondrial and ribosomal gene definitions</h3>
+<p><code>ds.compute_qc_metrics()</code> matches both <code>adata.var_names</code> and <code>adata.var['gene_symbol']</code>. By default, mitochondrial genes begin with <code>MT-</code> or <code>mt-</code>, while ribosomal genes begin with uppercase or lowercase <code>RPL</code>/<code>RPS</code>. You can instead provide a custom prefix, a regular expression, or an exact gene list.</p>
+<pre><code class="language-python"># Exact lists have highest priority over regex and prefixes
+ds.compute_qc_metrics(
+    dsd,
+    mito_genes=["MT-ND1", "MT-ND2", "MT-CO1"],
+    ribo_genes=["RPL3", "RPL4", "RPS3", "RPS4X"],
+    inplace=True,
+)
+</code></pre>
+<p>The resolved mode, requested prefixes/pattern/list, and number of matched features are stored in <code>dsd.uns['qc_gene_definitions']</code>.</p>
+<h3 id="how-the-mad-outlier-score-is-calculated">How the MAD outlier score is calculated</h3>
+<p>For sample <em>i</em> and QC metric <em>j</em>, the implementation first calculates the across-sample median and median absolute deviation:</p>
+<pre><code class="language-text">m_j = median_i(x_ij)
+MAD_j = median_i(abs(x_ij - m_j))
+z_ij = (x_ij - m_j) / MAD_j
+outlier_score_i = sqrt(sum_j(z_ij ** 2))
+</code></pre>
+<p>The five input metrics are <code>log10(total_umi + 1)</code>, <code>n_genes_det</code>, <code>pct_mito</code>, <code>pct_ribo</code>, and <code>gini_index</code>. A metric column containing any missing value is omitted; a zero MAD is replaced by 1.0. The raw MAD is used without the 1.4826 normal-consistency multiplier. Scores are calculated across all samples in the object—<code>groupby</code> changes only the visualization, not the score.</p>
+<p><strong>Grouping, splitting, and colors.</strong> The default <code>groupby="plate_id"</code> can be replaced by any column in <code>dsd.obs</code>, such as <code>compound</code> or <code>treatment</code>. It controls categories or colors within the same axes. <code>split_by=None</code> is the default; set it to a metadata column only when separate panels are needed. Every workflow visualization accepts <code>palette</code> as a Seaborn palette name, a sequence of colors, or a dictionary such as <code>{"Sample 3": "#167d9a", "Sample 4": "#d46b3d"}</code>. Numeric plate layouts use the separate <code>cmap</code> parameter.</p>
+<p><strong>No automatic filtering.</strong> QC metrics and an outlier score are evidence for review. The report does not delete wells. Choose thresholds after comparing plates, controls, and biological groups.</p>
+<h3 id="qc-metric-violin-panels">QC metric violin panels</h3>
+<p><code>ds.generate_qc_metric_violin_figure()</code> creates separate-axis violin panels and places each median label above its violin instead of over the distribution. <code>metrics=None</code> uses all four defaults; pass a list such as <code>["total_umi", "n_genes_det"]</code> to show only a subset. The example explicitly lists all four and keeps the default plate grouping.</p>
+<pre><code class="language-python">violin_files = ds.generate_qc_metric_violin_figure(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    metrics=["mt.pct", "ribo.pct", "total_umi", "n_genes_det"],
+    groupby="plate_id",    # e.g. "compound" or "treatment"
+    palette="colorblind",  # Seaborn name, color list, or mapping
+)
+</code></pre>
+<p><img alt="QC metric violin panels" decoding="async" loading="lazy" src="assets/figures/qc-01.png"/></p>
+<p><strong>QC metric violin panels.</strong> Each metric has its own y-axis and is grouped by plate_id. Red median annotations sit above the corresponding violin bodies; individual wells remain visible as translucent points.</p>
+<h3 id="outlier-score-scatter">Outlier-score scatter</h3>
+<p><code>ds.generate_outlier_score_scatter_figure()</code> plots one sample per point with <code>outlier_score</code> on the y-axis. <code>groupby</code> controls both point color and sample ordering; its default is <code>plate_id</code>. This worked example sets <code>label_outliers=True</code> and labels the ten highest scores by <code>well_id</code>, verifying the annotation path. The optional <code>threshold</code> can restrict labels to points above a justified review cutoff.</p>
+<pre><code class="language-python">outlier_files = ds.generate_outlier_score_scatter_figure(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",    # controls sample ordering and point colors
+    palette="colorblind",
+    threshold=None,        # set a review threshold only when justified
+    label_outliers=True,   # label the highest scores for review
+    label_col="well_id",
+    max_labels=10,
+)
+</code></pre>
+<p><img alt="Sample outlier scores" decoding="async" loading="lazy" src="assets/figures/qc-02.png"/></p>
+<p><strong>Sample outlier scores.</strong> Each point is one retained sample, colored by plate_id and ordered into plate groups along the x-axis. Higher MAD scores indicate more unusual multivariate QC profiles; they identify samples for review rather than automatic deletion.</p>
+<h4 id="colored-and-ordered-by-compound">Colored and ordered by compound</h4>
+<p>The second call changes <code>groupby</code> to <code>compound</code>. It does not recalculate the MAD scores. A custom <code>output_name</code> keeps this figure and its source table alongside the default plate-colored output.</p>
+<pre><code class="language-python">outlier_compound_files = ds.generate_outlier_score_scatter_figure(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="compound",  # color and order wells by 231, 3T3, water
+    palette={"231": "#16B4D1", "3T3": "#1B2A40", "water": "#64748B"},
+    threshold=None,
+    label_outliers=True,
+    label_col="well_id",
+    max_labels=10,
+    output_name="Samples_3_4_Outlier_Score_Scatter_by_compound",
+)
+</code></pre>
+<p><img alt="Sample outlier scores colored by compound" decoding="async" loading="lazy" src="assets/figures/qc-03.png"/></p>
+<p><strong>Sample outlier scores colored by compound.</strong> The MAD score is unchanged from the plate-colored view. Only point color and sample ordering change, making compound-associated QC patterns easier to inspect.</p>
+<h3 id="umi-density">UMI density</h3>
+<p><code>ds.generate_umi_density_figure()</code> creates only the total-UMI distribution figure and uses the same configurable grouping and palette interface.</p>
+<pre><code class="language-python">umi_density_files = ds.generate_umi_density_figure(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="Per-well UMI density" decoding="async" loading="lazy" src="assets/figures/qc-04.png"/></p>
+<p><strong>Per-well UMI density.</strong> The density shape compares library-size distributions between Sample 3 and Sample 4 using plate names, not positional codes.</p>
+<h3 id="detected-gene-density">Detected-gene density</h3>
+<p><code>ds.generate_detected_gene_density_figure()</code> creates only the detected-gene distribution figure and uses the same configurable grouping and palette interface.</p>
+<pre><code class="language-python">gene_density_files = ds.generate_detected_gene_density_figure(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="Per-well detected-gene density" decoding="async" loading="lazy" src="assets/figures/qc-05.png"/></p>
+<p><strong>Per-well detected-gene density.</strong> A left-shifted plate would indicate lower sample complexity; a multimodal curve can indicate distinct well-quality populations.</p>
+<p><strong>Combined wrapper.</strong> <code>ds.generate_qc_distribution_figures()</code> now creates all four sample-QC outputs together: the selected violin metrics, outlier-score scatter, UMI density, and detected-gene density. The focused functions above remain useful when each code block should correspond to one figure.</p>
+<p><a id="plate-layout"></a></p>
+<h2 id="3-plate-layouts">3. Plate layouts</h2>
+<p>Plate maps are the fastest way to detect edge effects, dispensing failures, coordinate mistakes, and spatially structured signal. Sample 3/Sample 4 use an 8-row × 12-column layout. Well-dT numbering runs down rows within a column, so the first column contains Well-dT-1 through Well-dT-8. Use <code>palette</code> for categorical wells and <code>cmap</code> for continuous values.</p>
+<p><code>generate_plate_layout_figures()</code> creates exactly one figure per call. Supply exactly one color source: <code>plate_value</code> for an <code>obs</code> field, <code>plate_gene</code> for expression, or <code>well_color</code> for a fixed literal fill. There is no separate <code>legend_col</code>: a categorical legend always represents <code>plate_value</code>.</p>
+<p><strong>Tip — empty wells.</strong> White wells with a black border represent empty or missing positions on the physical plate. This convention is documented here instead of adding explanatory text inside every generated figure.</p>
+<p><strong>Plate format and scaling.</strong> The defaults <code>nrow=8</code> and <code>ncol=12</code> describe a 96-well plate. Use <code>nrow=16, ncol=24</code> for a standard 384-well plate or provide another exact grid. <code>plate_id</code> names the metadata column containing actual plate identities. <code>nrow_plate</code> is the maximum number of plate panels in one figure row; <code>1</code> stacks plates vertically. Continuous values use <code>log1p</code> by default and the bright blue-to-red <code>RdYlBu_r</code> map; use <code>log_values=False</code> for the original scale.</p>
+<p>Every well has a border by default, including missing wells. Set <code>well_border=False</code> to remove all borders, or customize <code>well_border_color</code> and <code>well_border_width</code>. The panel and well sizes remain adjustable with <code>figsize</code> and <code>well_size</code>.</p>
+<h3 id="detected-umi-count">Detected UMI count</h3>
+<pre><code class="language-python">umi_plate = ds.generate_plate_layout_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    plate_value="total_umi",
+    plate_id="plate_id",  # obs column containing actual plate identities
+    continuous=True,
+    log_values=True,      # default: color by log1p(total_umi)
+    nrow=8, ncol=12,
+    nrow_plate=1,         # maximum plate panels per figure row
+    output_name="plate_layout_detected_umi",
+    cmap="RdYlBu_r",
+)
+</code></pre>
+<p><img alt="Plate layout colored by detected UMI count" decoding="async" loading="lazy" src="assets/figures/qc-06.png"/></p>
+<p><strong>Plate layout colored by detected UMI count.</strong> Compare intensity within and between plates to find spatial gradients, edge effects, or isolated low-yield wells. Labels are intentionally omitted.</p>
+<h3 id="detected-gene-count">Detected gene count</h3>
+<pre><code class="language-python">gene_count_plate = ds.generate_plate_layout_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    plate_value="n_genes_det",
+    continuous=True,
+    log_values=True,
+    nrow=8, ncol=12,
+    nrow_plate=1,
+    output_name="plate_layout_detected_genes",
+    cmap="RdYlBu_r",
+)
+</code></pre>
+<p><img alt="Plate layout colored by detected gene count" decoding="async" loading="lazy" src="assets/figures/qc-07.png"/></p>
+<p><strong>Plate layout colored by detected gene count.</strong> This is a library-complexity view. A well can have many UMIs but relatively few detected genes when a small number of transcripts dominate.</p>
+<h3 id="compound-categories">Compound categories</h3>
+<pre><code class="language-python">compound_plate = ds.generate_plate_layout_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    plate_value="compound",
+    continuous=False,
+    nrow=8, ncol=12,
+    nrow_plate=1,
+    output_name="plate_layout_compound",
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="Plate layout colored by compound" decoding="async" loading="lazy" src="assets/figures/qc-08.png"/></p>
+<p><strong>Plate layout colored by compound.</strong> The legend and well colors use the same categorical variable. This map checks randomization and the spatial placement of 231, 3T3, and water wells.</p>
+<h3 id="well-labels-with-a-fixed-fill">Well labels with a fixed fill</h3>
+<p><code>well_color="#E2E8F0"</code> sets the literal fill of occupied wells. It is not the name of a metadata field. <code>label_col</code> defaults to <code>None</code>; specifying it enables labels, whose color, size, style, and weight are adjustable. Here <code>nrow_plate=1</code> places one plate in each figure row, stacking Sample 3 and Sample 4 vertically and giving each label substantially more display space.</p>
+<pre><code class="language-python">well_id_plate = ds.generate_plate_layout_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    well_color="#E2E8F0",  # literal fill for occupied wells
+    label_col="well_id",
+    show_legend=False,
+    nrow=8, ncol=12,
+    nrow_plate=1,  # one plate per row; stack Sample 3 and Sample 4
+    output_name="plate_layout_well_id",
+    well_size=0.88,
+    well_border=True,
+    well_border_color="#111827",
+    well_border_width=0.8,
+    label_color="#111827",
+    label_size=6,
+    label_style="normal",
+    label_weight="normal",
+)
+</code></pre>
+<p><img alt="Plate layout labeled by well ID" decoding="async" loading="lazy" src="assets/figures/qc-09.png"/></p>
+<p><strong>Plate layout labeled by well ID.</strong> Occupied wells use a pale fill so labels remain legible. Numbering is column-major: 1–8 down the first column.</p>
+<h3 id="single-gene-expression">Single-gene expression</h3>
+<p>When <code>plate_gene</code> is one string, the map displays only that gene's per-well expression. This worked example uses <code>"FN1"</code>. If multiple features share the requested symbol, their counts are summed for that gene.</p>
+<pre><code class="language-python">expression_plate = ds.generate_plate_layout_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    plate_gene="FN1",
+    continuous=True,
+    log_values=True,
+    nrow=8, ncol=12,
+    nrow_plate=1,
+    output_name="plate_layout_gene_expression",
+    cmap="RdYlBu_r",
+)
+</code></pre>
+<p><img alt="Spatial FN1 expression" decoding="async" loading="lazy" src="assets/figures/qc-10.png"/></p>
+<p><strong>Spatial FN1 expression.</strong> A real single-gene expression map generated for FN1. The same call accepts any available gene symbol or feature ID.</p>
+<h3 id="gene-set-expression">Gene-set expression</h3>
+<p>When <code>plate_gene</code> is a list, each requested gene is resolved and summarized separately before the per-well values are combined. <code>gene_aggregation="mean"</code> is the default; <code>"sum"</code> and <code>"median"</code> are also supported. All requested genes must be present, preventing a partially matched signature from being plotted silently.</p>
+<pre><code class="language-python">geneset_plate = ds.generate_plate_layout_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    plate_gene=["FN1", "CDH2"],
+    gene_aggregation="mean",  # alternatives: "sum" or "median"
+    continuous=True,
+    log_values=True,
+    nrow=8, ncol=12,
+    nrow_plate=1,
+    output_name="plate_layout_gene_set_expression",
+    cmap="RdYlBu_r",
+)
+</code></pre>
+<p><img alt="Spatial FN1/CDH2 gene-set expression" decoding="async" loading="lazy" src="assets/figures/qc-11.png"/></p>
+<p><strong>Spatial FN1/CDH2 gene-set expression.</strong> Each gene is first resolved independently and duplicate features for that gene are summed. The displayed value is then the mean expression across FN1 and CDH2 for each well.</p>
+<p><a id="gene-qc"></a></p>
+<h2 id="4-gene-summaries-and-markers">4. Gene summaries and markers</h2>
+<h3 id="gene-level-umi-distributions">Gene-level UMI distributions</h3>
+<p><code>ds.generate_gene_umi_distribution_figures()</code> is dedicated to feature-level total-UMI distributions. <code>identifier_types=None</code> draws both Ensembl-ID and gene-symbol views by default. Pass <code>"ensembl_id"</code> or <code>"gene_symbol"</code> to generate only one. The default <code>groupby="plate_id"</code> calculates feature totals independently for every plate and overlays those distributions by color; it no longer collapses every sample before plotting.</p>
+<pre><code class="language-python">gene_umi_files = ds.generate_gene_umi_distribution_figures(
+    dsd,
+    output_dir="results/qc",
+    formats=("png",),
+    identifier_types=["ensembl_id", "gene_symbol"],  # default: both
+    groupby="plate_id",  # separate per-group totals, overlaid by color
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="UMI totals per Ensembl ID" decoding="async" loading="lazy" src="assets/figures/qc-12.png"/></p>
+<p><strong>UMI totals per Ensembl ID.</strong> This density uses group-specific feature totals from the actual matrix. groupby='plate_id' overlays the Sample 3 and Sample 4 curves by color in one axes.</p>
+<p><img alt="UMI totals per gene symbol" decoding="async" loading="lazy" src="assets/figures/qc-13.png"/></p>
+<p><strong>UMI totals per gene symbol.</strong> This companion density uses group-specific totals for features with human-readable symbols; Sample 3 and Sample 4 remain overlaid rather than split into separate panels.</p>
+<h3 id="specific-marker-gene-panel">Specific marker-gene panel</h3>
+<p><code>ds.generate_marker_gene_figure()</code> accepts an explicit ordered marker list. The worked example supplies the actual MDA-MB-231 panel rather than using <code>None</code>: VIM, FN1, CDH2, CD44, EGFR, MMP9, TGFB1, SNAI1, TWIST1, and ITGB1. Here <code>groupby="compound"</code> compares the treatment categories <code>3T3</code> and <code>231</code> within each axes, while <code>split_by="plate_id"</code> creates separate Sample 3 and Sample 4 panels. Water controls are retained in <code>dsd</code> but excluded from the marker-only copy.</p>
+<pre><code class="language-python">mda_mb_231_markers = [
+    "VIM", "FN1", "CDH2", "CD44", "EGFR",
+    "MMP9", "TGFB1", "SNAI1", "TWIST1", "ITGB1",
+]
+# This marker comparison focuses on the two biological treatment/species
+# groups; water controls remain in the main QC object and other figures.
+marker_dsd = dsd.subset(
+    obs_mask=dsd.obs["compound"].astype(str).isin(["3T3", "231"]),
+)
+marker_files = ds.generate_marker_gene_figure(
+    marker_dsd,
+    output_dir="results/qc",
+    marker_genes=mda_mb_231_markers,
+    formats=("png",),
+    groupby="compound",   # treatment groups: 3T3 and 231
+    split_by="plate_id",  # separate Sample 3 and Sample 4 panels
+    nrow_plate=5,
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="MDA-MB-231 marker expression by treatment and plate" decoding="async" loading="lazy" src="assets/figures/qc-14.png"/></p>
+<p><strong>MDA-MB-231 marker expression by treatment and plate.</strong> Within each Sample 3 or Sample 4 facet, bars compare mean raw expression between the 3T3 and 231 treatment groups. Water controls are omitted from this marker-specific comparison. Interpret the panel as an identity/signal check, not a differential-expression test.</p>
+<h3 id="marker-dot-plot">Marker dot plot</h3>
+<p><code>ds.generate_marker_gene_dotplot_figure()</code> summarizes two complementary quantities in one compact panel: color is the group mean expression and dot area is the percentage of wells with expression greater than zero. The saved table also records the number of wells contributing to each dot.</p>
+<pre><code class="language-python">marker_dotplot_files = ds.generate_marker_gene_dotplot_figure(
+    marker_dsd,
+    output_dir="results/qc",
+    marker_genes=mda_mb_231_markers,
+    formats=("png",),
+    groupby="compound",   # treatment groups: 3T3 and 231
+    split_by="plate_id",  # separate Sample 3 and Sample 4 panels
+    nrow_plate=5,        # five gene/plate panels per row
+    cmap="RdYlBu_r",
+    dot_min_size=18,
+    dot_max_size=280,
+)
+</code></pre>
+<p><img alt="Marker-expression dot plot" decoding="async" loading="lazy" src="assets/figures/qc-15.png"/></p>
+<p><strong>Marker-expression dot plot.</strong> Color reports mean raw expression and dot area reports the percentage of wells with nonzero expression. Rows compare 3T3 and 231, while separate panels show Sample 3 and Sample 4.</p>
+<h3 id="marker-violin-plot">Marker violin plot</h3>
+<p><code>ds.generate_marker_gene_violin_figure()</code> retains the per-well distributions hidden by group means. Every gene receives an independent panel and y-axis; with <code>split_by="plate_id"</code>, each gene receives one Sample 3 panel and one Sample 4 panel. The 231 and 3T3 violins remain side by side within each panel. It shows raw expression by default; set <code>log_values=True</code> when a long upper tail compresses the lower part of the violins.</p>
+<pre><code class="language-python">marker_violin_files = ds.generate_marker_gene_violin_figure(
+    marker_dsd,
+    output_dir="results/qc",
+    marker_genes=mda_mb_231_markers,
+    formats=("png",),
+    groupby="compound",   # treatment groups: 3T3 and 231
+    split_by="plate_id",  # separate Sample 3 and Sample 4 panels
+    nrow_plate=5,
+    palette="colorblind",
+    log_values=False,      # show raw per-well expression
+)
+</code></pre>
+<p><img alt="Marker-expression violin plot" decoding="async" loading="lazy" src="assets/figures/qc-16.png"/></p>
+<p><strong>Marker-expression violin plot.</strong> Each gene has its own panel and independent y-axis. Within a panel, side-by-side violins show the full per-well raw-expression distributions for 231 and 3T3; Sample 3 and Sample 4 are represented by separate gene panels.</p>
+<p><strong>Compatibility wrapper.</strong> <code>ds.generate_gene_summary_figures()</code> remains available for existing scripts and delegates to the UMI-distribution and grouped-bar functions. Call the dot-plot and violin functions independently when those views are required.</p>
+<p><a id="star-qc"></a></p>
+<h2 id="5-starsolo-read-level-qc-optional">5. STARsolo read-level QC (Optional)</h2>
+<p>This optional section requires separately supplied STARsolo read-level outputs; they are not included in the synthetic practice bundle. Skip these calls until your files are available under <code>data/star_results</code>, or set <code>star_root</code> to a directory with the following structure:</p>
+<pre><code class="language-text">data/star_results/
+├── Sample 3/Solo.out/Gene/
+│  ├── Summary.csv
+│  ├── CellReads.stats
+│  └── filtered/barcodes.tsv.gz
+└── Sample 4/Solo.out/Gene/
+   ├── Summary.csv
+   ├── CellReads.stats
+   └── filtered/barcodes.tsv.gz
+</code></pre>
+<p><code>Summary.csv</code> is required for the read-summary doughnut. <code>CellReads.stats</code> must contain <code>CB</code>, <code>cbMatch</code>, and <code>nGenesUnique</code> for saturation. <code>filtered/barcodes.tsv.gz</code> selects retained barcodes when present; otherwise non-pass-list rows are excluded. <code>groupby</code> defaults to <code>plate_id</code>. For the read-summary figure, each plate must map to exactly one grouping value.</p>
+<h3 id="read-summary-doughnut">Read-summary doughnut</h3>
+<pre><code class="language-python">from pathlib import Path
+
+star_root = Path.cwd() / "data" / "star_results"
+star_read_files = ds.generate_star_read_qc_figure(
+    dsd,
+    star_root=star_root,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",
+    split_by=None,       # default: one axes, plate_id controls colors
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="STARsolo read-level QC" decoding="async" loading="lazy" src="assets/figures/qc-17.png"/></p>
+<p><strong>STARsolo read-level QC.</strong> Concentric rings report valid barcodes, Q30 CB+UMI, Q30 RNA, uniquely genome-mapped reads, and uniquely gene-mapped reads as percentages.</p>
+<h3 id="reads-per-well">Reads per well</h3>
+<p><code>ds.generate_star_read_count_violin_figure()</code> reads <code>cbMatch</code> from <code>CellReads.stats</code> and retains every analyzed well in <code>dsd</code>. The violin and overlaid points show the full per-well distribution for each plate; the mean and median labels are placed above the corresponding violin. A well without a matching STAR barcode is represented by zero reads and <code>matched_star_record=False</code> in the saved table rather than silently disappearing.</p>
+<pre><code class="language-python">star_read_count_files = ds.generate_star_read_count_violin_figure(
+    dsd,
+    star_root=star_root,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",
+    palette={"Sample 3": "#16B4D1", "Sample 4": "#1B2A40"},
+    point_color="#253746",
+    annotation_color="#D32F2F",
+)
+</code></pre>
+<p><img alt="STAR matched reads per well" decoding="async" loading="lazy" src="assets/figures/qc-18.png"/></p>
+<p><strong>STAR matched reads per well.</strong> Each point is an analyzed well and violin fills compare plates. Mean and median matched-read counts are labeled above each plate distribution; wells lacking a matching STAR record remain in the source table with zero reads and an explicit false match flag.</p>
+<h3 id="read-depth-saturation">Read-depth saturation</h3>
+<p>These saturation diagnostics compare read counts with detected genes across wells; they are not curves obtained by downsampling each library. They use original read and detected-gene values rather than log-scaled axes. <code>groupby</code> controls point color and keeps all groups in one axes by default. The red median label is placed at the upper-left outside the data region so it does not hide points.</p>
+<h4 id="grouped-in-one-axes-default">Grouped in one axes (default)</h4>
+<pre><code class="language-python">star_saturation_files = ds.generate_star_saturation_figures(
+    dsd,
+    star_root=star_root,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",
+    nrow_plate=1,
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="STAR read saturation: Ensembl IDs" decoding="async" loading="lazy" src="assets/figures/qc-19.png"/></p>
+<p><strong>STAR read saturation: Ensembl IDs.</strong> Raw read counts are on the x-axis and detected genes on the y-axis. The values are not log-transformed; a plateau suggests additional reads recover fewer new genes.</p>
+<p><img alt="STAR read saturation: gene symbols" decoding="async" loading="lazy" src="assets/figures/qc-20.png"/></p>
+<p><strong>STAR read saturation: gene symbols.</strong> The same raw-scale saturation diagnostic using detected gene-symbol features. The dashed horizontal line is the median detected-gene count.</p>
+<h4 id="split-into-separate-panels">Split into separate panels</h4>
+<p>Set <code>split_by="plate_id"</code> when separate plate panels are useful. <code>nrow_plate</code> then controls the maximum number of split panels per row. The split output receives a <code>_split_by_plate_id</code> filename suffix and therefore does not overwrite the grouped figure.</p>
+<pre><code class="language-python">star_saturation_split_files = ds.generate_star_saturation_figures(
+    dsd,
+    star_root=star_root,
+    output_dir="results/qc",
+    formats=("png",),
+    groupby="plate_id",  # colors within each panel
+    split_by="plate_id", # one panel per plate
+    nrow_plate=2,
+    palette="colorblind",
+)
+</code></pre>
+<p><img alt="Split saturation: Ensembl IDs" decoding="async" loading="lazy" src="assets/figures/qc-21.png"/></p>
+<p><strong>Split saturation: Ensembl IDs.</strong> Setting split_by='plate_id' creates one panel per plate while groupby still controls point colors within each panel.</p>
+<p><img alt="Split saturation: gene symbols" decoding="async" loading="lazy" src="assets/figures/qc-22.png"/></p>
+<p><strong>Split saturation: gene symbols.</strong> The split view is useful when overplotting obscures plate-specific trends. Median labels sit outside the data region at the upper-left of each axes.</p>
+<p><a id="subsetting"></a></p>
+<h2 id="6-subset-wells-and-genes">6. Subset wells and genes</h2>
+<p>Subsetting is optional. The examples below always create a new <code>DrugSeqData</code> object and leave <code>dsd</code> unchanged. Keep the full object through QC review whenever possible, record every applied mask or threshold, and save the excluded identifiers for auditability.</p>
+<h3 id="keep-specific-wells">Keep specific wells</h3>
+<p>Use <code>dsd.subset(obs_mask=...)</code> for an explicit well list or any Boolean metadata condition. Because <code>well_id</code> is reused on every plate, combine it with <code>plate_id</code> when selecting individual wells.</p>
+<pre><code class="language-python"># Keep explicit wells. Include plate_id because well_id repeats across plates.
+wells_to_keep = {
+    ("Sample 3", "Well-dT-2"),
+    ("Sample 3", "Well-dT-4"),
+    ("Sample 4", "Well-dT-2"),
+    ("Sample 4", "Well-dT-4"),
+}
+well_keys = list(zip(dsd.obs["plate_id"], dsd.obs["well_id"]))
+well_mask = [key in wells_to_keep for key in well_keys]
+dsd_selected_wells = dsd.subset(obs_mask=well_mask)
+print(dsd_selected_wells)
+</code></pre>
+<h3 id="keep-specific-genes">Keep specific genes</h3>
+<p>Use <code>dsd.subset(var_mask=...)</code> for an explicit gene panel. Matching both stable feature IDs and <code>gene_symbol</code> prevents accidental misses when users provide a mixture of identifier types. The same method accepts both <code>obs_mask</code> and <code>var_mask</code> to subset wells and genes together.</p>
+<pre><code class="language-python"># Gene requests may contain stable feature IDs, symbols, or both.
+genes_to_keep = {"FN1", "CDH2"}
+gene_mask = dsd.var_names.isin(genes_to_keep)
+if "gene_symbol" in dsd.var:
+    gene_mask |= dsd.var["gene_symbol"].isin(genes_to_keep).to_numpy()
+dsd_selected_genes = dsd.subset(var_mask=gene_mask)
+print(dsd_selected_genes)
+
+# Both dimensions can be subset in one operation.
+dsd_selected = dsd.subset(obs_mask=well_mask, var_mask=gene_mask)
+</code></pre>
+<h3 id="optionally-remove-low-quality-wells">Optionally remove low-quality wells</h3>
+<p><code>ds.filter_samples()</code> applies reviewed limits for UMI yield, detected genes, mitochondrial/ribosomal percentages, housekeeping metrics, and the MAD outlier score. It requires QC metrics first and returns a new object. The quantiles below are only an adaptive demonstration—not recommended universal cutoffs. Examine the candidate table, plate layouts, controls, and experimental design before filtering.</p>
+<pre><code class="language-python"># QC filtering is optional. Calculate and inspect metrics before filtering.
+qc_for_filtering = dsd.copy()
+ds.compute_qc_metrics(qc_for_filtering, inplace=True)
+
+# Illustrative, data-adaptive review thresholds—not universal cutoffs.
+thresholds = {
+    "min_umi": qc_for_filtering.obs["total_umi"].quantile(0.01),
+    "min_genes": qc_for_filtering.obs["n_genes_det"].quantile(0.01),
+    "max_pct_mito": qc_for_filtering.obs["pct_mito"].quantile(0.99),
+    "max_outlier_score": qc_for_filtering.obs["outlier_score"].quantile(0.99),
+}
+review_mask = (
+    (qc_for_filtering.obs["total_umi"] &lt; thresholds["min_umi"])
+    | (qc_for_filtering.obs["n_genes_det"] &lt; thresholds["min_genes"])
+    | (qc_for_filtering.obs["pct_mito"] &gt; thresholds["max_pct_mito"])
+    | (qc_for_filtering.obs["outlier_score"] &gt; thresholds["max_outlier_score"])
+)
+review_table = qc_for_filtering.obs.loc[
+    review_mask,
+    ["sample_id", "plate_id", "well_id", "total_umi", "n_genes_det",
+     "pct_mito", "outlier_score"],
+]
+print(review_table.to_string(index=False))
+
+# Apply only after reviewing the candidates and experimental controls.
+dsd_quality_wells = ds.filter_samples(
+    qc_for_filtering,
+    **thresholds,
+    keep_sample_types=["DMSO", "vehicle", "positive_ctrl", "negative_ctrl"],
+)
+</code></pre>
+<p><strong>Protect controls deliberately.</strong> By default, <code>ds.filter_samples()</code> exempts DMSO, vehicle, and positive/negative controls from library-QC thresholds. Pass <code>keep_sample_types=[]</code> only when intentionally allowing those controls to be removed. Water/media behavior depends on its <code>sample_type</code> value and should be reviewed explicitly.</p>
+<h3 id="optionally-remove-low-expression-genes">Optionally remove low-expression genes</h3>
+<p><code>ds.filter_genes()</code> filters raw counts and returns a new object. For perturbation screens, <code>group_aware=True</code> retains a gene if it passes in at least one treatment group, protecting genes induced only by particular compounds. Apply well filtering first when failed wells would distort expression prevalence.</p>
+<pre><code class="language-python"># Retain genes expressed in &gt;=3 wells in at least one compound group.
+# min_cpm=1 adds an experiment-wide CPM requirement in &gt;=3 wells.
+dsd_quality_genes = ds.filter_genes(
+    dsd,
+    min_count=1,
+    min_samples=3,
+    group_aware=True,
+    group_col="compound",
+    min_cpm=1,
+    min_cpm_samples=3,
+    remove_mito=False,
+    remove_ribo=False,
+)
+</code></pre>
+<p><strong>Feature-name patterns.</strong> <code>remove_mito=True</code> and <code>remove_ribo=True</code> match <code>mito_pattern</code>/<code>ribo_pattern</code> against feature names. When <code>var_names</code> are Ensembl IDs, use an explicit symbol-aware mask or map symbols before relying on those options.</p>
+<p><a id="complete-report"></a></p>
+<h2 id="7-complete-automated-report">7. Complete automated report</h2>
+<p><code>ds.generate_qc_report()</code> is the batch entry point after the individual operations are understood. Internally it runs <code>ds.compute_qc_metrics()</code>, <code>ds.validate_metadata()</code>, and, when suitable sample-type metadata exist, <code>ds.compute_plate_qc()</code>. It then calls <code>ds.generate_plate_layout_figures()</code>, <code>ds.generate_qc_metric_violin_figure()</code>, <code>ds.generate_outlier_score_scatter_figure()</code>, <code>ds.generate_umi_density_figure()</code>, <code>ds.generate_detected_gene_density_figure()</code>, <code>ds.generate_gene_umi_distribution_figures()</code>, <code>ds.generate_marker_gene_figure()</code>, and—when <code>star_root</code> is supplied—the focused <code>ds.generate_star_read_qc_figure()</code>, <code>ds.generate_star_read_count_violin_figure()</code>, and <code>ds.generate_star_saturation_figures()</code> functions. It also writes the sample metrics, metadata audit, source tables, and a producer-aware figure manifest. The separately grouped compound outlier view in the script is an additional focused call so it can coexist with the report's default plate-colored view.</p>
+<p>The following complete script applies the same workflow to the tutorial input layout. It generates new results from your inputs; the historical figures and numbers above remain interpretation examples. Optional read-level figures run only when the STARsolo directory exists.</p>
+<pre><code class="language-python">from pathlib import Path
+import pandas as pd
+import drugseqpy as ds
+
+# Run from the tutorial repository root.
+objects = []
+for number in (3, 4):
+    folder = Path("data") / f"sample_{number}"
+    obj = ds.create_drugseq_from_files(
+        folder / "matrix", folder / "metadata.csv",
+        metadata_key="barcode", min_overlap=1.0,
+    )
+    obj.adata.obs_names = obj.obs["sample_id"].astype(str)
+    assert obj.obs_names.is_unique
+    objects.append(obj)
+
+dsd = ds.merge_drugseq_objects(*objects, batch_key="source_plate")
+assert dsd.obs_names.is_unique
+for folder in ("qc", "species", "batch", "reproducibility", "comparison"):
+    (Path("results") / folder).mkdir(parents=True, exist_ok=True)
+print(dsd)
+
+output_dir = Path("results/qc")
+star_root = Path("data/star_results")
+
+# Complete batch report, including optional STARsolo figures when available.
+all_files = ds.generate_qc_report(
+    dsd,
+    output_dir=output_dir,
+    formats=("png",),
+    star_root=star_root if star_root.exists() else None,
+    marker_genes=[
+        "VIM", "FN1", "CDH2", "CD44", "EGFR",
+        "MMP9", "TGFB1", "SNAI1", "TWIST1", "ITGB1",
+    ],
+    gene_umi_identifier_types=["ensembl_id", "gene_symbol"],
+    plate_gene="FN1",
+    plate_gene_set=["FN1", "CDH2"],
+    plate_gene_aggregation="mean",
+    plate_nrow=8,
+    plate_ncol=12,
+    nrow_plate=1,
+    violin_metrics=None,  # all four defaults; or provide a subset
+    groupby="plate_id",
+    split_by=None,        # combine groups unless faceting is requested
+    palette="colorblind",
+    cmap="RdYlBu_r",
+    outlier_threshold=None,
+    label_outliers=True,
+)
+
+# Add a second outlier view without replacing the plate-colored default.
+compound_outlier_files = ds.generate_outlier_score_scatter_figure(
+    dsd,
+    output_dir=output_dir,
+    formats=("png",),
+    groupby="compound",
+    palette={"231": "#16B4D1", "3T3": "#1B2A40", "water": "#64748B"},
+    label_outliers=True,
+    output_name="Samples_3_4_Outlier_Score_Scatter_by_compound",
+)
+all_files.extend(compound_outlier_files)
+
+# Regroup only the marker panel by treatment and split it by plate.
+marker_dsd = dsd.subset(
+    obs_mask=dsd.obs["compound"].astype(str).isin(["3T3", "231"]),
+)
+marker_files = ds.generate_marker_gene_figure(
+    marker_dsd,
+    output_dir=output_dir,
+    marker_genes=[
+        "VIM", "FN1", "CDH2", "CD44", "EGFR",
+        "MMP9", "TGFB1", "SNAI1", "TWIST1", "ITGB1",
+    ],
+    formats=("png",),
+    groupby="compound",
+    split_by="plate_id",
+    nrow_plate=5,
+    palette="colorblind",
+)
+all_files.extend(marker_files)
+dotplot_files = ds.generate_marker_gene_dotplot_figure(
+    marker_dsd,
+    output_dir=output_dir,
+    marker_genes=[
+        "VIM", "FN1", "CDH2", "CD44", "EGFR",
+        "MMP9", "TGFB1", "SNAI1", "TWIST1", "ITGB1",
+    ],
+    formats=("png",),
+    groupby="compound",
+    split_by="plate_id",
+    nrow_plate=2,
+    cmap="RdYlBu_r",
+)
+all_files.extend(dotplot_files)
+violin_files = ds.generate_marker_gene_violin_figure(
+    marker_dsd,
+    output_dir=output_dir,
+    marker_genes=[
+        "VIM", "FN1", "CDH2", "CD44", "EGFR",
+        "MMP9", "TGFB1", "SNAI1", "TWIST1", "ITGB1",
+    ],
+    formats=("png",),
+    groupby="compound",
+    split_by="plate_id",
+    nrow_plate=5,
+    palette="colorblind",
+    log_values=False,
+)
+all_files.extend(violin_files)
+print(f"Generated {len(all_files)} figure files in {output_dir}")
+</code></pre>
+<p><a id="tables"></a></p>
+<h2 id="8-saved-result-tables">8. Saved result tables</h2>
+<p>The report saves data behind the visualizations so a flagged well or summary value can be inspected without reverse-engineering a plot.</p>
+<h3 id="sample-qc-metrics">Sample QC metrics</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_qc_report()</code>, using metrics from <code>ds.compute_qc_metrics()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>sample_id</th>
+<th>plate_id</th>
+<th>well_id</th>
+<th>compound</th>
+<th>total_umi</th>
+<th>n_genes_det</th>
+<th>pct_mito</th>
+<th>pct_ribo</th>
+<th>outlier_score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3_AAGATCAATT</td>
+<td>Sample 3</td>
+<td>Well-dT-34</td>
+<td>231</td>
+<td>8.83e+05</td>
+<td>1.57e+04</td>
+<td>9.74</td>
+<td>14.9</td>
+<td>2.22</td>
+</tr>
+<tr>
+<td>Sample 3_AAGATTAACC</td>
+<td>Sample 3</td>
+<td>Well-dT-19</td>
+<td>3T3</td>
+<td>5.18e+05</td>
+<td>1.55e+04</td>
+<td>6.22</td>
+<td>0.253</td>
+<td>2.36</td>
+</tr>
+<tr>
+<td>Sample 3_AAGTAAGCGT</td>
+<td>Sample 3</td>
+<td>Well-dT-58</td>
+<td>3T3</td>
+<td>4.65e+05</td>
+<td>1.47e+04</td>
+<td>7.48</td>
+<td>0.264</td>
+<td>1.45</td>
+</tr>
+<tr>
+<td>Sample 3_AATACTCGAT</td>
+<td>Sample 3</td>
+<td>Well-dT-71</td>
+<td>3T3</td>
+<td>5.1e+05</td>
+<td>1.42e+04</td>
+<td>6.4</td>
+<td>0.199</td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>Sample 3_AATCAGTGGA</td>
+<td>Sample 3</td>
+<td>Well-dT-39</td>
+<td>3T3</td>
+<td>3.45e+05</td>
+<td>1.39e+04</td>
+<td>9.01</td>
+<td>0.275</td>
+<td>1.87</td>
+</tr>
+<tr>
+<td>Sample 3_AATCTACAAG</td>
+<td>Sample 3</td>
+<td>Well-dT-12</td>
+<td>3T3</td>
+<td>5.36e+05</td>
+<td>1.53e+04</td>
+<td>5.99</td>
+<td>0.267</td>
+<td>2.27</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 184 rows from <code>sample_qc_metrics.csv</code>.</p>
+<h3 id="qc-violin-plotting-table">QC violin plotting table</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_qc_metric_violin_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>metadata_index</th>
+<th>plate_id</th>
+<th>mt.pct</th>
+<th>ribo.pct</th>
+<th>total_umi</th>
+<th>n_genes_det</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3_AAGATCAATT</td>
+<td>Sample 3</td>
+<td>9.74</td>
+<td>14.9</td>
+<td>8.83e+05</td>
+<td>1.57e+04</td>
+</tr>
+<tr>
+<td>Sample 3_AAGATTAACC</td>
+<td>Sample 3</td>
+<td>6.22</td>
+<td>0.253</td>
+<td>5.18e+05</td>
+<td>1.55e+04</td>
+</tr>
+<tr>
+<td>Sample 3_AAGTAAGCGT</td>
+<td>Sample 3</td>
+<td>7.48</td>
+<td>0.264</td>
+<td>4.65e+05</td>
+<td>1.47e+04</td>
+</tr>
+<tr>
+<td>Sample 3_AATACTCGAT</td>
+<td>Sample 3</td>
+<td>6.4</td>
+<td>0.199</td>
+<td>5.1e+05</td>
+<td>1.42e+04</td>
+</tr>
+<tr>
+<td>Sample 3_AATCAGTGGA</td>
+<td>Sample 3</td>
+<td>9.01</td>
+<td>0.275</td>
+<td>3.45e+05</td>
+<td>1.39e+04</td>
+</tr>
+<tr>
+<td>Sample 3_AATCTACAAG</td>
+<td>Sample 3</td>
+<td>5.99</td>
+<td>0.267</td>
+<td>5.36e+05</td>
+<td>1.53e+04</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 184 rows from <code>qc_metric_violin_plot_table.csv</code>.</p>
+<h3 id="outlier-score-plotting-table">Outlier-score plotting table</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_outlier_score_scatter_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>sample_order</th>
+<th>sample_id</th>
+<th>plate_id</th>
+<th>well_id</th>
+<th>compound</th>
+<th>outlier_score</th>
+<th>above_threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Sample 3_AAGATCAATT</td>
+<td>Sample 3</td>
+<td>Well-dT-34</td>
+<td>231</td>
+<td>2.22</td>
+<td>False</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Sample 3_AAGATTAACC</td>
+<td>Sample 3</td>
+<td>Well-dT-19</td>
+<td>3T3</td>
+<td>2.36</td>
+<td>False</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Sample 3_AAGTAAGCGT</td>
+<td>Sample 3</td>
+<td>Well-dT-58</td>
+<td>3T3</td>
+<td>1.45</td>
+<td>False</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Sample 3_AATACTCGAT</td>
+<td>Sample 3</td>
+<td>Well-dT-71</td>
+<td>3T3</td>
+<td>3.3</td>
+<td>False</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Sample 3_AATCAGTGGA</td>
+<td>Sample 3</td>
+<td>Well-dT-39</td>
+<td>3T3</td>
+<td>1.87</td>
+<td>False</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Sample 3_AATCTACAAG</td>
+<td>Sample 3</td>
+<td>Well-dT-12</td>
+<td>3T3</td>
+<td>2.27</td>
+<td>False</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 184 rows from <code>outlier_score_plot_table.csv</code>.</p>
+<h3 id="compound-colored-outlier-plotting-table">Compound-colored outlier plotting table</h3>
+<p><strong>Generated by:</strong> the second <code>ds.generate_outlier_score_scatter_figure()</code> call with <code>groupby="compound"</code> and a custom <code>output_name</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>sample_order</th>
+<th>sample_id</th>
+<th>plate_id</th>
+<th>well_id</th>
+<th>compound</th>
+<th>outlier_score</th>
+<th>above_threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Sample 3_AAGATCAATT</td>
+<td>Sample 3</td>
+<td>Well-dT-34</td>
+<td>231</td>
+<td>2.22</td>
+<td>False</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Sample 3_AATGCCAGTT</td>
+<td>Sample 3</td>
+<td>Well-dT-29</td>
+<td>231</td>
+<td>6.69</td>
+<td>False</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Sample 3_ACACACCAGA</td>
+<td>Sample 3</td>
+<td>Well-dT-89</td>
+<td>231</td>
+<td>2</td>
+<td>False</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Sample 3_ACGTTGAATA</td>
+<td>Sample 3</td>
+<td>Well-dT-77</td>
+<td>231</td>
+<td>3</td>
+<td>False</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Sample 3_ACTACGGTCG</td>
+<td>Sample 3</td>
+<td>Well-dT-27</td>
+<td>231</td>
+<td>2.67</td>
+<td>False</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Sample 3_ACTGGTAAGA</td>
+<td>Sample 3</td>
+<td>Well-dT-61</td>
+<td>231</td>
+<td>2.41</td>
+<td>False</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 184 rows from <code>Samples_3_4_Outlier_Score_Scatter_by_compound_plot_table.csv</code>.</p>
+<h3 id="plate-coordinate-audit">Plate-coordinate audit</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_plate_layout_figures()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>sample_id</th>
+<th>well_id</th>
+<th>row</th>
+<th>column</th>
+<th>row_label</th>
+<th>is_missing_well</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>NaN</td>
+<td>Well-dT-1</td>
+<td>1</td>
+<td>1</td>
+<td>A</td>
+<td>True</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Sample 3_TTGAAGAAGC</td>
+<td>Well-dT-9</td>
+<td>1</td>
+<td>2</td>
+<td>A</td>
+<td>False</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Sample 3_CGACGGACGA</td>
+<td>Well-dT-17</td>
+<td>1</td>
+<td>3</td>
+<td>A</td>
+<td>False</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Sample 3_TAACATAGCA</td>
+<td>Well-dT-25</td>
+<td>1</td>
+<td>4</td>
+<td>A</td>
+<td>False</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Sample 3_AGGTTAGGAG</td>
+<td>Well-dT-33</td>
+<td>1</td>
+<td>5</td>
+<td>A</td>
+<td>False</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Sample 3_TCCTCCTGGC</td>
+<td>Well-dT-41</td>
+<td>1</td>
+<td>6</td>
+<td>A</td>
+<td>False</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 192 rows from <code>plate_layout_coordinates.csv</code>.</p>
+<h3 id="gene-set-resolution">Gene-set resolution</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_plate_layout_figures()</code> for the FN1/CDH2 gene-set map.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>requested_gene</th>
+<th>feature_id</th>
+<th>gene_symbol</th>
+<th>matched_by</th>
+<th>aggregation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FN1</td>
+<td>ENSG00000115414</td>
+<td>FN1</td>
+<td>gene_symbol</td>
+<td>mean</td>
+</tr>
+<tr>
+<td>CDH2</td>
+<td>ENSG00000170558</td>
+<td>CDH2</td>
+<td>gene_symbol</td>
+<td>mean</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 2 of 2 rows from <code>plate_layout_gene_set_expression_gene_resolution.csv</code>.</p>
+<h3 id="grouped-gene-umi-distributions">Grouped gene-UMI distributions</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_gene_umi_distribution_figures()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>identifier_type</th>
+<th>plate_id</th>
+<th>gene</th>
+<th>gene_symbol</th>
+<th>total_umi</th>
+<th>detected_samples</th>
+<th>log2_total_umi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ensembl_id</td>
+<td>Sample 3</td>
+<td>ENSG00000142606</td>
+<td>MMEL1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>ensembl_id</td>
+<td>Sample 3</td>
+<td>ENSG00000048707</td>
+<td>VPS13D</td>
+<td>217</td>
+<td>48</td>
+<td>7.77</td>
+</tr>
+<tr>
+<td>ensembl_id</td>
+<td>Sample 3</td>
+<td>ENSG00000197921</td>
+<td>HES5</td>
+<td>24</td>
+<td>18</td>
+<td>4.64</td>
+</tr>
+<tr>
+<td>ensembl_id</td>
+<td>Sample 3</td>
+<td>ENSG00000189337</td>
+<td>KAZN</td>
+<td>23</td>
+<td>18</td>
+<td>4.58</td>
+</tr>
+<tr>
+<td>ensembl_id</td>
+<td>Sample 3</td>
+<td>ENSG00000272420</td>
+<td>ENSG00000272420</td>
+<td>14</td>
+<td>11</td>
+<td>3.91</td>
+</tr>
+<tr>
+<td>ensembl_id</td>
+<td>Sample 3</td>
+<td>ENSG00000130940</td>
+<td>CASZ1</td>
+<td>31</td>
+<td>21</td>
+<td>5</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 182,931 rows from <code>gene_umi_distribution_plot_table.csv</code>.</p>
+<h3 id="marker-expression-summary">Marker-expression summary</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_marker_gene_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>compound</th>
+<th>gene</th>
+<th>mean_expression</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>CD44</td>
+<td>195</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>CDH2</td>
+<td>0.543</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>EGFR</td>
+<td>84.4</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>FN1</td>
+<td>0.674</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>ITGB1</td>
+<td>28</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>MMP9</td>
+<td>0.457</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 40 rows from <code>marker_expression_summary.csv</code>.</p>
+<h3 id="marker-dot-plot-summary">Marker dot-plot summary</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_marker_gene_dotplot_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>compound</th>
+<th>gene</th>
+<th>mean_expression</th>
+<th>pct_expressing</th>
+<th>n_samples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>CD44</td>
+<td>195</td>
+<td>100</td>
+<td>46</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>CDH2</td>
+<td>0.543</td>
+<td>50</td>
+<td>46</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>EGFR</td>
+<td>84.4</td>
+<td>100</td>
+<td>46</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>FN1</td>
+<td>0.674</td>
+<td>47.8</td>
+<td>46</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>ITGB1</td>
+<td>28</td>
+<td>100</td>
+<td>46</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>MMP9</td>
+<td>0.457</td>
+<td>37</td>
+<td>46</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 40 rows from <code>marker_dotplot_table.csv</code>.</p>
+<h3 id="marker-violin-plotting-table">Marker violin plotting table</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_marker_gene_violin_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>compound</th>
+<th>gene</th>
+<th>expression</th>
+<th>plot_expression</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>231</td>
+<td>VIM</td>
+<td>2.27e+03</td>
+<td>2.27e+03</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>3T3</td>
+<td>VIM</td>
+<td>18</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>3T3</td>
+<td>VIM</td>
+<td>23</td>
+<td>23</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>3T3</td>
+<td>VIM</td>
+<td>15</td>
+<td>15</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>3T3</td>
+<td>VIM</td>
+<td>17</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>3T3</td>
+<td>VIM</td>
+<td>24</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 1,840 rows from <code>marker_violin_plot_table.csv</code>.</p>
+<h3 id="metadata-audit">Metadata audit</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_qc_report()</code>, using <code>ds.validate_metadata()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>ok</th>
+<th>issues</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>False</td>
+<td>Column 'dose' has 184 NA value(s).</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 1 of 1 rows from <code>metadata_audit.csv</code>.</p>
+<h3 id="star-read-summary">STAR read summary</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_star_read_qc_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>metric</th>
+<th>fraction</th>
+<th>percent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>Valid Barcodes</td>
+<td>0.929</td>
+<td>92.9</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Q30 CB+UMI</td>
+<td>0.866</td>
+<td>86.6</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Q30 RNA</td>
+<td>0.942</td>
+<td>94.2</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Mapped to Genome</td>
+<td>0.806</td>
+<td>80.6</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>Mapped to Gene</td>
+<td>0.637</td>
+<td>63.7</td>
+</tr>
+<tr>
+<td>Sample 4</td>
+<td>Valid Barcodes</td>
+<td>0.929</td>
+<td>92.9</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 10 rows from <code>star_group_summary.csv</code>.</p>
+<h3 id="star-reads-per-well">STAR reads per well</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_star_read_count_violin_figure()</code>. The per-well table feeds the points and violins; the summary table supplies the labeled plate means and medians.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>sample_id</th>
+<th>plate_id</th>
+<th>barcode</th>
+<th>read_count</th>
+<th>matched_star_record</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3_AAGATCAATT</td>
+<td>Sample 3</td>
+<td>AAGATCAATT</td>
+<td>1.41e+06</td>
+<td>True</td>
+</tr>
+<tr>
+<td>Sample 3_AAGATTAACC</td>
+<td>Sample 3</td>
+<td>AAGATTAACC</td>
+<td>1.14e+06</td>
+<td>True</td>
+</tr>
+<tr>
+<td>Sample 3_AAGTAAGCGT</td>
+<td>Sample 3</td>
+<td>AAGTAAGCGT</td>
+<td>1.05e+06</td>
+<td>True</td>
+</tr>
+<tr>
+<td>Sample 3_AATACTCGAT</td>
+<td>Sample 3</td>
+<td>AATACTCGAT</td>
+<td>1.04e+06</td>
+<td>True</td>
+</tr>
+<tr>
+<td>Sample 3_AATCAGTGGA</td>
+<td>Sample 3</td>
+<td>AATCAGTGGA</td>
+<td>8.28e+05</td>
+<td>True</td>
+</tr>
+<tr>
+<td>Sample 3_AATCTACAAG</td>
+<td>Sample 3</td>
+<td>AATCTACAAG</td>
+<td>1.16e+06</td>
+<td>True</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 184 rows from <code>star_read_count_per_well.csv</code>.</p>
+<h3 id="star-read-count-summary">STAR read-count summary</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_star_read_count_violin_figure()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>plate_id</th>
+<th>n_wells</th>
+<th>n_matched_star_records</th>
+<th>mean_read_count</th>
+<th>median_read_count</th>
+<th>min_read_count</th>
+<th>max_read_count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>92</td>
+<td>92</td>
+<td>1.2e+06</td>
+<td>1.1e+06</td>
+<td>4.64e+05</td>
+<td>3.49e+06</td>
+</tr>
+<tr>
+<td>Sample 4</td>
+<td>92</td>
+<td>92</td>
+<td>1.25e+06</td>
+<td>1.15e+06</td>
+<td>4.55e+05</td>
+<td>2.95e+06</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 2 of 2 rows from <code>star_read_count_summary.csv</code>.</p>
+<h3 id="star-saturation-metrics">STAR saturation metrics</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_star_saturation_figures()</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>sample_id</th>
+<th>plate_id</th>
+<th>cbMatch</th>
+<th>nGenesUnique</th>
+<th>entrez_genes</th>
+<th>symbol_genes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3_CTGTGAGCAG</td>
+<td>Sample 3</td>
+<td>1.13e+06</td>
+<td>1.49e+04</td>
+<td>1.49e+04</td>
+<td>1.35e+04</td>
+</tr>
+<tr>
+<td>Sample 3_CGACGGACGA</td>
+<td>Sample 3</td>
+<td>6.48e+05</td>
+<td>1.3e+04</td>
+<td>1.3e+04</td>
+<td>1.3e+04</td>
+</tr>
+<tr>
+<td>Sample 3_TTGATCTTAA</td>
+<td>Sample 3</td>
+<td>4.64e+05</td>
+<td>1.12e+04</td>
+<td>1.12e+04</td>
+<td>1.11e+04</td>
+</tr>
+<tr>
+<td>Sample 3_AGTTCCTGTC</td>
+<td>Sample 3</td>
+<td>6.6e+05</td>
+<td>1.31e+04</td>
+<td>1.31e+04</td>
+<td>1.31e+04</td>
+</tr>
+<tr>
+<td>Sample 3_TATATGCGTT</td>
+<td>Sample 3</td>
+<td>9.59e+05</td>
+<td>1.4e+04</td>
+<td>1.4e+04</td>
+<td>1.4e+04</td>
+</tr>
+<tr>
+<td>Sample 3_CATCAGTTGG</td>
+<td>Sample 3</td>
+<td>1.5e+06</td>
+<td>1.54e+04</td>
+<td>1.54e+04</td>
+<td>1.4e+04</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 184 rows from <code>star_saturation_metrics.csv</code>.</p>
+<h3 id="figure-manifest">Figure manifest</h3>
+<p><strong>Generated by:</strong> <code>ds.generate_qc_report()</code>; its <code>producer</code> column identifies the public function responsible for every figure.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>figure</th>
+<th>producer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>results/qc/plate_layout_detected_umi.pdf</td>
+<td>generate_plate_layout_figures</td>
+</tr>
+<tr>
+<td>results/qc/plate_layout_detected_umi.png</td>
+<td>generate_plate_layout_figures</td>
+</tr>
+<tr>
+<td>results/qc/plate_layout_detected_genes.pdf</td>
+<td>generate_plate_layout_figures</td>
+</tr>
+<tr>
+<td>results/qc/plate_layout_detected_genes.png</td>
+<td>generate_plate_layout_figures</td>
+</tr>
+<tr>
+<td>results/qc/plate_layout_compound.pdf</td>
+<td>generate_plate_layout_figures</td>
+</tr>
+<tr>
+<td>results/qc/plate_layout_compound.png</td>
+<td>generate_plate_layout_figures</td>
+</tr>
+</tbody>
+</table></div>
+<p>Showing 6 of 34 rows from <code>qc_figure_manifest.csv</code>.</p>
+<pre><code class="language-text">Example output directory
+results/qc/
+├── plate_layout_*.png
+├── plate_layout_*_plot_table.csv
+├── plate_layout_*_gene_resolution.csv
+├── plate_layout_*_per_gene_expression.csv
+├── Samples_3_4_*.png
+├── sample_qc_metrics.csv
+├── qc_metric_violin_plot_table.csv
+├── outlier_score_plot_table.csv
+├── Samples_3_4_Outlier_Score_Scatter_by_compound_plot_table.csv
+├── plate_layout_coordinates.csv
+├── gene_umi_summary.csv
+├── gene_umi_distribution_plot_table.csv
+├── marker_expression_summary.csv
+├── marker_dotplot_table.csv
+├── marker_violin_plot_table.csv
+├── star_group_summary.csv 
+(optional)
+├── star_read_count_per_well.csv 
+(optional)
+├── star_read_count_summary.csv 
+(optional)
+├── star_saturation_metrics.csv 
+(optional)
+└── qc_figure_manifest.csv
+</code></pre>
+<p><a id="related-functions"></a></p>
+<h2 id="9-related-functions">9. Related functions</h2>
+<p>This tutorial uses the functions below. Follow a function name to its complete signature, parameters, return value, side effects, and notes in the separate API reference.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="api-reference.html#api-load-expression-matrix"><code>drugseqpy.load_expression_matrix()</code></a></td>
+<td>Read either a gene-by-sample table or a STARsolo filtered matrix bundle.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-load-metadata"><code>drugseqpy.load_metadata()</code></a></td>
+<td>Read sample metadata from CSV, TSV/TXT, or Excel.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-create-drugseq-from-files"><code>drugseqpy.create_drugseq_from_files()</code></a></td>
+<td>Load, normalize barcode identifiers, align counts to metadata, and construct a DrugSeqData object.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-activate-gene-names"><code>drugseqpy.activate_gene_names()</code></a></td>
+<td>Activate a gene-annotation column as the AnnData variable names without changing matrix values or gene order.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-merge-drugseq-objects"><code>drugseqpy.merge_drugseq_objects()</code></a></td>
+<td>Combine separately loaded plates along the sample axis while retaining the union of genes.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-compute-qc-metrics"><code>drugseqpy.compute_qc_metrics()</code></a></td>
+<td>Calculate sample-level library composition, housekeeping stability, Gini inequality, and a multivariate MAD outlier score.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-validate-metadata"><code>drugseqpy.validate_metadata()</code></a></td>
+<td>Check required columns, missing values, and recognized sample-type labels.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-filter-samples"><code>drugseqpy.filter_samples()</code></a></td>
+<td>Return a new object after applying reviewed sample/well QC thresholds.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-filter-genes"><code>drugseqpy.filter_genes()</code></a></td>
+<td>Return a new object after removing low-expression and optionally mitochondrial/ribosomal genes.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-compute-plate-qc"><code>drugseqpy.compute_plate_qc()</code></a></td>
+<td>Summarize control separation and variability within each plate.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-plate-qc-summary"><code>drugseqpy.plate_qc_summary()</code></a></td>
+<td>Convert stored plate-QC results to a tidy table.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-build-plate-layout"><code>drugseqpy.build_plate_layout()</code></a></td>
+<td>Resolve each metadata row to a physical plate coordinate and attach the requested plotting value.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-plot-plate-layout"><code>drugseqpy.plot_plate_layout()</code></a></td>
+<td>Draw one spatial panel per plate with adaptive marker, font, panel, legend, and colorbar sizing.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-plate-layout-figures"><code>drugseqpy.generate_plate_layout_figures()</code></a></td>
+<td>Generate one universal plate-layout figure and save its resolved plotting table.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-qc-metric-violin-figure"><code>drugseqpy.generate_qc_metric_violin_figure()</code></a></td>
+<td>Generate selectable essential QC-metric violin panels, grouped by configurable sample metadata.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-outlier-score-scatter-figure"><code>drugseqpy.generate_outlier_score_scatter_figure()</code></a></td>
+<td>Plot one MAD outlier score per sample, colored by a configurable metadata group.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-umi-density-figure"><code>drugseqpy.generate_umi_density_figure()</code></a></td>
+<td>Generate the per-well total-UMI density figure, grouped by configurable sample metadata.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-detected-gene-density-figure"><code>drugseqpy.generate_detected_gene_density_figure()</code></a></td>
+<td>Generate the per-well detected-gene density figure, grouped by configurable sample metadata.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-qc-distribution-figures"><code>drugseqpy.generate_qc_distribution_figures()</code></a></td>
+<td>Compatibility wrapper that generates the violin panel, outlier scatter, and both sample-level density figures.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-gene-umi-distribution-figures"><code>drugseqpy.generate_gene_umi_distribution_figures()</code></a></td>
+<td>Generate gene-level total-UMI distributions for selected identifier types.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-marker-gene-figure"><code>drugseqpy.generate_marker_gene_figure()</code></a></td>
+<td>Generate an expression panel for an explicit set of marker genes.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-marker-gene-dotplot-figure"><code>drugseqpy.generate_marker_gene_dotplot_figure()</code></a></td>
+<td>Generate a marker dot plot combining expression magnitude and detection prevalence.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-marker-gene-violin-figure"><code>drugseqpy.generate_marker_gene_violin_figure()</code></a></td>
+<td>Generate grouped violin distributions for per-well marker expression.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-gene-set-violin-figure"><code>drugseqpy.generate_gene_set_violin_figure()</code></a></td>
+<td>Generate grouped violin distributions for aggregated per-well gene-set expression.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-gene-summary-figures"><code>drugseqpy.generate_gene_summary_figures()</code></a></td>
+<td>Compatibility wrapper for the focused UMI-distribution and marker-panel functions.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-star-read-qc-figure"><code>drugseqpy.generate_star_read_qc_figure()</code></a></td>
+<td>Generate the optional STARsolo multilayered read-summary figure.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-star-read-count-violin-figure"><code>drugseqpy.generate_star_read_count_violin_figure()</code></a></td>
+<td>Plot matched STAR reads for every analyzed well and annotate group means and medians.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-star-saturation-figures"><code>drugseqpy.generate_star_saturation_figures()</code></a></td>
+<td>Generate optional STARsolo read-count versus detected-gene saturation figures.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-star-qc-figures"><code>drugseqpy.generate_star_qc_figures()</code></a></td>
+<td>Compatibility wrapper for the STARsolo doughnut, per-well read violin, and saturation functions.</td>
+</tr>
+<tr>
+<td><a href="api-reference.html#api-generate-qc-report"><code>drugseqpy.generate_qc_report()</code></a></td>
+<td>Convenience orchestrator that runs all public QC metric and figure groups for batch reporting.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="notes"></a></p>
+<h2 id="10-important-notes">10. Important notes</h2>
+<p><strong>Control statistics need control design.</strong> Z-prime and SSMD are meaningful only when <code>sample_type</code> identifies adequate positive and negative controls. Species-mixture plates Sample 3/Sample 4 do not provide the standard positive-control/DMSO structure.</p>
+<ul>
+<li>Keep raw counts in <code>layers['counts']</code>; QC should precede normalization, filtering, and differential expression.</li>
+<li>A low UMI well may be a technical failure, a deliberately empty control, or a biological effect. Confirm metadata and plate location before removal.</li>
+<li>Mitochondrial and ribosomal percentages depend on the gene-symbol annotation and regex patterns. Inspect the number of matched genes when values are unexpectedly zero.</li>
+<li>Density curves are normalized shapes; their height is not a sample count. Use saved tables for exact numbers.</li>
+<li>Figure sizes, marker sizes, font sizes, legends, and color palettes adapt to plate and category counts, but very high-cardinality labels should remain off the plate map.
+<a id="glossary"></a></li>
+</ul>
+<h2 id="glossary-1">Glossary</h2>
+<p>Search terms used in the workflow, saved tables, and figure captions.</p>
+<p><strong>UMI</strong> — Unique molecular identifier: a molecule-level tag used to reduce amplification duplicates. <code>total_umi</code> is the summed count per well.</p>
+<p><strong>Detected gene</strong> — A feature with at least one count in a well. <code>n_genes_det</code> measures observed library complexity.</p>
+<p><strong>mt.pct / pct_mito</strong> — Percentage of all UMIs assigned to mitochondrial genes. Elevated values can indicate stressed or damaged cells, but expected ranges are context dependent.</p>
+<p><strong>ribo.pct / pct_ribo</strong> — Percentage of UMIs assigned to ribosomal-protein genes, based on the configured regular expression.</p>
+<p><strong>MAD outlier score</strong> — A robust multivariate distance based on median absolute deviation across several QC metrics. It ranks unusual wells; it is not an automatic exclusion rule.</p>
+<p><strong>Gini index</strong> — Inequality of counts across genes within one well. Higher values mean expression is concentrated in fewer genes.</p>
+<p><strong>Housekeeping genes</strong> — Genes expected to be relatively stable. Their mean, variation, and dropout provide an additional consistency check when enough are present.</p>
+<p><strong>Plate effect</strong> — Systematic variation associated with a plate or physical location rather than the intended treatment.</p>
+<p><strong>Missing well</strong> — A physical plate coordinate with no matched sample. It is drawn as a white circle with a black border and no label.</p>
+<p><strong>Density plot</strong> — A smoothed estimate of a distribution. Compare location, spread, and modality; do not read curve height as a raw sample count.</p>
+<p><strong>groupby</strong> — Metadata column that assigns colors or categories within the same axes. It does not create separate panels.</p>
+<p><strong>split_by</strong> — Optional metadata column that creates separate figure panels. <code>None</code> keeps groups together in one axes.</p>
+<p><strong>Saturation</strong> — Relationship between read depth and detected genes. The plots here compare different wells; depth-controlled downsampling would be needed to estimate additional gene recovery for an individual library.</p>
+<p><strong>Z-prime</strong> — A control-separation statistic combining the distance and variability of positive and negative controls. It is undefined without suitable controls.</p>
+<p><strong>SSMD</strong> — Strictly standardized mean difference between positive and negative controls.</p>
+<p><strong>Ensembl ID</strong> — Stable gene identifier such as ENSG… for human or ENSMUSG… for mouse. The historical output name says “Entrez_ID”, but these feature prefixes are Ensembl IDs.</p>
+<p><strong>Gene symbol</strong> — Human-readable name such as VIM or EGFR. Symbols may be duplicated or absent, so the stable feature ID remains important.</p>
+<p><strong>STARsolo</strong> — STAR’s single-cell/sample barcode counting mode; it writes matrix bundles and read-level QC summaries used here.</p>
+<p><a id="troubleshooting"></a></p>
+<h2 id="troubleshooting-1">Troubleshooting</h2>
+<p>Only a fraction of barcodes match metadata</p>
+<p>Check barcode suffixes, whitespace, selected <code>metadata_key</code>, and whether the metadata corresponds to the same sequencing plate. The loader removes a terminal <code>-1</code> on both sides.</p>
+<p>Mitochondrial or ribosomal percentages are all zero</p>
+<p>Confirm <code>adata.var['gene_symbol']</code> exists and inspect its naming convention. Adjust <code>mito_pattern</code> or <code>ribo_pattern</code> to the annotation species/case.</p>
+<p>STAR figures are missing</p>
+<p>Confirm <code>star_root/&lt;plate&gt;/Solo.out/Gene/Summary.csv</code> and <code>CellReads.stats</code> exist. The matrix/metadata figures still run without these files.</p>
+<p>Well positions appear transposed</p>
+<p>For Well-dT numbers, verify column-major numbering: 1–8 down column 1, 9–16 down column 2. When explicit x/y metadata are present, inspect <code>plate_layout_coordinates.csv</code> to confirm which orientation was selected.</p>
+<hr/>
+<p><a href="input-preparation.html">← Previous chapter</a> · <a href="mix-species-workflow.html">Next chapter →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="input-preparation.html"><small>Previous</small>Prepare inputs</a><a href="mix-species-workflow.html"><small>Next</small>Mixed species →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="qc-workflow.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#overview-1">Overview</a><a href="#1-input-and-metadata">1. Input and metadata</a><a href="#2-essential-qc-metrics-and-distributions">2. Essential QC metrics and distributions</a><a href="#3-plate-layouts">3. Plate layouts</a><a href="#4-gene-summaries-and-markers">4. Gene summaries and markers</a><a href="#5-starsolo-read-level-qc-optional">5. STARsolo read-level QC (Optional)</a><a href="#6-subset-wells-and-genes">6. Subset wells and genes</a><a href="#7-complete-automated-report">7. Complete automated report</a><a href="#8-saved-result-tables">8. Saved result tables</a><a href="#9-related-functions">9. Related functions</a><a href="#10-important-notes">10. Important notes</a><a href="#glossary-1">Glossary</a><a href="#troubleshooting-1">Troubleshooting</a></nav></aside></div></body></html>

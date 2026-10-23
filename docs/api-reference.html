@@ -1,0 +1,3840 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>API reference · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/api-reference.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html" aria-current="page"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / API REFERENCE</div><article><h1 id="api-reference">API reference</h1>
+<p>Use this reference alongside the <a href="index.html">learning path</a>, <a href="qc-workflow.html">QC</a>, <a href="mix-species-workflow.html">mixed-species</a>, and <a href="multi-plate-comparison.html">multi-plate</a> chapters. Functions are grouped by task. Each entry documents the reviewed Python signature, default values, parameters, outputs, side effects, and workflow-specific notes. Signature blocks describe the API; use the workflow chapters for executable calls.</p>
+<p><strong>Compatibility.</strong> Run <code>python scripts/check_environment.py</code> before starting. These contracts were checked against a development build reporting version 0.1.0; a matching public release is not assumed. Signatures below are reference displays, not complete runnable cells.</p>
+<p><strong>Import convention.</strong> Use <code>import drugseqpy as ds</code>, then call any public function directly—for example, <code>ds.merge_drugseq_objects()</code> or <code>ds.generate_qc_report()</code>. The names below are all exported from the package root.</p>
+<h2 id="read-the-data-object">Read the data object</h2>
+<p><code>DrugSeqData</code> wraps an AnnData object. <code>dsd.adata.obs</code> contains wells, <code>dsd.adata.var</code> contains genes, and <code>dsd.adata.layers['counts']</code> retains raw UMI counts. <code>dsd.adata.X</code> starts as counts on import and changes when you normalize or correct a view. <code>dsd.copy()</code> creates an independent copy; <code>dsd.subset(obs_mask=..., var_mask=...)</code> selects wells or genes. Set observation names through <code>dsd.adata.obs_names</code> when making them globally unique before merging.</p>
+<p>Follow <a href="getting-started.html">Getting started</a> for the executable workflow. The reference signatures below describe arguments and defaults; use the chapter examples for complete runnable cells.</p>
+<p><a id="input-objects"></a></p>
+<h2 id="input-and-data-objects">Input and data objects</h2>
+<p>Read expression and metadata, construct DrugSeqData, and merge plates.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#api-load-expression-matrix"><code>drugseqpy.load_expression_matrix()</code></a></td>
+<td>Read either a gene-by-sample table or a STARsolo count-matrix bundle.</td>
+</tr>
+<tr>
+<td><a href="#api-load-metadata"><code>drugseqpy.load_metadata()</code></a></td>
+<td>Read sample metadata from CSV, TSV/TXT, or Excel.</td>
+</tr>
+<tr>
+<td><a href="#api-create-drugseq-from-files"><code>drugseqpy.create_drugseq_from_files()</code></a></td>
+<td>Load, normalize barcode identifiers, align counts to metadata, and construct a DrugSeqData object.</td>
+</tr>
+<tr>
+<td><a href="#api-activate-gene-names"><code>drugseqpy.activate_gene_names()</code></a></td>
+<td>Activate a gene-annotation column as the AnnData variable names without changing matrix values or gene order.</td>
+</tr>
+<tr>
+<td><a href="#api-merge-drugseq-objects"><code>drugseqpy.merge_drugseq_objects()</code></a></td>
+<td>Combine separately loaded plates along the sample axis while retaining the union of genes.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="input-objects-details"></a></p>
+<h3 id="detailed-reference">Detailed reference</h3>
+<p><a id="api-load-expression-matrix"></a></p>
+<h3 id="drugseqpyload_expression_matrix"><code>drugseqpy.load_expression_matrix()</code></h3>
+<p>Read either a gene-by-sample table or a STARsolo count-matrix bundle.</p>
+<pre><code class="language-python">load_expression_matrix(path: 'str | Path') -&gt; 'tuple[pd.DataFrame, pd.DataFrame | None]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>File path to a CSV/TSV count table, or a directory containing <code>matrix.mtx.gz</code>, <code>features.tsv.gz</code>, and <code>barcodes.tsv.gz</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A gene-by-sample sparse DataFrame and optional gene annotation table. Barcode suffix <code>-1</code> is removed.</p>
+<p>Point this loader at the directory containing the three matrix files. Both raw and filtered STARsolo bundles use this format; record which well set you selected. The whole STAR run root is used separately for read-level QC.</p>
+<p><a id="api-load-metadata"></a></p>
+<h3 id="drugseqpyload_metadata"><code>drugseqpy.load_metadata()</code></h3>
+<p>Read sample metadata from CSV, TSV/TXT, or Excel.</p>
+<pre><code class="language-python">load_metadata(path: 'str | Path', index_col: 'str | int | None' = None, delimiter: 'str | None' = 'auto') -&gt; 'pd.DataFrame'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Path to <code>.csv</code>, <code>.tsv</code>, <code>.txt</code>, <code>.xlsx</code>, or <code>.xls</code> metadata.</td>
+</tr>
+<tr>
+<td><code>index_col</code></td>
+<td>str | int | None</td>
+<td>None</td>
+<td>Column name or zero-based column number used as the sample index. If omitted, <code>sample_id</code> is preferred, then <code>barcode</code>.</td>
+</tr>
+<tr>
+<td><code>delimiter</code></td>
+<td>str | None</td>
+<td>'auto'</td>
+<td>Metadata delimiter. <code>'auto'</code> uses comma for CSV, tab for TSV, and delimiter detection for TXT. An explicit value overrides the extension for text files; Excel does not accept this parameter.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A pandas DataFrame indexed by the selected sample identifier; duplicate identifiers raise an error.</p>
+<p><a id="api-create-drugseq-from-files"></a></p>
+<h3 id="drugseqpycreate_drugseq_from_files"><code>drugseqpy.create_drugseq_from_files()</code></h3>
+<p>Load, normalize barcode identifiers, align counts to metadata, and construct a DrugSeqData object.</p>
+<pre><code class="language-python">create_drugseq_from_files(expression_path: 'str | Path', metadata_path: 'str | Path', *, metadata_key: 'str | int | None' = None, delimiter: 'str | None' = 'auto', min_overlap: 'float' = 0.5) -&gt; 'DrugSeqData'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expression_path</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Count table or a directory containing <code>barcodes.tsv.gz</code>, <code>features.tsv.gz</code>, and <code>matrix.mtx.gz</code>.</td>
+</tr>
+<tr>
+<td><code>metadata_path</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>CSV, TSV/TXT, or Excel metadata path.</td>
+</tr>
+<tr>
+<td><code>metadata_key</code></td>
+<td>str | int | None</td>
+<td>None</td>
+<td>Metadata column used for count/metadata matching. <code>None</code> uses <code>sample_id</code> or <code>barcode</code> automatically.</td>
+</tr>
+<tr>
+<td><code>delimiter</code></td>
+<td>str | None</td>
+<td>'auto'</td>
+<td>Delimiter used for the metadata file. <code>'auto'</code> detects TXT delimiters; an explicit separator overrides extension-based parsing for delimited text metadata.</td>
+</tr>
+<tr>
+<td><code>min_overlap</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum fraction of expression barcodes that must match metadata. A lower overlap raises <code>ValueError</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A DrugSeqData object with samples in <code>adata.obs</code>, genes in <code>adata.var</code>, and raw counts in <code>adata.layers['counts']</code>. It also creates <code>sample_id = plate_id + barcode</code> and <code>treatment = compound + dose + time</code>, skipping empty components.</p>
+<p><a id="api-activate-gene-names"></a></p>
+<h3 id="drugseqpyactivate_gene_names"><code>drugseqpy.activate_gene_names()</code></h3>
+<p>Activate a gene-annotation column as the AnnData variable names without changing matrix values or gene order.</p>
+<pre><code class="language-python">activate_gene_names(dsd: 'DrugSeqData', label_col: 'str' = 'gene_symbol', *, stable_id_col: 'str' = 'ensembl_id', inplace: 'bool' = True) -&gt; 'DrugSeqData | None'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData whose active gene labels will be changed.</td>
+</tr>
+<tr>
+<td><code>label_col</code></td>
+<td>str</td>
+<td>'gene_symbol'</td>
+<td>Column in <code>dsd.var</code> to activate, such as <code>gene_symbol</code>. Use the stable-ID column to switch back.</td>
+</tr>
+<tr>
+<td><code>stable_id_col</code></td>
+<td>str</td>
+<td>'ensembl_id'</td>
+<td>Column that preserves the original variable names and supplies fallbacks for missing labels.</td>
+</tr>
+<tr>
+<td><code>inplace</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Modify the input and return <code>None</code>; <code>False</code> returns an independently modified copy.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A modified DrugSeqData copy when <code>inplace=False</code>; otherwise <code>None</code>. Duplicate active labels receive unique suffixes and the active-label configuration is recorded in <code>uns['active_gene_names']</code>.</p>
+<p><a id="api-merge-drugseq-objects"></a></p>
+<h3 id="drugseqpymerge_drugseq_objects"><code>drugseqpy.merge_drugseq_objects()</code></h3>
+<p>Combine separately loaded plates along the sample axis while retaining the union of genes.</p>
+<pre><code class="language-python">merge_drugseq_objects(*objects: 'DrugSeqData', fill_missing: 'float' = 0.0, batch_key: 'str' = 'batch') -&gt; 'DrugSeqData'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>objects</code></td>
+<td>DrugSeqData</td>
+<td>one or more</td>
+<td>Two or more DrugSeqData objects. Sample names must already be unique across plates.</td>
+</tr>
+<tr>
+<td><code>fill_missing</code></td>
+<td>float</td>
+<td>0.0</td>
+<td>Fill value for features absent from an input object. Confirm annotation compatibility: an absent feature is not evidence of zero biological expression.</td>
+</tr>
+<tr>
+<td><code>batch_key</code></td>
+<td>str</td>
+<td>'batch'</td>
+<td>Name of the new <code>obs</code> column recording which input object supplied each sample.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A new merged DrugSeqData object. Shared gene annotations are preserved when feature indexes match.</p>
+<p><a id="quality-control"></a></p>
+<h2 id="quality-control-metrics">Quality-control metrics</h2>
+<p>Calculate and summarize sample-, metadata-, and plate-level QC information.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#api-compute-qc-metrics"><code>drugseqpy.compute_qc_metrics()</code></a></td>
+<td>Calculate sample-level library composition, housekeeping stability, Gini inequality, and a multivariate MAD outlier score.</td>
+</tr>
+<tr>
+<td><a href="#api-validate-metadata"><code>drugseqpy.validate_metadata()</code></a></td>
+<td>Check required columns, missing values, and recognized sample-type labels.</td>
+</tr>
+<tr>
+<td><a href="#api-compute-plate-qc"><code>drugseqpy.compute_plate_qc()</code></a></td>
+<td>Summarize control separation and variability within each plate.</td>
+</tr>
+<tr>
+<td><a href="#api-plate-qc-summary"><code>drugseqpy.plate_qc_summary()</code></a></td>
+<td>Convert stored plate-QC results to a tidy table.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="quality-control-details"></a></p>
+<h3 id="detailed-reference-1">Detailed reference</h3>
+<p><a id="api-compute-qc-metrics"></a></p>
+<h3 id="drugseqpycompute_qc_metrics"><code>drugseqpy.compute_qc_metrics()</code></h3>
+<p>Calculate sample-level library composition, housekeeping stability, Gini inequality, and a multivariate MAD outlier score.</p>
+<pre><code class="language-python">compute_qc_metrics(dsd: 'DrugSeqData', mito_pattern: 'str | None' = None, ribo_pattern: 'str | None' = None, hk_genes: 'list[str] | None' = None, min_hk_detected: 'int' = 5, inplace: 'bool' = True, *, mito_prefixes: 'str | Sequence[str] | None' = ('MT-', 'mt-'), ribo_prefixes: 'str | Sequence[str] | None' = ('RPL', 'RPS', 'rpl', 'rps'), mito_genes: 'Sequence[str] | None' = None, ribo_genes: 'Sequence[str] | None' = None) -&gt; 'DrugSeqData | None'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts in <code>layers['counts']</code> (preferred) or <code>X</code>.</td>
+</tr>
+<tr>
+<td><code>mito_pattern</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional regular expression matched against both gene symbols and feature IDs. It overrides <code>mito_prefixes</code> unless <code>mito_genes</code> is supplied.</td>
+</tr>
+<tr>
+<td><code>ribo_pattern</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional regular expression matched against both gene symbols and feature IDs. It overrides <code>ribo_prefixes</code> unless <code>ribo_genes</code> is supplied.</td>
+</tr>
+<tr>
+<td><code>hk_genes</code></td>
+<td>list[str] | None</td>
+<td>None</td>
+<td>Optional housekeeping-gene symbols. <code>None</code> uses the package list/fallback list.</td>
+</tr>
+<tr>
+<td><code>min_hk_detected</code></td>
+<td>int</td>
+<td>5</td>
+<td>Minimum number of supplied housekeeping genes present before housekeeping metrics are calculated.</td>
+</tr>
+<tr>
+<td><code>inplace</code></td>
+<td>bool</td>
+<td>True</td>
+<td>If <code>True</code>, write metrics into the existing object; if <code>False</code>, calculate them on and return a copy.</td>
+</tr>
+<tr>
+<td><code>mito_prefixes</code></td>
+<td>str | Sequence[str] | None</td>
+<td>('MT-', 'mt-')</td>
+<td>String or sequence of mitochondrial prefixes. The default recognizes both <code>MT-</code> and <code>mt-</code>.</td>
+</tr>
+<tr>
+<td><code>ribo_prefixes</code></td>
+<td>str | Sequence[str] | None</td>
+<td>('RPL', 'RPS', 'rpl', 'rps')</td>
+<td>String or sequence of ribosomal prefixes. The default recognizes uppercase and lowercase <code>RPL</code>/<code>RPS</code>.</td>
+</tr>
+<tr>
+<td><code>mito_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>None</td>
+<td>Optional exact mitochondrial gene symbols or feature IDs. A supplied list has highest priority and disables prefix/regex selection for this set.</td>
+</tr>
+<tr>
+<td><code>ribo_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>None</td>
+<td>Optional exact ribosomal gene symbols or feature IDs. A supplied list has highest priority and disables prefix/regex selection for this set.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Adds <code>total_umi</code>, <code>n_genes_det</code>, <code>pct_mito</code>, <code>pct_ribo</code>, housekeeping metrics, <code>gini_index</code>, and <code>outlier_score</code> to <code>obs</code>; marks <code>var['is_mito']</code>/<code>var['is_ribo']</code>; and records the resolved gene definitions in <code>uns['qc_gene_definitions']</code>. Returns only when <code>inplace=False</code>.</p>
+<p>Selection priority is exact gene list, then regex, then prefixes. The outlier score is the Euclidean norm of five median-centered, unscaled-MAD-normalized QC metrics; no 1.4826 consistency multiplier is used.</p>
+<p><a id="api-validate-metadata"></a></p>
+<h3 id="drugseqpyvalidate_metadata"><code>drugseqpy.validate_metadata()</code></h3>
+<p>Check required columns, missing values, and recognized sample-type labels.</p>
+<pre><code class="language-python">validate_metadata(dsd: 'DrugSeqData', required_cols: 'list[str] | None' = None, verbose: 'bool' = True) -&gt; 'dict'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData whose <code>obs</code> metadata will be checked.</td>
+</tr>
+<tr>
+<td><code>required_cols</code></td>
+<td>list[str] | None</td>
+<td>None</td>
+<td>Columns that must exist and contain no missing values. <code>None</code> uses the package defaults.</td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Print issues and per-plate sample-type counts when enabled.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A dictionary with Boolean <code>ok</code> and a list of human-readable <code>issues</code>.</p>
+<p><a id="api-compute-plate-qc"></a></p>
+<h3 id="drugseqpycompute_plate_qc"><code>drugseqpy.compute_plate_qc()</code></h3>
+<p>Summarize control separation and variability within each plate.</p>
+<pre><code class="language-python">compute_plate_qc(dsd: 'DrugSeqData', signal_col: 'str' = 'log10_total_umi', pos_ctrl_label: 'str' = 'positive_ctrl', neg_ctrl_label: 'str' = 'DMSO', inplace: 'bool' = True) -&gt; 'DrugSeqData | None'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData after <code>compute_qc_metrics()</code>.</td>
+</tr>
+<tr>
+<td><code>signal_col</code></td>
+<td>str</td>
+<td>'log10_total_umi'</td>
+<td>Numeric <code>obs</code> column used as the assay signal; the default is log10 UMI.</td>
+</tr>
+<tr>
+<td><code>pos_ctrl_label</code></td>
+<td>str</td>
+<td>'positive_ctrl'</td>
+<td>Value in <code>sample_type</code> identifying positive-control wells.</td>
+</tr>
+<tr>
+<td><code>neg_ctrl_label</code></td>
+<td>str</td>
+<td>'DMSO'</td>
+<td>Value in <code>sample_type</code> identifying negative/reference-control wells.</td>
+</tr>
+<tr>
+<td><code>inplace</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Store results in the current object when <code>True</code>, otherwise return a modified copy.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Stores per-plate Z-prime, SSMD, negative-control CV/correlation, spatial matrices, and pass/warn/fail flags in <code>adata.uns['plate_qc']</code>.</p>
+<p>Z-prime and SSMD require suitable positive and negative controls. Sample 3/Sample 4 are species-mixture plates, so missing control classes produce <code>NaN</code> and a warning flag; this is expected and must not be treated as an assay failure.</p>
+<p><a id="api-plate-qc-summary"></a></p>
+<h3 id="drugseqpyplate_qc_summary"><code>drugseqpy.plate_qc_summary()</code></h3>
+<p>Convert stored plate-QC results to a tidy table.</p>
+<pre><code class="language-python">plate_qc_summary(dsd: 'DrugSeqData') -&gt; 'pd.DataFrame'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData after <code>compute_plate_qc()</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A DataFrame with one row per plate; raises an error when plate QC has not been computed.</p>
+<p><a id="subsetting-filtering"></a></p>
+<h2 id="subsetting-and-filtering">Subsetting and filtering</h2>
+<p>Optionally remove reviewed low-quality wells or low-expression genes.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#api-filter-samples"><code>drugseqpy.filter_samples()</code></a></td>
+<td>Return a new object after applying reviewed sample/well QC thresholds.</td>
+</tr>
+<tr>
+<td><a href="#api-filter-genes"><code>drugseqpy.filter_genes()</code></a></td>
+<td>Return a new object after removing low-expression and optionally mitochondrial/ribosomal genes.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="subsetting-filtering-details"></a></p>
+<h3 id="detailed-reference-2">Detailed reference</h3>
+<p><a id="api-filter-samples"></a></p>
+<h3 id="drugseqpyfilter_samples"><code>drugseqpy.filter_samples()</code></h3>
+<p>Return a new object after applying reviewed sample/well QC thresholds.</p>
+<pre><code class="language-python">filter_samples(dsd: 'DrugSeqData', min_umi: 'float' = 5000, max_umi: 'float' = inf, min_genes: 'int' = 200, max_pct_mito: 'float' = 25.0, max_pct_ribo: 'float' = inf, min_hk_mean: 'float' = 0.0, max_hk_cv: 'float' = inf, max_outlier_score: 'float' = 10.0, keep_sample_types: 'list[str] | None' = None, verbose: 'bool' = True) -&gt; 'DrugSeqData'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with sample QC metrics already calculated by <code>compute_qc_metrics()</code>.</td>
+</tr>
+<tr>
+<td><code>min_umi</code></td>
+<td>float</td>
+<td>5000</td>
+<td>Minimum total UMI count retained per unprotected well.</td>
+</tr>
+<tr>
+<td><code>max_umi</code></td>
+<td>float</td>
+<td>inf</td>
+<td>Maximum total UMI count retained per unprotected well.</td>
+</tr>
+<tr>
+<td><code>min_genes</code></td>
+<td>int</td>
+<td>200</td>
+<td>Minimum detected-gene count retained per unprotected well.</td>
+</tr>
+<tr>
+<td><code>max_pct_mito</code></td>
+<td>float</td>
+<td>25.0</td>
+<td>Maximum mitochondrial UMI percentage.</td>
+</tr>
+<tr>
+<td><code>max_pct_ribo</code></td>
+<td>float</td>
+<td>inf</td>
+<td>Maximum ribosomal UMI percentage.</td>
+</tr>
+<tr>
+<td><code>min_hk_mean</code></td>
+<td>float</td>
+<td>0.0</td>
+<td>Minimum housekeeping-gene mean log expression when that metric is available.</td>
+</tr>
+<tr>
+<td><code>max_hk_cv</code></td>
+<td>float</td>
+<td>inf</td>
+<td>Maximum housekeeping-gene coefficient of variation when available.</td>
+</tr>
+<tr>
+<td><code>max_outlier_score</code></td>
+<td>float</td>
+<td>10.0</td>
+<td>Maximum multivariate MAD outlier score.</td>
+</tr>
+<tr>
+<td><code>keep_sample_types</code></td>
+<td>list[str] | None</td>
+<td>None</td>
+<td>Sample types exempt from thresholds. <code>None</code> protects DMSO, vehicle, and positive/negative controls; pass an empty list only after deciding no wells require protection.</td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Print retained/removed counts and failure reasons.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A new filtered DrugSeqData object; the input object is unchanged.</p>
+<p>Thresholds are experiment-specific. Preview the failing-well mask and protect required controls before applying this optional operation.</p>
+<p><a id="api-filter-genes"></a></p>
+<h3 id="drugseqpyfilter_genes"><code>drugseqpy.filter_genes()</code></h3>
+<p>Return a new object after removing low-expression and optionally mitochondrial/ribosomal genes.</p>
+<pre><code class="language-python">filter_genes(dsd: 'DrugSeqData', min_count: 'int' = 1, min_samples: 'int' = 2, group_aware: 'bool' = True, group_col: 'str' = 'compound', min_cpm: 'float' = 0.0, min_cpm_samples: 'int' = 2, remove_mito: 'bool' = False, remove_ribo: 'bool' = False, mito_pattern: 'str' = '^MT-', ribo_pattern: 'str' = '^RP[SL]', verbose: 'bool' = True) -&gt; 'DrugSeqData'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts in <code>layers['counts']</code>.</td>
+</tr>
+<tr>
+<td><code>min_count</code></td>
+<td>int</td>
+<td>1</td>
+<td>Minimum raw count used to call a gene expressed in one sample.</td>
+</tr>
+<tr>
+<td><code>min_samples</code></td>
+<td>int</td>
+<td>2</td>
+<td>Minimum samples meeting <code>min_count</code> globally or within at least one group.</td>
+</tr>
+<tr>
+<td><code>group_aware</code></td>
+<td>bool</td>
+<td>True</td>
+<td>When <code>True</code>, retain genes passing in at least one group so treatment-induced genes are not lost.</td>
+</tr>
+<tr>
+<td><code>group_col</code></td>
+<td>str</td>
+<td>'compound'</td>
+<td>Metadata column defining groups for group-aware filtering; defaults to <code>compound</code>.</td>
+</tr>
+<tr>
+<td><code>min_cpm</code></td>
+<td>float</td>
+<td>0.0</td>
+<td>Optional CPM threshold; zero disables CPM filtering.</td>
+</tr>
+<tr>
+<td><code>min_cpm_samples</code></td>
+<td>int</td>
+<td>2</td>
+<td>Minimum samples that must meet <code>min_cpm</code>.</td>
+</tr>
+<tr>
+<td><code>remove_mito</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Optionally remove genes whose feature names match <code>mito_pattern</code>.</td>
+</tr>
+<tr>
+<td><code>remove_ribo</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Optionally remove genes whose feature names match <code>ribo_pattern</code>.</td>
+</tr>
+<tr>
+<td><code>mito_pattern</code></td>
+<td>str</td>
+<td>'^MT-'</td>
+<td>Regular expression used against feature names when <code>remove_mito=True</code>.</td>
+</tr>
+<tr>
+<td><code>ribo_pattern</code></td>
+<td>str</td>
+<td>'^RP[SL]'</td>
+<td>Regular expression used against feature names when <code>remove_ribo=True</code>.</td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Print retained and removed gene counts.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A new gene-filtered DrugSeqData object; the input object is unchanged.</p>
+<p>Group-aware filtering is usually safer for perturbation screens. Pattern-based mitochondrial/ribosomal removal requires feature names compatible with the supplied patterns.</p>
+<p><a id="plate-layouts"></a></p>
+<h2 id="plate-layouts-1">Plate layouts</h2>
+<p>Resolve physical coordinates and generate spatial plate visualizations.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#api-build-plate-layout"><code>drugseqpy.build_plate_layout()</code></a></td>
+<td>Resolve each metadata row to a physical plate coordinate and attach the requested plotting value.</td>
+</tr>
+<tr>
+<td><a href="#api-plot-plate-layout"><code>drugseqpy.plot_plate_layout()</code></a></td>
+<td>Draw one spatial panel per plate with adaptive marker, font, panel, legend, and colorbar sizing.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-plate-layout-figures"><code>drugseqpy.generate_plate_layout_figures()</code></a></td>
+<td>Generate one universal plate-layout figure and save its resolved plotting table.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="plate-layouts-details"></a></p>
+<h3 id="detailed-reference-3">Detailed reference</h3>
+<p><a id="api-build-plate-layout"></a></p>
+<h3 id="drugseqpybuild_plate_layout"><code>drugseqpy.build_plate_layout()</code></h3>
+<p>Resolve each metadata row to a physical plate coordinate and attach the requested plotting value.</p>
+<pre><code class="language-python">build_plate_layout(obs: 'pd.DataFrame', value_col: 'str | None' = None, *, nrow: 'int' = 8, ncol: 'int' = 12) -&gt; 'pd.DataFrame'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>obs</code></td>
+<td>pd.DataFrame</td>
+<td>required</td>
+<td>Sample metadata DataFrame. Parseable <code>well_id</code> values take precedence over <code>x/y</code>; validate the resulting positions against the physical design.</td>
+</tr>
+<tr>
+<td><code>value_col</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata/QC column copied into the generic <code>value</code> field.</td>
+</tr>
+<tr>
+<td><code>nrow</code></td>
+<td>int</td>
+<td>8</td>
+<td>Number of physical plate rows. The default is 8 for a 96-well plate; use 16 for a standard 384-well plate.</td>
+</tr>
+<tr>
+<td><code>ncol</code></td>
+<td>int</td>
+<td>12</td>
+<td>Number of physical plate columns. The default is 12 for a 96-well plate; use 24 for a standard 384-well plate.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A tidy layout DataFrame with numeric <code>row</code>/<code>column</code>, display labels, and missing-well status.</p>
+<p>For numbered Well-dT identifiers, numbering is column-major: Well-dT-1 through Well-dT-8 run down column 1, then Well-dT-9 starts column 2.</p>
+<p><a id="api-plot-plate-layout"></a></p>
+<h3 id="drugseqpyplot_plate_layout"><code>drugseqpy.plot_plate_layout()</code></h3>
+<p>Draw one spatial panel per plate with adaptive marker, font, panel, legend, and colorbar sizing.</p>
+<pre><code class="language-python">plot_plate_layout(obs: 'pd.DataFrame', value_col: 'str | None' = None, *, well_color: 'str | None' = None, plate_id: 'str' = 'plate_id', split_by: 'str | None' = None, label_col: 'str | None' = None, continuous: 'bool' = False, log_values: 'bool' = True, show_legend: 'bool' = True, nrow: 'int' = 8, ncol: 'int' = 12, nrow_plate: 'int | None' = None, figsize: 'tuple[float, float] | None' = None, well_size: 'float' = 0.76, well_border: 'bool' = True, well_border_color: 'str' = '#111827', well_border_width: 'float' = 0.8, palette: 'str | list[str] | tuple[str, ...] | dict[str, str] | None' = None, cmap: 'str' = 'RdYlBu_r', label_color: 'str' = '#111827', label_size: 'float | None' = None, label_style: 'str' = 'normal', label_weight: 'str | int' = 'normal')
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>obs</code></td>
+<td>pd.DataFrame</td>
+<td>required</td>
+<td>Metadata plus the numeric or categorical field selected by <code>value_col</code>.</td>
+</tr>
+<tr>
+<td><code>value_col</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Metadata/QC column controlling well color. Supply exactly one of <code>value_col</code> or <code>well_color</code>.</td>
+</tr>
+<tr>
+<td><code>well_color</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Literal fixed fill color, such as <code>'white'</code>. This is not a metadata column and does not create a legend.</td>
+</tr>
+<tr>
+<td><code>plate_id</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Name of the metadata column containing the real plate identities. Defaults to <code>'plate_id'</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate physical-layout panels for each plate-by-split combination. <code>None</code> uses one panel per plate.</td>
+</tr>
+<tr>
+<td><code>label_col</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional column printed inside occupied wells. <code>None</code> is the default and draws no labels.</td>
+</tr>
+<tr>
+<td><code>continuous</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Use a continuous colormap and colorbar when <code>True</code>. The default <code>False</code> treats <code>value_col</code> as categorical.</td>
+</tr>
+<tr>
+<td><code>log_values</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Apply <code>log1p</code> to continuous values before coloring. Defaults to <code>True</code>; the source table retains the original value and the transformed plotting value.</td>
+</tr>
+<tr>
+<td><code>show_legend</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Show the categorical <code>value_col</code> legend or the continuous colorbar. Fixed-color plots have neither.</td>
+</tr>
+<tr>
+<td><code>nrow</code></td>
+<td>int</td>
+<td>8</td>
+<td>Number of physical plate rows; defaults to 8.</td>
+</tr>
+<tr>
+<td><code>ncol</code></td>
+<td>int</td>
+<td>12</td>
+<td>Number of physical plate columns; defaults to 12.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of plate panels in one figure row. For two plates, <code>1</code> stacks them vertically and <code>2</code> places them side by side; <code>None</code> uses the adaptive arrangement.</td>
+</tr>
+<tr>
+<td><code>figsize</code></td>
+<td>tuple[float, float] | None</td>
+<td>None</td>
+<td>Optional explicit figure size in inches. <code>None</code> adapts to plate dimensions and panel count.</td>
+</tr>
+<tr>
+<td><code>well_size</code></td>
+<td>float</td>
+<td>0.76</td>
+<td>Well diameter relative to one grid cell. The adaptive default is 0.76; values up to 1.25 are accepted.</td>
+</tr>
+<tr>
+<td><code>well_border</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Draw borders around every occupied and missing well. Defaults to <code>True</code>.</td>
+</tr>
+<tr>
+<td><code>well_border_color</code></td>
+<td>str</td>
+<td>'#111827'</td>
+<td>Matplotlib color used for well borders when enabled.</td>
+</tr>
+<tr>
+<td><code>well_border_width</code></td>
+<td>float</td>
+<td>0.8</td>
+<td>Well-border line width in points.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>str | list[str] | tuple[str, ...] | dict[str, str] | None</td>
+<td>None</td>
+<td>Categorical colors as a Seaborn palette name, a color sequence, or a mapping from category labels to colors.</td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td>str</td>
+<td>'RdYlBu_r'</td>
+<td>Matplotlib colormap used when <code>continuous=True</code>. The default <code>RdYlBu_r</code> runs from bright blue through yellow to red.</td>
+</tr>
+<tr>
+<td><code>label_color</code></td>
+<td>str</td>
+<td>'#111827'</td>
+<td>Matplotlib color for text drawn inside wells.</td>
+</tr>
+<tr>
+<td><code>label_size</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Optional label font size in points. <code>None</code> adapts to well size and plate format.</td>
+</tr>
+<tr>
+<td><code>label_style</code></td>
+<td>str</td>
+<td>'normal'</td>
+<td>Font style for labels, for example <code>'normal'</code> or <code>'italic'</code>.</td>
+</tr>
+<tr>
+<td><code>label_weight</code></td>
+<td>str | int</td>
+<td>'normal'</td>
+<td>Font weight for labels, for example <code>'normal'</code>, <code>'bold'</code>, or a numeric weight.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A <code>(matplotlib.figure.Figure, layout_dataframe)</code> tuple. Missing wells are white and use the configured border settings.</p>
+<p><a id="api-generate-plate-layout-figures"></a></p>
+<h3 id="drugseqpygenerate_plate_layout_figures"><code>drugseqpy.generate_plate_layout_figures()</code></h3>
+<p>Generate one universal plate-layout figure and save its resolved plotting table.</p>
+<pre><code class="language-python">generate_plate_layout_figures(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), plate_value: 'str | None' = None, plate_gene: 'str | Sequence[str] | None' = None, gene_aggregation: 'str' = 'mean', well_color: 'str | None' = None, plate_id: 'str' = 'plate_id', split_by: 'str | None' = None, label_col: 'str | None' = None, continuous: 'bool' = False, log_values: 'bool' = True, show_legend: 'bool' = True, nrow: 'int' = 8, ncol: 'int' = 12, nrow_plate: 'int | None' = None, output_name: 'str | None' = None, figsize: 'tuple[float, float] | None' = None, well_size: 'float' = 0.76, well_border: 'bool' = True, well_border_color: 'str' = '#111827', well_border_width: 'float' = 0.8, palette: 'PaletteSpec' = None, cmap: 'str' = 'RdYlBu_r', label_color: 'str' = '#111827', label_size: 'float | None' = None, label_style: 'str' = 'normal', label_weight: 'str | int' = 'normal') -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing aligned metadata and raw counts. Missing QC metrics are computed automatically.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the plate-layout image files and coordinate source tables.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>plate_value</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Metadata/QC field controlling well color. Exactly one of <code>plate_value</code>, <code>plate_gene</code>, or <code>well_color</code> is required.</td>
+</tr>
+<tr>
+<td><code>plate_gene</code></td>
+<td>str | Sequence[str] | None</td>
+<td>None</td>
+<td>One gene symbol/feature ID, or a sequence defining a gene set. A string plots that gene alone; a sequence is aggregated per well.</td>
+</tr>
+<tr>
+<td><code>gene_aggregation</code></td>
+<td>str</td>
+<td>'mean'</td>
+<td>Gene-set aggregation: <code>'mean'</code> (default), <code>'sum'</code>, or <code>'median'</code>. It is ignored for a single string gene.</td>
+</tr>
+<tr>
+<td><code>well_color</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Literal fixed fill color, such as <code>'white'</code>; it is not a metadata column.</td>
+</tr>
+<tr>
+<td><code>plate_id</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Name of the metadata column containing actual plate identities. Defaults to <code>'plate_id'</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate plate-by-split layout panels. <code>None</code> keeps one panel per physical plate.</td>
+</tr>
+<tr>
+<td><code>label_col</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata field printed in occupied wells. The default <code>None</code> draws no labels.</td>
+</tr>
+<tr>
+<td><code>continuous</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Use a continuous colormap/colorbar for numeric metrics or gene expression. The default is <code>False</code>.</td>
+</tr>
+<tr>
+<td><code>log_values</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Apply <code>log1p</code> before coloring continuous values. Defaults to <code>True</code>; set it to <code>False</code> for original or signed scales.</td>
+</tr>
+<tr>
+<td><code>show_legend</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Show a categorical legend or continuous colorbar. Categorical entries always represent <code>plate_value</code>; fixed-color plots have neither.</td>
+</tr>
+<tr>
+<td><code>nrow</code></td>
+<td>int</td>
+<td>8</td>
+<td>Number of plate rows. Use 8 for 96-well or 16 for 384-well plates.</td>
+</tr>
+<tr>
+<td><code>ncol</code></td>
+<td>int</td>
+<td>12</td>
+<td>Number of plate columns. Use 12 for 96-well or 24 for 384-well plates.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of plate panels in one figure row. Set <code>1</code> to stack plates vertically; <code>None</code> arranges panels adaptively.</td>
+</tr>
+<tr>
+<td><code>output_name</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Filename stem. <code>None</code> derives a name from the selected value source.</td>
+</tr>
+<tr>
+<td><code>figsize</code></td>
+<td>tuple[float, float] | None</td>
+<td>None</td>
+<td>Optional whole-figure size in inches; <code>None</code> adapts to plate shape and plate count.</td>
+</tr>
+<tr>
+<td><code>well_size</code></td>
+<td>float</td>
+<td>0.76</td>
+<td>Well diameter relative to one plate-grid cell.</td>
+</tr>
+<tr>
+<td><code>well_border</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Whether all wells have visible borders; defaults to <code>True</code>.</td>
+</tr>
+<tr>
+<td><code>well_border_color</code></td>
+<td>str</td>
+<td>'#111827'</td>
+<td>Matplotlib border color applied when <code>well_border=True</code>.</td>
+</tr>
+<tr>
+<td><code>well_border_width</code></td>
+<td>float</td>
+<td>0.8</td>
+<td>Well-border line width in points.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Categorical colors as a Seaborn name, color sequence, category-to-color mapping, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td>str</td>
+<td>'RdYlBu_r'</td>
+<td>Continuous Matplotlib colormap. The default <code>RdYlBu_r</code> provides a bright blue-to-red scale.</td>
+</tr>
+<tr>
+<td><code>label_color</code></td>
+<td>str</td>
+<td>'#111827'</td>
+<td>Color of labels drawn inside occupied wells.</td>
+</tr>
+<tr>
+<td><code>label_size</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Optional label font size; <code>None</code> adapts automatically.</td>
+</tr>
+<tr>
+<td><code>label_style</code></td>
+<td>str</td>
+<td>'normal'</td>
+<td>Label font style, such as <code>'normal'</code> or <code>'italic'</code>.</td>
+</tr>
+<tr>
+<td><code>label_weight</code></td>
+<td>str | int</td>
+<td>'normal'</td>
+<td>Label font weight, such as <code>'normal'</code> or <code>'bold'</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for one figure in every requested format. Also writes <code>&lt;output_name&gt;_plot_table.csv</code> and <code>plate_layout_coordinates.csv</code>. Gene maps additionally write gene-resolution and per-gene-expression tables. Continuous tables retain the original <code>value</code> and transformed <code>plot_value</code>.</p>
+<p>There is no <code>legend_col</code>: categorical legend labels and colors both come from <code>plate_value</code>. Call this function once per desired figure.</p>
+<p><a id="qc-figures"></a></p>
+<h2 id="qc-report-figures">QC report figures</h2>
+<p>Generate distribution, gene-summary, STARsolo, and complete QC reports.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#api-generate-qc-metric-violin-figure"><code>drugseqpy.generate_qc_metric_violin_figure()</code></a></td>
+<td>Generate selectable essential QC-metric violin panels, grouped by configurable sample metadata.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-outlier-score-scatter-figure"><code>drugseqpy.generate_outlier_score_scatter_figure()</code></a></td>
+<td>Plot one MAD outlier score per sample, colored by a configurable metadata group.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-umi-density-figure"><code>drugseqpy.generate_umi_density_figure()</code></a></td>
+<td>Generate the per-well total-UMI density figure, grouped by configurable sample metadata.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-detected-gene-density-figure"><code>drugseqpy.generate_detected_gene_density_figure()</code></a></td>
+<td>Generate the per-well detected-gene density figure, grouped by configurable sample metadata.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-qc-distribution-figures"><code>drugseqpy.generate_qc_distribution_figures()</code></a></td>
+<td>Compatibility wrapper that generates the violin panel, outlier scatter, and both sample-level density figures.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-gene-umi-distribution-figures"><code>drugseqpy.generate_gene_umi_distribution_figures()</code></a></td>
+<td>Generate gene-level total-UMI distributions for selected identifier types.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-marker-gene-figure"><code>drugseqpy.generate_marker_gene_figure()</code></a></td>
+<td>Generate an expression panel for an explicit set of marker genes.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-marker-gene-dotplot-figure"><code>drugseqpy.generate_marker_gene_dotplot_figure()</code></a></td>
+<td>Generate a marker dot plot combining expression magnitude and detection prevalence.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-marker-gene-violin-figure"><code>drugseqpy.generate_marker_gene_violin_figure()</code></a></td>
+<td>Generate grouped violin distributions for per-well marker expression.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-gene-set-violin-figure"><code>drugseqpy.generate_gene_set_violin_figure()</code></a></td>
+<td>Generate grouped violin distributions for aggregated per-well gene-set expression.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-gene-summary-figures"><code>drugseqpy.generate_gene_summary_figures()</code></a></td>
+<td>Compatibility wrapper for the focused UMI-distribution and marker-panel functions.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-star-read-qc-figure"><code>drugseqpy.generate_star_read_qc_figure()</code></a></td>
+<td>Generate the optional STARsolo multilayered read-summary figure.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-star-read-count-violin-figure"><code>drugseqpy.generate_star_read_count_violin_figure()</code></a></td>
+<td>Plot matched STAR reads for every analyzed well and annotate group means and medians.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-star-saturation-figures"><code>drugseqpy.generate_star_saturation_figures()</code></a></td>
+<td>Generate optional STARsolo read-count versus detected-gene saturation figures.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-star-qc-figures"><code>drugseqpy.generate_star_qc_figures()</code></a></td>
+<td>Compatibility wrapper for the STARsolo doughnut, per-well read violin, and saturation functions.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-qc-report"><code>drugseqpy.generate_qc_report()</code></a></td>
+<td>Convenience orchestrator that runs all public QC metric and figure groups for batch reporting.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="qc-figures-details"></a></p>
+<h3 id="detailed-reference-4">Detailed reference</h3>
+<p><a id="api-generate-qc-metric-violin-figure"></a></p>
+<h3 id="drugseqpygenerate_qc_metric_violin_figure"><code>drugseqpy.generate_qc_metric_violin_figure()</code></h3>
+<p>Generate selectable essential QC-metric violin panels, grouped by configurable sample metadata.</p>
+<pre><code class="language-python">generate_qc_metric_violin_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, metrics: 'Sequence[str] | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData input. Required sample QC metrics are computed automatically when absent.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the violin-panel figure.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix. <code>None</code> derives a stable prefix from observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td>Sequence[str] | None</td>
+<td>None</td>
+<td>Ordered list of numeric <code>obs</code> metrics to plot. <code>None</code> uses all four defaults: <code>mt.pct</code>, <code>ribo.pct</code>, <code>total_umi</code>, and <code>n_genes_det</code>.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Column in <code>dsd.obs</code> used on the x-axis and for median calculation. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate figure panels. <code>None</code> keeps all samples in the same metric panels.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of panels per figure row when faceting; <code>None</code> uses the metric-aware layout.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Group colors as a Seaborn palette name, color sequence, group-to-color mapping, or <code>None</code> for adaptive defaults.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>*_QC_Boxplots</code> in every requested format. Despite the legacy filename, the panels are violin plots with separate y-axes, individual wells, and median labels placed above the violin bodies.</p>
+<p><a id="api-generate-outlier-score-scatter-figure"></a></p>
+<h3 id="drugseqpygenerate_outlier_score_scatter_figure"><code>drugseqpy.generate_outlier_score_scatter_figure()</code></h3>
+<p>Plot one MAD outlier score per sample, colored by a configurable metadata group.</p>
+<pre><code class="language-python">generate_outlier_score_scatter_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None, threshold: 'float | None' = None, label_outliers: 'bool' = False, label_col: 'str' = 'well_id', max_labels: 'int' = 10, output_name: 'str | None' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData input. <code>outlier_score</code> is computed automatically when absent.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the scatter figure and <code>outlier_score_plot_table.csv</code>.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix. <code>None</code> derives a stable prefix from observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Column in <code>dsd.obs</code> controlling point colors and sample ordering. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate scatter panels. <code>None</code> draws one combined scatter.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Point colors as a Seaborn palette name, color sequence, group-to-color mapping, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Optional horizontal review threshold. <code>None</code> draws no cutoff and does not classify samples.</td>
+</tr>
+<tr>
+<td><code>label_outliers</code></td>
+<td>bool</td>
+<td>False</td>
+<td>When enabled, label the highest-scoring samples above <code>threshold</code>, or the overall highest scores when no threshold is supplied.</td>
+</tr>
+<tr>
+<td><code>label_col</code></td>
+<td>str</td>
+<td>'well_id'</td>
+<td>Metadata column used for point labels; falls back to <code>sample_id</code> when unavailable.</td>
+</tr>
+<tr>
+<td><code>max_labels</code></td>
+<td>int</td>
+<td>10</td>
+<td>Maximum number of labels, limiting clutter for large experiments.</td>
+</tr>
+<tr>
+<td><code>output_name</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional custom figure stem. When supplied, it also creates a matching <code>*_plot_table.csv</code>, allowing multiple differently grouped outlier plots to coexist.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>*_Outlier_Score_Scatter</code> in every requested format. Also writes a sample-level plotting table with group, score, plot order, and threshold status.</p>
+<p>The MAD score prioritizes unusual multivariate QC profiles. A high value is evidence for review, not an automatic removal decision.</p>
+<p><a id="api-generate-umi-density-figure"></a></p>
+<h3 id="drugseqpygenerate_umi_density_figure"><code>drugseqpy.generate_umi_density_figure()</code></h3>
+<p>Generate the per-well total-UMI density figure, grouped by configurable sample metadata.</p>
+<pre><code class="language-python">generate_umi_density_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData input. <code>total_umi</code> is computed automatically when absent.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the UMI-density figure.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix. <code>None</code> derives a stable prefix from observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Column in <code>dsd.obs</code> defining the overlaid density curves. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate density panels. <code>None</code> overlays all groups in one axes.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Curve colors as a Seaborn palette name, color sequence, group-to-color mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>*_UMI_Density</code> in every requested format.</p>
+<p><a id="api-generate-detected-gene-density-figure"></a></p>
+<h3 id="drugseqpygenerate_detected_gene_density_figure"><code>drugseqpy.generate_detected_gene_density_figure()</code></h3>
+<p>Generate the per-well detected-gene density figure, grouped by configurable sample metadata.</p>
+<pre><code class="language-python">generate_detected_gene_density_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData input. <code>n_genes_det</code> is computed automatically when absent.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the detected-gene-density figure.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix. <code>None</code> derives a stable prefix from observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Column in <code>dsd.obs</code> defining the overlaid density curves. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate density panels. <code>None</code> overlays all groups in one axes.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Curve colors as a Seaborn palette name, color sequence, group-to-color mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>*_Gene_Density</code> in every requested format.</p>
+<p><a id="api-generate-qc-distribution-figures"></a></p>
+<h3 id="drugseqpygenerate_qc_distribution_figures"><code>drugseqpy.generate_qc_distribution_figures()</code></h3>
+<p>Compatibility wrapper that generates the violin panel, outlier scatter, and both sample-level density figures.</p>
+<pre><code class="language-python">generate_qc_distribution_figures(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, metrics: 'Sequence[str] | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None, outlier_threshold: 'float | None' = None, label_outliers: 'bool' = False, outlier_label_col: 'str' = 'well_id', max_outlier_labels: 'int' = 10) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData input. Required sample QC metrics are computed automatically when absent.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the four figure families and outlier plotting table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix. <code>None</code> derives a stable prefix from observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td>Sequence[str] | None</td>
+<td>None</td>
+<td>Optional violin-metric subset forwarded to <code>generate_qc_metric_violin_figure()</code>.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Grouping column forwarded to all four focused visualization functions.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional faceting column forwarded to all four focused visualization functions.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Categorical colors forwarded to all four focused visualization functions.</td>
+</tr>
+<tr>
+<td><code>outlier_threshold</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Optional review threshold for the included outlier-score scatter.</td>
+</tr>
+<tr>
+<td><code>label_outliers</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Whether to label high-scoring points in the included outlier scatter.</td>
+</tr>
+<tr>
+<td><code>outlier_label_col</code></td>
+<td>str</td>
+<td>'well_id'</td>
+<td>Metadata column used for outlier point labels.</td>
+</tr>
+<tr>
+<td><code>max_outlier_labels</code></td>
+<td>int</td>
+<td>10</td>
+<td>Maximum number of outlier labels.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Combined paths returned by <code>generate_qc_metric_violin_figure()</code>, <code>generate_outlier_score_scatter_figure()</code>, <code>generate_umi_density_figure()</code>, and <code>generate_detected_gene_density_figure()</code>.</p>
+<p>Existing scripts can continue to use this wrapper. Tutorials can call the four focused functions so each code block corresponds to one figure.</p>
+<p><a id="api-generate-gene-umi-distribution-figures"></a></p>
+<h3 id="drugseqpygenerate_gene_umi_distribution_figures"><code>drugseqpy.generate_gene_umi_distribution_figures()</code></h3>
+<p>Generate gene-level total-UMI distributions for selected identifier types.</p>
+<pre><code class="language-python">generate_gene_umi_distribution_figures(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), identifier_types: 'str | Sequence[str] | None' = None, report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts and optional <code>gene_symbol</code> annotation.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving UMI-distribution figures and gene-level source tables.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>identifier_types</code></td>
+<td>str | Sequence[str] | None</td>
+<td>None</td>
+<td>Identifier distribution(s) to draw: <code>'ensembl_id'</code>, <code>'gene_symbol'</code>, or a sequence containing both. <code>None</code> draws both by default.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column used to calculate separate per-group gene totals and colored density curves. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate density panels. <code>None</code> overlays the <code>groupby</code> curves.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for <code>groupby</code> density curves as a Seaborn name, color sequence, category mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for the requested Ensembl-ID and/or gene-symbol distributions. Writes overall gene summaries and <code>gene_umi_distribution_plot_table.csv</code> with group-specific totals.</p>
+<p><a id="api-generate-marker-gene-figure"></a></p>
+<h3 id="drugseqpygenerate_marker_gene_figure"><code>drugseqpy.generate_marker_gene_figure()</code></h3>
+<p>Generate an expression panel for an explicit set of marker genes.</p>
+<pre><code class="language-python">generate_marker_gene_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, marker_genes: 'Sequence[str] | None' = ('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1'), formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts, plate metadata, compound labels, and gene-symbol annotation.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the marker panel and marker source tables.</td>
+</tr>
+<tr>
+<td><code>marker_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1')</td>
+<td>Ordered marker symbols. The default is the explicit package MDA-MB-231 panel: VIM, FN1, CDH2, CD44, EGFR, MMP9, TGFB1, SNAI1, TWIST1, and ITGB1.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column used on the x-axis and for grouped means. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate gene panels for each split value.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of gene/split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Group colors as a Seaborn name, color sequence, category mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for the marker-expression panel when at least one marker is available. Writes requested-gene availability, sample-level plotting values, and grouped mean-expression tables.</p>
+<p><a id="api-generate-marker-gene-dotplot-figure"></a></p>
+<h3 id="drugseqpygenerate_marker_gene_dotplot_figure"><code>drugseqpy.generate_marker_gene_dotplot_figure()</code></h3>
+<p>Generate a marker dot plot combining expression magnitude and detection prevalence.</p>
+<pre><code class="language-python">generate_marker_gene_dotplot_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, marker_genes: 'Sequence[str] | None' = ('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1'), formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, cmap: 'str' = 'RdYlBu_r', dot_min_size: 'float' = 18, dot_max_size: 'float' = 280) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts, grouping metadata, and gene-symbol annotation.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the marker dot plot and its source table.</td>
+</tr>
+<tr>
+<td><code>marker_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1')</td>
+<td>Ordered marker symbols. The default is the explicit package MDA-MB-231 marker panel.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column displayed on the y-axis. Dot statistics are calculated independently for each group.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate dot-plot panels.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td>str</td>
+<td>'RdYlBu_r'</td>
+<td>Continuous Matplotlib colormap for mean expression.</td>
+</tr>
+<tr>
+<td><code>dot_min_size</code></td>
+<td>float</td>
+<td>18</td>
+<td>Marker area used for zero-percent detection; must be positive.</td>
+</tr>
+<tr>
+<td><code>dot_max_size</code></td>
+<td>float</td>
+<td>280</td>
+<td>Marker area used for 100-percent detection; must exceed <code>dot_min_size</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for the marker dot plot. Writes <code>marker_dotplot_table.csv</code> with mean expression, percent-expressing wells, and sample count for every gene/group/facet combination.</p>
+<p><a id="api-generate-marker-gene-violin-figure"></a></p>
+<h3 id="drugseqpygenerate_marker_gene_violin_figure"><code>drugseqpy.generate_marker_gene_violin_figure()</code></h3>
+<p>Generate grouped violin distributions for per-well marker expression.</p>
+<pre><code class="language-python">generate_marker_gene_violin_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, marker_genes: 'Sequence[str] | None' = ('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1'), formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None, log_values: 'bool' = False) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts, grouping metadata, and gene-symbol annotation.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the marker violin plot and its sample-level source table.</td>
+</tr>
+<tr>
+<td><code>marker_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1')</td>
+<td>Ordered marker symbols. The default is the explicit package MDA-MB-231 marker panel.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column represented by side-by-side colored violins.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating a separate gene panel for every split value.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of gene/split violin panels per figure row; defaults to five.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Group colors as a Seaborn name, color sequence, category mapping, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>log_values</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Apply <code>log1p</code> to per-well expression before plotting; defaults to raw expression.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for the marker violin plot. Writes <code>marker_violin_plot_table.csv</code> with raw and plotted expression for every well and gene.</p>
+<p><a id="api-generate-gene-set-violin-figure"></a></p>
+<h3 id="drugseqpygenerate_gene_set_violin_figure"><code>drugseqpy.generate_gene_set_violin_figure()</code></h3>
+<p>Generate grouped violin distributions for aggregated per-well gene-set expression.</p>
+<pre><code class="language-python">generate_gene_set_violin_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', gene_sets: 'Mapping[str, Sequence[str]]', *, gene_aggregation: 'str' = 'mean', formats=('pdf', 'png'), groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None, log_values: 'bool' = True, point_color: 'str' = '#253746', annotation_color: 'str' = '#D32F2F', output_name: 'str' = 'gene_set_expression_violin') -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts, grouping metadata, and gene-symbol annotation.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the gene-set violin figure and source tables.</td>
+</tr>
+<tr>
+<td><code>gene_sets</code></td>
+<td>Mapping[str, Sequence[str]]</td>
+<td>required</td>
+<td>Mapping from display names to sequences of exact gene symbols or feature IDs.</td>
+</tr>
+<tr>
+<td><code>gene_aggregation</code></td>
+<td>str</td>
+<td>'mean'</td>
+<td>Per-well aggregation across each resolved gene set: <code>'mean'</code>, <code>'sum'</code>, or <code>'median'</code>.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column represented by side-by-side colored violins.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate gene-set panels.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Group colors as a Seaborn name, sequence, category mapping, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>log_values</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Apply <code>log1p</code> to aggregated expression for plotting while retaining raw values in the source table.</td>
+</tr>
+<tr>
+<td><code>point_color</code></td>
+<td>str</td>
+<td>'#253746'</td>
+<td>Color of individual well points overlaid on the violins.</td>
+</tr>
+<tr>
+<td><code>annotation_color</code></td>
+<td>str</td>
+<td>'#D32F2F'</td>
+<td>Color of median labels placed above each distribution.</td>
+</tr>
+<tr>
+<td><code>output_name</code></td>
+<td>str</td>
+<td>'gene_set_expression_violin'</td>
+<td>Filename stem shared by the figure and its source tables.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Figure paths plus per-well plotting values, gene-resolution records, and per-gene expression tables.</p>
+<p>This function uses the same exact identifier resolution and aggregation implementation as <code>generate_plate_layout_figures()</code>.</p>
+<p><a id="api-generate-gene-summary-figures"></a></p>
+<h3 id="drugseqpygenerate_gene_summary_figures"><code>drugseqpy.generate_gene_summary_figures()</code></h3>
+<p>Compatibility wrapper for the focused UMI-distribution and marker-panel functions.</p>
+<pre><code class="language-python">generate_gene_summary_figures(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), identifier_types: 'str | Sequence[str] | None' = None, marker_genes: 'Sequence[str] | None' = ('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData containing raw counts and optional gene-symbol annotation.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving both requested gene-level figure families.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>identifier_types</code></td>
+<td>str | Sequence[str] | None</td>
+<td>None</td>
+<td>Identifier distribution(s) forwarded to <code>generate_gene_umi_distribution_figures()</code>; <code>None</code> selects both.</td>
+</tr>
+<tr>
+<td><code>marker_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1')</td>
+<td>Markers forwarded to <code>generate_marker_gene_figure()</code>. The explicit MDA-MB-231 panel is the default; an empty sequence disables this figure.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column forwarded to both focused functions; defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional faceting column forwarded to both focused functions.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Palette forwarded to both focused functions.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Combined figure paths returned by the two focused functions.</p>
+<p>New tutorials should call the focused functions separately so each call maps to one figure family.</p>
+<p><a id="api-generate-star-read-qc-figure"></a></p>
+<h3 id="drugseqpygenerate_star_read_qc_figure"><code>drugseqpy.generate_star_read_qc_figure()</code></h3>
+<p>Generate the optional STARsolo multilayered read-summary figure.</p>
+<pre><code class="language-python">generate_star_read_qc_figure(dsd: 'DrugSeqData', star_root: 'str | Path', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData used to identify plates and their grouping values.</td>
+</tr>
+<tr>
+<td><code>star_root</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Generic STAR root containing <code>&lt;plate&gt;/library_seq_Solo.out/Gene/Summary.csv</code>.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the doughnut figure and <code>star_group_summary.csv</code>.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column used to label/group panels. It must resolve to one value per plate and defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional plate-level metadata column used instead of <code>groupby</code> to create separate doughnut panels.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of grouped plate panels per figure row. <code>1</code> stacks panels vertically.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for doughnut rings as a Seaborn name, color sequence, mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for the multilayered doughnut figure. Missing <code>Summary.csv</code> inputs are skipped rather than fabricated.</p>
+<p><a id="api-generate-star-read-count-violin-figure"></a></p>
+<h3 id="drugseqpygenerate_star_read_count_violin_figure"><code>drugseqpy.generate_star_read_count_violin_figure()</code></h3>
+<p>Plot matched STAR reads for every analyzed well and annotate group means and medians.</p>
+<pre><code class="language-python">generate_star_read_count_violin_figure(dsd: 'DrugSeqData', star_root: 'str | Path', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None, point_color: 'str' = '#253746', annotation_color: 'str' = '#D32F2F') -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData defining the full analyzed-well set and plate/group metadata.</td>
+</tr>
+<tr>
+<td><code>star_root</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>STAR root containing per-plate <code>CellReads.stats</code> and filtered barcodes.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the violin figure, per-well read table, and group summary table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column used for violin fills, x-axis groups, means, and medians; defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate violin panels.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Violin fill colors as a Seaborn name, color sequence, category mapping, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>point_color</code></td>
+<td>str</td>
+<td>'#253746'</td>
+<td>Color of individual well points overlaid on the violins.</td>
+</tr>
+<tr>
+<td><code>annotation_color</code></td>
+<td>str</td>
+<td>'#D32F2F'</td>
+<td>Color of mean and median labels above each violin.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>*_STAR_Read_Count_Violin</code>. Writes <code>star_read_count_per_well.csv</code> and <code>star_read_count_summary.csv</code>; unmatched wells are retained with zero reads and an explicit match flag.</p>
+<p><a id="api-generate-star-saturation-figures"></a></p>
+<h3 id="drugseqpygenerate_star_saturation_figures"><code>drugseqpy.generate_star_saturation_figures()</code></h3>
+<p>Generate optional STARsolo read-count versus detected-gene saturation figures.</p>
+<pre><code class="language-python">generate_star_saturation_figures(dsd: 'DrugSeqData', star_root: 'str | Path', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData used to connect STAR barcodes to matrix-level detected-gene counts.</td>
+</tr>
+<tr>
+<td><code>star_root</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Generic STAR root containing per-plate <code>CellReads.stats</code> and, preferably, filtered barcodes.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving saturation figures and <code>star_saturation_metrics.csv</code>.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column defining point colors in each saturation axes; defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate saturation panels. <code>None</code> combines all samples in one axes.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of split saturation panels per figure row. <code>1</code> stacks panels vertically.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Panel colors as a Seaborn name, color sequence, mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for available Ensembl-ID and gene-symbol saturation plots. Axes use original, non-log read and detected-gene values.</p>
+<p><a id="api-generate-star-qc-figures"></a></p>
+<h3 id="drugseqpygenerate_star_qc_figures"><code>drugseqpy.generate_star_qc_figures()</code></h3>
+<p>Compatibility wrapper for the STARsolo doughnut, per-well read violin, and saturation functions.</p>
+<pre><code class="language-python">generate_star_qc_figures(dsd: 'DrugSeqData', star_root: 'str | Path', output_dir: 'str | Path', *, formats=('pdf', 'png'), report_label: 'str | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, nrow_plate: 'int | None' = None, palette: 'PaletteSpec' = None) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData used to identify plate order and connect barcodes to matrix-level detected-gene counts.</td>
+</tr>
+<tr>
+<td><code>star_root</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>STAR root containing <code>&lt;plate&gt;/library_seq_Solo.out/Gene</code> directories.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving STAR figures and source tables.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix, otherwise derived from plate IDs.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column defining figure groups; defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column defining separate panels.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of grouped panels per figure row.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for doughnut rings and plate groups as a Seaborn name, color sequence, category mapping, or <code>None</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for the multilayered doughnut, per-well read-count violin, and available Ensembl-ID/gene-symbol saturation plots. Missing STAR inputs are skipped rather than fabricated.</p>
+<p><a id="api-generate-qc-report"></a></p>
+<h3 id="drugseqpygenerate_qc_report"><code>drugseqpy.generate_qc_report()</code></h3>
+<p>Convenience orchestrator that runs all public QC metric and figure groups for batch reporting.</p>
+<pre><code class="language-python">generate_qc_report(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), star_root: 'str | Path | None' = None, marker_genes: 'Sequence[str] | None' = ('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1'), gene_umi_identifier_types: 'str | Sequence[str] | None' = None, plate_gene: 'str | Sequence[str] | None' = 'FN1', plate_gene_set: 'Sequence[str] | None' = None, plate_gene_aggregation: 'str' = 'mean', plate_nrow: 'int' = 8, plate_ncol: 'int' = 12, nrow_plate: 'int | None' = None, report_label: 'str | None' = None, violin_metrics: 'Sequence[str] | None' = None, groupby: 'str' = 'plate_id', split_by: 'str | None' = None, palette: 'PaletteSpec' = None, cmap: 'str' = 'RdYlBu_r', outlier_threshold: 'float | None' = None, label_outliers: 'bool' = False, outlier_label_col: 'str' = 'well_id', max_outlier_labels: 'int' = 10) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>Merged DrugSeqData input.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving figures, CSV source tables, and the figure manifest.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib-supported output extensions. This HTML tutorial requests PNG only.</td>
+</tr>
+<tr>
+<td><code>star_root</code></td>
+<td>str | Path | None</td>
+<td>None</td>
+<td>Optional STAR result root containing <code>&lt;plate&gt;/library_seq_Solo.out/Gene</code>. If absent, STAR-only plots are skipped.</td>
+</tr>
+<tr>
+<td><code>marker_genes</code></td>
+<td>Sequence[str] | None</td>
+<td>('VIM', 'FN1', 'CDH2', 'CD44', 'EGFR', 'MMP9', 'TGFB1', 'SNAI1', 'TWIST1', 'ITGB1')</td>
+<td>Marker symbols for the focused marker panel. The default is the explicit MDA-MB-231 panel: VIM, FN1, CDH2, CD44, EGFR, MMP9, TGFB1, SNAI1, TWIST1, and ITGB1.</td>
+</tr>
+<tr>
+<td><code>gene_umi_identifier_types</code></td>
+<td>str | Sequence[str] | None</td>
+<td>None</td>
+<td>UMI-distribution identifier types. <code>None</code> draws both Ensembl-ID and gene-symbol distributions; pass one type to select only that figure.</td>
+</tr>
+<tr>
+<td><code>plate_gene</code></td>
+<td>str | Sequence[str] | None</td>
+<td>'FN1'</td>
+<td>Optional string gene or gene sequence used for the primary spatial expression map; defaults to <code>FN1</code> and is skipped if unavailable.</td>
+</tr>
+<tr>
+<td><code>plate_gene_set</code></td>
+<td>Sequence[str] | None</td>
+<td>None</td>
+<td>Optional additional gene sequence used to generate a separate gene-set expression plate map.</td>
+</tr>
+<tr>
+<td><code>plate_gene_aggregation</code></td>
+<td>str</td>
+<td>'mean'</td>
+<td>Aggregation used when either expression specification is a sequence: <code>'mean'</code>, <code>'sum'</code>, or <code>'median'</code>.</td>
+</tr>
+<tr>
+<td><code>plate_nrow</code></td>
+<td>int</td>
+<td>8</td>
+<td>Number of rows used for all report plate layouts; defaults to 8.</td>
+</tr>
+<tr>
+<td><code>plate_ncol</code></td>
+<td>int</td>
+<td>12</td>
+<td>Number of columns used for all report plate layouts; defaults to 12.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum plate/group panels per row for plate layouts and STARsolo figures.</td>
+</tr>
+<tr>
+<td><code>report_label</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional filename prefix. <code>None</code> derives a combined label from the observed plate IDs.</td>
+</tr>
+<tr>
+<td><code>violin_metrics</code></td>
+<td>Sequence[str] | None</td>
+<td>None</td>
+<td>Optional ordered subset of QC metrics shown in the violin panel; <code>None</code> uses all four defaults.</td>
+</tr>
+<tr>
+<td><code>groupby</code></td>
+<td>str</td>
+<td>'plate_id'</td>
+<td>Metadata column used by the QC violin, outlier-score scatter, and density figures. Defaults to <code>plate_id</code>.</td>
+</tr>
+<tr>
+<td><code>split_by</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column creating separate panels across group-aware QC visualizations. <code>None</code> keeps combined plots.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Categorical palette forwarded to all QC visualization functions. Accepts a Seaborn name, color sequence, or category-to-color mapping.</td>
+</tr>
+<tr>
+<td><code>cmap</code></td>
+<td>str</td>
+<td>'RdYlBu_r'</td>
+<td>Continuous Matplotlib colormap forwarded to numeric plate layouts.</td>
+</tr>
+<tr>
+<td><code>outlier_threshold</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Optional review threshold forwarded to the outlier-score scatter. <code>None</code> draws no threshold line.</td>
+</tr>
+<tr>
+<td><code>label_outliers</code></td>
+<td>bool</td>
+<td>False</td>
+<td>Label high-scoring points in the outlier-score scatter when enabled.</td>
+</tr>
+<tr>
+<td><code>outlier_label_col</code></td>
+<td>str</td>
+<td>'well_id'</td>
+<td>Metadata column used for labels in the outlier-score scatter.</td>
+</tr>
+<tr>
+<td><code>max_outlier_labels</code></td>
+<td>int</td>
+<td>10</td>
+<td>Maximum number of outlier labels drawn in the complete report.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A list of all figure paths. The object gains QC columns; <code>qc_figure_manifest.csv</code> records the public producer function for every figure.</p>
+<p>Use this wrapper for a complete automated report. In a tutorial or interactive analysis, call the focused figure functions separately so each code block has a visible, inspectable result.</p>
+<p><a id="mix-species"></a></p>
+<h2 id="mix-species-analysis">Mix-species analysis</h2>
+<p>Configure any two species, assign wells, and quantify reciprocal cross-contamination.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#api-assign-well-species"><code>drugseqpy.assign_well_species()</code></a></td>
+<td>Assign the designed base species of each well from an existing metadata column.</td>
+</tr>
+<tr>
+<td><a href="#api-compute-mix-species-qc"><code>drugseqpy.compute_mix_species_qc()</code></a></td>
+<td>Count any two configured species, classify wells, and quantify cross-well contamination relative to the assigned base species.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-barnyard-figure"><code>drugseqpy.generate_mix_species_barnyard_figure()</code></a></td>
+<td>Generate only the plate-faceted species-A-versus-species-B UMI barnyard figure with square 1:1 coordinate panels.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-purity-figure"><code>drugseqpy.generate_mix_species_purity_figure()</code></a></td>
+<td>Generate only the plate-faceted two-species purity figure.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-concordance-figure"><code>drugseqpy.generate_mix_species_concordance_figure()</code></a></td>
+<td>Generate only the expected-label versus observed-species stacked-bar figure.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-qc-metrics-figure"><code>drugseqpy.generate_mix_species_qc_metrics_figure()</code></a></td>
+<td>Generate only the plate-level mix-species technical-QC violin panel.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-fraction-figure"><code>drugseqpy.generate_mix_species_fraction_figure()</code></a></td>
+<td>Generate only the two-species fraction-by-expected-label figure.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-contamination-figure"><code>drugseqpy.generate_mix_species_contamination_figure()</code></a></td>
+<td>Plot off-target fractions separately with species A and species B as the assigned base.</td>
+</tr>
+<tr>
+<td><a href="#api-generate-mix-species-report"><code>drugseqpy.generate_mix_species_report()</code></a></td>
+<td>Generate the independent mix-species figure set and all plot source/audit tables.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="mix-species-details"></a></p>
+<h3 id="detailed-reference-5">Detailed reference</h3>
+<p><a id="api-assign-well-species"></a></p>
+<h3 id="drugseqpyassign_well_species"><code>drugseqpy.assign_well_species()</code></h3>
+<p>Assign the designed base species of each well from an existing metadata column.</p>
+<pre><code class="language-python">assign_well_species(dsd: 'DrugSeqData', source_col: 'str', mapping: 'Mapping[str, str]', *, output_col: 'str' = 'expected_species', default: 'str' = 'unknown', inplace: 'bool' = True) -&gt; 'DrugSeqData | None'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData whose <code>obs</code> contains the source labels.</td>
+</tr>
+<tr>
+<td><code>source_col</code></td>
+<td>str</td>
+<td>required</td>
+<td>Metadata column containing cell-line, sample-class, or other design labels.</td>
+</tr>
+<tr>
+<td><code>mapping</code></td>
+<td>Mapping[str, str]</td>
+<td>required</td>
+<td>Mapping from each design label to one configured species name, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>output_col</code></td>
+<td>str</td>
+<td>'expected_species'</td>
+<td>Metadata column that receives the assigned base species.</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>str</td>
+<td>'unknown'</td>
+<td>Value assigned to source labels absent from <code>mapping</code>.</td>
+</tr>
+<tr>
+<td><code>inplace</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Modify the input object when <code>True</code>; otherwise return a modified copy.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Stores the well assignment in <code>obs[output_col]</code> and the mapping provenance in <code>uns['well_species_assignment']</code>; returns a copy only when <code>inplace=False</code>.</p>
+<p>Assignment is case-insensitive. The two species need not be human and mouse.</p>
+<p><a id="api-compute-mix-species-qc"></a></p>
+<h3 id="drugseqpycompute_mix_species_qc"><code>drugseqpy.compute_mix_species_qc()</code></h3>
+<p>Count any two configured species, classify wells, and quantify cross-well contamination relative to the assigned base species.</p>
+<pre><code class="language-python">compute_mix_species_qc(dsd: 'DrugSeqData', *, species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_col: 'str | None' = None, expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, mitochondrial_pattern: 'str' = '^(?:MT-|mt-)', human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, human_threshold: 'float | None' = None, min_total_umi: 'float | None' = None) -&gt; 'pd.DataFrame'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>mitochondrial_pattern</code></td>
+<td>str</td>
+<td>'^(?:MT-|mt-)'</td>
+<td>Regular expression matched against gene symbols to calculate mitochondrial UMI percentage.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>human_threshold</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>assignment_threshold</code>.</td>
+</tr>
+<tr>
+<td><code>min_total_umi</code></td>
+<td>float | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>min_species_umi</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A per-well DataFrame with generic species-A/B counts and fractions, observed calls, and—when assignments are supplied—base species, on-target signal, off-target signal, cross-contamination fraction, and concordance.</p>
+<p>Human–mouse defaults and historical column aliases are retained for compatibility, but every new analysis can provide arbitrary species names and feature prefixes.</p>
+<p><a id="api-generate-mix-species-barnyard-figure"></a></p>
+<h3 id="drugseqpygenerate_mix_species_barnyard_figure"><code>drugseqpy.generate_mix_species_barnyard_figure()</code></h3>
+<p>Generate only the plate-faceted species-A-versus-species-B UMI barnyard figure with square 1:1 coordinate panels.</p>
+<pre><code class="language-python">generate_mix_species_barnyard_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'compound', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, nrow_plate: 'int | None' = None, metric_species: 'str | Sequence[str] | None' = 'base', expected_palette: 'PaletteSpec' = None, reference_line_color: 'str' = '#7F7F7F', annotation_color: 'str' = '#D32F2F', edge_color: 'str' = 'white', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155', point_alpha: 'float' = 0.72, show_observed_style: 'bool' = True) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the figure and its plot-source table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib output formats.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'compound'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of plate facets per figure row.</td>
+</tr>
+<tr>
+<td><code>metric_species</code></td>
+<td>str | Sequence[str] | None</td>
+<td>'base'</td>
+<td>Base-species purity summaries to annotate: <code>'base'</code> (default, all assigned bases present), <code>'both'</code>, <code>'species_a'</code>, <code>'species_b'</code>, one configured species name, a sequence of names, or <code>None</code> to hide metrics.</td>
+</tr>
+<tr>
+<td><code>expected_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for expected labels or cell types.</td>
+</tr>
+<tr>
+<td><code>reference_line_color</code></td>
+<td>str</td>
+<td>'#7F7F7F'</td>
+<td>Color of the equal-species-count diagonal.</td>
+</tr>
+<tr>
+<td><code>annotation_color</code></td>
+<td>str</td>
+<td>'#D32F2F'</td>
+<td>Color of per-panel summary annotations.</td>
+</tr>
+<tr>
+<td><code>edge_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Point-edge color.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Dashed panel-grid color.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Complete panel-border color.</td>
+</tr>
+<tr>
+<td><code>point_alpha</code></td>
+<td>float</td>
+<td>0.72</td>
+<td>Point opacity between zero and one.</td>
+</tr>
+<tr>
+<td><code>show_observed_style</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Whether point marker shape also represents observed species.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>species_barnyard</code> in every requested format; also writes the per-well plot table and <code>species_barnyard_metric_summary.csv</code>.</p>
+<p>Each facet uses identical x/y limits and an enforced square plotting box. Selected base-species annotations report minimum, mean, median, and maximum purity.</p>
+<p><a id="api-generate-mix-species-purity-figure"></a></p>
+<h3 id="drugseqpygenerate_mix_species_purity_figure"><code>drugseqpy.generate_mix_species_purity_figure()</code></h3>
+<p>Generate only the plate-faceted two-species purity figure.</p>
+<pre><code class="language-python">generate_mix_species_purity_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'compound', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, nrow_plate: 'int | None' = None, expected_palette: 'PaletteSpec' = None, reference_line_color: 'str' = '#7F7F7F', guide_line_color: 'str' = '#CBD5E1', edge_color: 'str' = 'white', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155', point_alpha: 'float' = 0.72, show_observed_style: 'bool' = True) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the figure and its plot-source table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib output formats.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'compound'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of plate facets per figure row.</td>
+</tr>
+<tr>
+<td><code>expected_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for expected labels or cell types.</td>
+</tr>
+<tr>
+<td><code>reference_line_color</code></td>
+<td>str</td>
+<td>'#7F7F7F'</td>
+<td>Color of the complementary-fraction diagonal.</td>
+</tr>
+<tr>
+<td><code>guide_line_color</code></td>
+<td>str</td>
+<td>'#CBD5E1'</td>
+<td>Color of the 50% guides.</td>
+</tr>
+<tr>
+<td><code>edge_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Point-edge color.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Dashed panel-grid color.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Complete panel-border color.</td>
+</tr>
+<tr>
+<td><code>point_alpha</code></td>
+<td>float</td>
+<td>0.72</td>
+<td>Point opacity between zero and one.</td>
+</tr>
+<tr>
+<td><code>show_observed_style</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Whether point marker shape also represents observed species.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>species_purity</code> in every requested format; also writes <code>species_purity_plot_table.csv</code>.</p>
+<p>Every facet has identical 0–100% x/y limits and an enforced square 1:1 plotting box.</p>
+<p><a id="api-generate-mix-species-concordance-figure"></a></p>
+<h3 id="drugseqpygenerate_mix_species_concordance_figure"><code>drugseqpy.generate_mix_species_concordance_figure()</code></h3>
+<p>Generate only the expected-label versus observed-species stacked-bar figure.</p>
+<pre><code class="language-python">generate_mix_species_concordance_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'compound', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, nrow_plate: 'int | None' = None, observed_palette: 'PaletteSpec' = None, edge_color: 'str' = 'white', label_color: 'str' = 'white', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155', fill_alpha: 'float' = 0.95) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the figure and its plot-source table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib output formats.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'compound'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of plate facets per figure row.</td>
+</tr>
+<tr>
+<td><code>observed_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Fill colors for observed-species categories.</td>
+</tr>
+<tr>
+<td><code>edge_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Stacked-bar edge color.</td>
+</tr>
+<tr>
+<td><code>label_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Color of counts printed inside bars.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Dashed panel-grid color.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Complete panel-border color.</td>
+</tr>
+<tr>
+<td><code>fill_alpha</code></td>
+<td>float</td>
+<td>0.95</td>
+<td>Bar opacity between zero and one.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>species_concordance_counts</code>; also writes <code>species_concordance_plot_table.csv</code>.</p>
+<p><a id="api-generate-mix-species-qc-metrics-figure"></a></p>
+<h3 id="drugseqpygenerate_mix_species_qc_metrics_figure"><code>drugseqpy.generate_mix_species_qc_metrics_figure()</code></h3>
+<p>Generate only the plate-level mix-species technical-QC violin panel.</p>
+<pre><code class="language-python">generate_mix_species_qc_metrics_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'compound', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, plate_palette: 'PaletteSpec' = None, point_color: 'str' = '#253746', annotation_color: 'str' = '#D32F2F', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155') -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the figure and its plot-source table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib output formats.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'compound'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>plate_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for plate groups.</td>
+</tr>
+<tr>
+<td><code>point_color</code></td>
+<td>str</td>
+<td>'#253746'</td>
+<td>Color of individual observations.</td>
+</tr>
+<tr>
+<td><code>annotation_color</code></td>
+<td>str</td>
+<td>'#D32F2F'</td>
+<td>Color of median labels.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Dashed panel-grid color.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Complete panel-border color.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>mix_species_qc_metrics</code>; also writes <code>mix_species_qc_metrics_plot_table.csv</code>.</p>
+<p><a id="api-generate-mix-species-fraction-figure"></a></p>
+<h3 id="drugseqpygenerate_mix_species_fraction_figure"><code>drugseqpy.generate_mix_species_fraction_figure()</code></h3>
+<p>Generate only the two-species fraction-by-expected-label figure.</p>
+<pre><code class="language-python">generate_mix_species_fraction_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'compound', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, plate_palette: 'PaletteSpec' = None, edge_color: 'str' = 'white', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155', fill_alpha: 'float' = 0.95, point_alpha: 'float' = 0.35) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the figure and its plot-source table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib output formats.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'compound'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>plate_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for plate groups.</td>
+</tr>
+<tr>
+<td><code>edge_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Point-edge color.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Dashed panel-grid color.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Complete panel-border color.</td>
+</tr>
+<tr>
+<td><code>fill_alpha</code></td>
+<td>float</td>
+<td>0.95</td>
+<td>Boxplot opacity between zero and one.</td>
+</tr>
+<tr>
+<td><code>point_alpha</code></td>
+<td>float</td>
+<td>0.35</td>
+<td>Individual-point opacity between zero and one.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>species_fraction_by_expected</code>; also writes <code>species_fraction_plot_table.csv</code>.</p>
+<p><a id="api-generate-mix-species-contamination-figure"></a></p>
+<h3 id="drugseqpygenerate_mix_species_contamination_figure"><code>drugseqpy.generate_mix_species_contamination_figure()</code></h3>
+<p>Plot off-target fractions separately with species A and species B as the assigned base.</p>
+<pre><code class="language-python">generate_mix_species_contamination_figure(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'expected_species', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, plate_palette: 'PaletteSpec' = None, point_color: 'str' = '#253746', annotation_color: 'str' = '#D32F2F', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155') -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>DrugSeqData with raw two-species counts and well assignments.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving the figure and its plot-source table.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of Matplotlib output formats.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'expected_species'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>plate_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for plate groups.</td>
+</tr>
+<tr>
+<td><code>point_color</code></td>
+<td>str</td>
+<td>'#253746'</td>
+<td>Color of individual wells.</td>
+</tr>
+<tr>
+<td><code>annotation_color</code></td>
+<td>str</td>
+<td>'#D32F2F'</td>
+<td>Color of median annotations.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Dashed panel-grid color.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Complete panel-border color.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> Paths for <code>species_cross_contamination_by_base</code>; also writes its per-well plot table.</p>
+<p>The left panel treats species A as the intended species, so species B is off target; the right panel reverses that direction. Both fractions divide by species-A-plus-species-B UMIs.</p>
+<p><a id="api-generate-mix-species-report"></a></p>
+<h3 id="drugseqpygenerate_mix_species_report"><code>drugseqpy.generate_mix_species_report()</code></h3>
+<p>Generate the independent mix-species figure set and all plot source/audit tables.</p>
+<pre><code class="language-python">generate_mix_species_report(dsd: 'DrugSeqData', output_dir: 'str | Path', *, formats=('pdf', 'png'), expected_col: 'str | None' = 'compound', species_a_prefix: 'str' = 'ENSG', species_b_prefix: 'str' = 'ENSMUSG', species_a_name: 'str' = 'human', species_b_name: 'str' = 'mouse', expected_species_map: 'Mapping[str, str] | None' = None, assignment_threshold: 'float' = 0.5, min_species_umi: 'float' = 0, human_prefix: 'str | None' = None, mouse_prefix: 'str | None' = None, nrow_plate: 'int | None' = None, barnyard_metric_species: 'str | Sequence[str] | None' = 'base', palette: 'PaletteSpec' = None, expected_palette: 'PaletteSpec' = None, observed_palette: 'PaletteSpec' = None, plate_palette: 'PaletteSpec' = None, reference_line_color: 'str' = '#7F7F7F', guide_line_color: 'str' = '#CBD5E1', annotation_color: 'str' = '#D32F2F', edge_color: 'str' = 'white', grid_color: 'str' = '#DCE6F2', panel_border_color: 'str' = '#334155', point_color: 'str' = '#253746', label_color: 'str' = 'white', point_alpha: 'float' = 0.72, fill_alpha: 'float' = 0.95, show_observed_style: 'bool' = True) -&gt; 'list[str]'
+</code></pre>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning and use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dsd</code></td>
+<td>DrugSeqData</td>
+<td>required</td>
+<td>Merged DrugSeqData input. This workflow does not depend on QC-report output.</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>str | Path</td>
+<td>required</td>
+<td>Directory receiving figures and source tables.</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>—</td>
+<td>('pdf', 'png')</td>
+<td>Iterable of figure formats; this HTML tutorial requests PNG only.</td>
+</tr>
+<tr>
+<td><code>expected_col</code></td>
+<td>str | None</td>
+<td>'compound'</td>
+<td>Optional metadata column containing the assigned base species, or labels that can be resolved with <code>expected_species_map</code>.</td>
+</tr>
+<tr>
+<td><code>species_a_prefix</code></td>
+<td>str</td>
+<td>'ENSG'</td>
+<td>Gene-ID prefix selecting species A features.</td>
+</tr>
+<tr>
+<td><code>species_b_prefix</code></td>
+<td>str</td>
+<td>'ENSMUSG'</td>
+<td>Gene-ID prefix selecting species B features.</td>
+</tr>
+<tr>
+<td><code>species_a_name</code></td>
+<td>str</td>
+<td>'human'</td>
+<td>Display and assignment name for species A.</td>
+</tr>
+<tr>
+<td><code>species_b_name</code></td>
+<td>str</td>
+<td>'mouse'</td>
+<td>Display and assignment name for species B.</td>
+</tr>
+<tr>
+<td><code>expected_species_map</code></td>
+<td>Mapping[str, str] | None</td>
+<td>None</td>
+<td>Optional mapping from values in <code>expected_col</code> to species A, species B, <code>control</code>, or <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>assignment_threshold</code></td>
+<td>float</td>
+<td>0.5</td>
+<td>Minimum within-pair fraction required for a species call. Use a value above 0.5 for mutually exclusive majority criteria; at a 0.5 tie, species A is selected first. This is a classification threshold, not a validated purity cutoff.</td>
+</tr>
+<tr>
+<td><code>min_species_umi</code></td>
+<td>float</td>
+<td>0</td>
+<td>Minimum species-A-plus-species-B UMI count; lower-count wells are called <code>low_umi</code>.</td>
+</tr>
+<tr>
+<td><code>human_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_a_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>mouse_prefix</code></td>
+<td>str | None</td>
+<td>None</td>
+<td>Backward-compatible alias for <code>species_b_prefix</code>.</td>
+</tr>
+<tr>
+<td><code>nrow_plate</code></td>
+<td>int | None</td>
+<td>None</td>
+<td>Maximum number of plate panels per row in the barnyard, purity, and concordance figures.</td>
+</tr>
+<tr>
+<td><code>barnyard_metric_species</code></td>
+<td>str | Sequence[str] | None</td>
+<td>'base'</td>
+<td>Species selection forwarded to the barnyard <code>metric_species</code> option; defaults to assigned base species present in the data.</td>
+</tr>
+<tr>
+<td><code>palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Backward-compatible fallback palette for every categorical layer. Role-specific palettes below override it.</td>
+</tr>
+<tr>
+<td><code>expected_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Colors for expected labels or cell types in the barnyard and purity plots. Accepts a Seaborn name, color sequence, category mapping, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>observed_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Fill colors for observed-species categories in the concordance bars.</td>
+</tr>
+<tr>
+<td><code>plate_palette</code></td>
+<td>PaletteSpec</td>
+<td>None</td>
+<td>Fill and point colors for plate groups in QC violins and species-fraction plots.</td>
+</tr>
+<tr>
+<td><code>reference_line_color</code></td>
+<td>str</td>
+<td>'#7F7F7F'</td>
+<td>Color of the barnyard balance diagonal and purity diagonal.</td>
+</tr>
+<tr>
+<td><code>guide_line_color</code></td>
+<td>str</td>
+<td>'#CBD5E1'</td>
+<td>Color of the 50% horizontal and vertical guides in the purity plot.</td>
+</tr>
+<tr>
+<td><code>annotation_color</code></td>
+<td>str</td>
+<td>'#D32F2F'</td>
+<td>Color of external barnyard summary statistics and QC median labels.</td>
+</tr>
+<tr>
+<td><code>edge_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Point and stacked-bar edge color across the report.</td>
+</tr>
+<tr>
+<td><code>grid_color</code></td>
+<td>str</td>
+<td>'#DCE6F2'</td>
+<td>Color of dashed panel grid lines across all figures.</td>
+</tr>
+<tr>
+<td><code>panel_border_color</code></td>
+<td>str</td>
+<td>'#334155'</td>
+<td>Color of the complete border around every plot panel.</td>
+</tr>
+<tr>
+<td><code>point_color</code></td>
+<td>str</td>
+<td>'#253746'</td>
+<td>Color of individual points overlaid on the mix-species QC violins.</td>
+</tr>
+<tr>
+<td><code>label_color</code></td>
+<td>str</td>
+<td>'white'</td>
+<td>Color of count labels placed inside concordance bars.</td>
+</tr>
+<tr>
+<td><code>point_alpha</code></td>
+<td>float</td>
+<td>0.72</td>
+<td>Opacity of barnyard/purity points and the fraction-plot point overlay; must be between zero and one.</td>
+</tr>
+<tr>
+<td><code>fill_alpha</code></td>
+<td>float</td>
+<td>0.95</td>
+<td>Opacity of stacked-bar and boxplot fills; must be between zero and one.</td>
+</tr>
+<tr>
+<td><code>show_observed_style</code></td>
+<td>bool</td>
+<td>True</td>
+<td>Whether barnyard and purity marker shapes also encode observed species. Set <code>False</code> for the cleaner reference-dashboard style.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Returns / side effects:</strong> A list of figure paths plus CSV tables: per-well metrics, summaries, concordance counts, contamination-by-base data, audit candidates, and a figure manifest.</p>
+<p>Set <code>expected_col='expected_species'</code> after <code>assign_well_species()</code> to make the intended species and off-target direction explicit and reproducible.</p>
+<h2 id="comparison-batch-effects-and-reproducibility">Comparison, batch effects and reproducibility</h2>
+<p>These signatures describe the installed DRUGseqPy 0.1.0 implementation used to verify this tutorial. Positional parameters and defaults are preserved; type annotations are omitted for readability.</p>
+<h3 id="audit_control_outliers"><code>audit_control_outliers</code></h3>
+<pre><code class="language-python">ds.audit_control_outliers(dsd, control_label='DMSO', control_col='compound', score_col='outlier_score', threshold=5.0, columns=None)
+</code></pre>
+<p>Returns a control-only pandas DataFrame. Does not modify or remove wells.</p>
+<p>The returned <code>excluded</code> flag means the score exceeds the supplied threshold; apply exclusions explicitly only after review. The default threshold is illustrative, not a universal QC cutoff.</p>
+<h3 id="plot_control_outlier_audit"><code>plot_control_outlier_audit</code></h3>
+<pre><code class="language-python">ds.plot_control_outlier_audit(audit, x='total_umi', y='n_genes_det', label_col='well_id', plate_col='plate_id', figsize=(8.3, 5.8))
+</code></pre>
+<p>Returns a Matplotlib Figure; does not change the data.</p>
+<p>Its legend says “Excluded control” for flagged rows even though the audit has not removed them. Clarify this in captions or rename the display labels.</p>
+<h3 id="correct_batch"><code>correct_batch</code></h3>
+<pre><code class="language-python">ds.correct_batch(dsd, batch_col='plate_id', method='limma_voom', covariate_cols=None, prior_count=1.0, inplace=True)
+</code></pre>
+<p>With <code>inplace=True</code>, returns None and replaces X with corrected log2-CPM; with False, returns an independent DrugSeqData. Saves batch_uncorrected and batch_corrected layers and batch settings in uns.</p>
+<p>Raw counts remain unchanged. Preserve biological covariates and check the design for confounding. For a fair before/after comparison, take the before view from batch_uncorrected. The edgeR option here is a Python TMM expression transformation; differential-expression edgeR separately needs R/edgeR and rpy2.</p>
+<h3 id="compute_batch_effect_metrics"><code>compute_batch_effect_metrics</code></h3>
+<pre><code class="language-python">ds.compute_batch_effect_metrics(before, after, batch_col='plate_id', group_col='compound', reduction='X_pca', n_dims=10, random_state=42)
+</code></pre>
+<p>Returns a pandas DataFrame with metric, before and after columns. Does not mutate the inputs.</p>
+<p>Both objects must have the requested embedding and exactly the same samples in the same order. Plate mixing alone does not prove that biology has been preserved.</p>
+<h3 id="run_pca"><code>run_pca</code></h3>
+<pre><code class="language-python">ds.run_pca(dsd, n_pcs=50, n_variable_genes=2000, use_highly_variable=True, random_state=42, inplace=True)
+</code></pre>
+<p>With inplace=True, returns None; otherwise returns a copy. Writes X_pca to obsm, PCs to varm, PCA statistics to uns, and highly_variable to var.</p>
+<p>Normalize X before use. Use use_highly_variable=False for the TMM/log2-CPM comparison shown here. The number of components is capped by sample and feature counts.</p>
+<h3 id="run_umap"><code>run_umap</code></h3>
+<pre><code class="language-python">ds.run_umap(dsd, dims=20, n_neighbors=15, min_dist=0.3, metric='euclidean', use_rep='X_pca', random_state=42, inplace=True)
+</code></pre>
+<p>With inplace=True, returns None; otherwise returns a copy. Writes X_umap and the Scanpy neighbor graph.</p>
+<p>Requires a precomputed representation, normally X_pca. A fixed random_state helps reproducibility; the embedding is exploratory.</p>
+<h3 id="run_tsne"><code>run_tsne</code></h3>
+<pre><code class="language-python">ds.run_tsne(dsd, dims=20, perplexity=30.0, use_rep='X_pca', random_state=42, inplace=True)
+</code></pre>
+<p>With inplace=True, returns None; otherwise returns a copy. Writes X_tsne and parameters in uns.</p>
+<p>Requires a precomputed representation and at least three samples. Perplexity is capped at n_samples minus one.</p>
+<h3 id="compute_within_plate_repeatability"><code>compute_within_plate_repeatability</code></h3>
+<pre><code class="language-python">ds.compute_within_plate_repeatability(dsd, plate_col='plate_id', group_col='compound', min_replicates=2, use_norm=False, method='pearson')
+</code></pre>
+<p>Returns a pandas DataFrame of within-plate, within-treatment replicate-pair correlations. Does not mutate the object.</p>
+<p>use_norm=False uses log10(raw UMI + 1); True uses X as supplied. Correlations between replicate wells measure repeatability, not treatment-effect reproducibility.</p>
+<h3 id="summarise_within_plate_repeatability"><code>summarise_within_plate_repeatability</code></h3>
+<pre><code class="language-python">ds.summarise_within_plate_repeatability(repeatability, plate_col='plate_id', group_col='compound', value_col='correlation')
+</code></pre>
+<p>Returns a pandas DataFrame summarizing the pair table.</p>
+<p>Supply the pair table from compute_within_plate_repeatability. Pairs sharing a well are statistically dependent.</p>
+<h3 id="compute_cross_plate_reproducibility"><code>compute_cross_plate_reproducibility</code></h3>
+<pre><code class="language-python">ds.compute_cross_plate_reproducibility(dsd, plate_col='plate_id', group_col='compound', reference='DMSO', exclude_levels=('water',), method='limma_voom', min_replicates=2, fdr_threshold=0.05, lfc_threshold=0.5)
+</code></pre>
+<p>Returns a dictionary containing summary, plate_results, gene_results and config. Does not store these results in the input object.</p>
+<p>Fits DE separately on each plate. Every requested treatment needs adequate replication and controls on each plate. The normalized-expression fields use X as supplied, so normalize first. Gene-level correlations can be undefined for constant profiles.</p>
+<h3 id="run_comparison"><code>run_comparison</code></h3>
+<pre><code class="language-python">ds.run_comparison(dsd, case, control, group_col='compound', method='limma_voom', batch_cols=None, within_plate=True, min_replicates=2, fdr_threshold=0.05, lfc_threshold=0.5, contrast_name=None)
+</code></pre>
+<p>Returns a DE pandas DataFrame for one contrast; uses the raw counts layer.</p>
+<p>Positive logFC means higher expression in case than control. Include batch_cols for a plate-adjusted model. within_plate restricts controls to plates represented among the case samples; it does not itself fit separate per-plate models.</p>
+<h3 id="compute_multi_de"><code>compute_multi_de</code></h3>
+<pre><code class="language-python">ds.compute_multi_de(dsd, compounds=None, reference='DMSO', compound_col='compound', method='limma_voom', within_plate=True, min_replicates=2, n_jobs=1, fdr_threshold=0.05, lfc_threshold=0.5, inplace=True, *, methods=None, comparisons=None, group_col=None, batch_cols=None, exclude_levels=None)
+</code></pre>
+<p>With inplace=True, returns None; otherwise returns an independent DrugSeqData. Rebuilds comparison_results and comparison_failures in uns; default compound-versus-reference runs also populate de_results.</p>
+<p>Check uns["comparison_failures"] because failed contrasts can be recorded as warnings. Raw counts supply DE. Multiple requested methods use keys such as contrast::method.</p>
+<h3 id="summarise_comparison"><code>summarise_comparison</code></h3>
+<pre><code class="language-python">ds.summarise_comparison(dsd, fdr_threshold=0.05, lfc_threshold=0.5)
+</code></pre>
+<p>Returns a pandas DataFrame of contrast-level tested/significant gene counts and cutoffs.</p>
+<p>Check for an empty table before choosing a priority contrast. Selecting the strongest example is a presentation choice, not independent validation.</p>
+<h3 id="run_enrichment"><code>run_enrichment</code></h3>
+<pre><code class="language-python">ds.run_enrichment(dsd, contrasts=None, libraries=('hallmark', 'go_bp', 'reactome', 'kegg'), gene_set_paths=None, mode=('gsea', 'ora'), rank_by='stat', fdr_threshold=0.05, lfc_threshold=0.5, n_perm=1000, min_size=15, max_size=500, species='Human', background='all_tested', seed=42, cache_dir=None, allow_network=False, inplace=True)
+</code></pre>
+<p>With inplace=True, returns None; otherwise returns an independent DrugSeqData. Stores per-contrast libraries in enrichment_results and the flattened summary in enrichment_summary.</p>
+<p>Provide matching local GMT files for offline runs; allow_network=False is the default. Match organism and gene identifiers. Directional ORA uses significant up/down genes and an explicit tested-gene background. GSEA uses ranked genes.</p>
+<h3 id="enrichment_summary"><code>enrichment_summary</code></h3>
+<pre><code class="language-python">ds.enrichment_summary(dsd)
+</code></pre>
+<p>Returns the flattened enrichment pandas DataFrame.</p>
+<p>An empty table can mean there are no eligible gene sets, no significant genes in a direction, or no stored enrichment results; inspect run diagnostics.</p>
+<h3 id="run_comparison_workflow"><code>run_comparison_workflow</code></h3>
+<pre><code class="language-python">ds.run_comparison_workflow(dsd, output_dir=None, *, comparisons=None, group_col='compound', reference='DMSO', exclude_levels=None, methods=('limma_voom',), batch_cols=None, within_plate=True, min_replicates=2, fdr_threshold=0.05, lfc_threshold=0.5, n_jobs=1, normalize=None, normalize_kwargs=None, filter_samples_kwargs=None, filter_genes_kwargs=None, enrichment=True, libraries=('hallmark', 'go_bp', 'reactome', 'kegg'), gene_set_paths=None, enrichment_mode=('gsea', 'ora'), n_perm=1000, min_size=15, max_size=500, species='Human', background='all_tested', seed=42, cache_dir=None, allow_network=False, figures=('volcano', 'heatmap', 'bar', 'box', 'violin', 'enrichment'), n_top_genes=60, boxplot_genes=None, formats=('png', 'pdf'), inplace=True)
+</code></pre>
+<p>Returns a dictionary with summary, manifest, figures, files and config, plus dsd when inplace=False. With an output directory, exports result tables, figures and configuration.</p>
+<p>Enrichment defaults to True: set enrichment=False for a minimal offline run. Inspect manifest statuses failed/partial and ensure summary is nonempty. It catches some stage failures instead of raising. Filtering is opt-in; normalize changes X while DE still uses raw counts.</p>
+<h3 id="plotting-helpers">Plotting helpers</h3>
+<p>These functions return a Matplotlib Figure and do not save it automatically. Use <code>fig.savefig(...)</code>, create its parent directory first, and close the figure when finished. They consume the objects or result tables described above.</p>
+<pre><code class="language-python">ds.plot_pca(dsd, color_by='compound', **kwargs)
+</code></pre>
+<pre><code class="language-python">ds.plot_umap(dsd, color_by='compound', **kwargs)
+</code></pre>
+<pre><code class="language-python">ds.plot_tsne(dsd, color_by='compound', **kwargs)
+</code></pre>
+<pre><code class="language-python">ds.plot_mds(dsd, group_by='sample_type', split_by=None, label_by='compound', n_top_genes=500, use_norm=True, figsize=None)
+</code></pre>
+<pre><code class="language-python">ds.plot_within_plate_repeatability(repeatability, plate_col='plate_id', group_col='compound', value_col='correlation', figsize=(14, 6.2))
+</code></pre>
+<pre><code class="language-python">ds.plot_within_plate_replicate_scatter(dsd, plate, compound, method='pearson', plate_col='plate_id', group_col='compound', label_col='well_id', use_norm=False, max_pairs=4, figsize=None)
+</code></pre>
+<pre><code class="language-python">ds.plot_within_plate_correlation_heatmap(dsd, plate, compound, method='pearson', plate_col='plate_id', group_col='compound', label_col='well_id', use_norm=False, figsize=(7.2, 6.2))
+</code></pre>
+<pre><code class="language-python">ds.plot_single_plate_de_volcano(reproducibility, plate, compound, fdr_threshold=0.05, lfc_threshold=0.5, n_label=5, figsize=(7, 5.8))
+</code></pre>
+<pre><code class="language-python">ds.plot_single_plate_de_layout(dsd, reproducibility, plate, compound, plate_col='plate_id', n_top_genes=30, nrow=8, ncol=12)
+</code></pre>
+<pre><code class="language-python">ds.plot_single_plate_de_heatmap(dsd, reproducibility, plate, compound, plate_col='plate_id', group_col='compound', n_top_genes=30, use_norm=True, figsize=(11, 7))
+</code></pre>
+<pre><code class="language-python">ds.plot_cross_plate_reproducibility(reproducibility, correlation_threshold=0.5, correlation_method='pearson', figsize=(13, 6.2))
+</code></pre>
+<pre><code class="language-python">ds.plot_plate_logfc_concordance(reproducibility, compounds=None, max_panels=4, value_type='log2fc', correlation_method='pearson', figsize=(11.5, 10.5))
+</code></pre>
+<pre><code class="language-python">ds.plot_deg_counts(dsd, contrasts=None, fdr_threshold=0.05, lfc_threshold=0.5, figsize=None)
+</code></pre>
+<pre><code class="language-python">ds.plot_comparison_volcano(dsd, contrast=None, method=None, lfc_threshold=0.5, fdr_threshold=0.05, n_label=15, figsize=(6, 5))
+</code></pre>
+<pre><code class="language-python">ds.plot_enrichment_dotplot(dsd, contrast=None, libraries=None, direction='up', mode='ora', n_terms=20, figsize=None)
+</code></pre>
+<p>For <code>plot_plate_logfc_concordance</code>, <code>value_type="normalized"</code> uses the X values present when reproducibility was computed. Use <code>value_type="log2fc"</code> to compare treatment effects. Plotting cutoffs should match the DE run.</p>
+<hr/>
+<p><a href="multi-plate-comparison.html">← Previous chapter</a> · <a href="troubleshooting.html">Next chapter →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="multi-plate-comparison.html"><small>Previous</small>Multi-plate comparison</a><a href="troubleshooting.html"><small>Next</small>Troubleshooting →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="api-reference.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#read-the-data-object">Read the data object</a><a href="#input-and-data-objects">Input and data objects</a><a href="#quality-control-metrics">Quality-control metrics</a><a href="#subsetting-and-filtering">Subsetting and filtering</a><a href="#plate-layouts-1">Plate layouts</a><a href="#qc-report-figures">QC report figures</a><a href="#mix-species-analysis">Mix-species analysis</a><a href="#comparison-batch-effects-and-reproducibility">Comparison, batch effects and reproducibility</a></nav></aside></div></body></html>

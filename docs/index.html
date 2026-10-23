@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Learn drugseqpy · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/index.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html" aria-current="page"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / LEARNING PATH</div><article><h1 id="learn-drugseqpy">Learn drugseqpy</h1>
+<p>Build a complete analysis from count matrices and plate metadata: inspect well quality, check mixed-species signal, compare treatments across plates, and interpret the saved results.</p>
+<p>These tutorials are written for new users. Each chapter explains the inputs, shows the Python calls, and connects the outputs to the next decision. You can read the same chapters as a website or directly on GitHub.</p>
+<h2 id="follow-the-learning-path">Follow the learning path</h2>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Chapter</th>
+<th>What you will be able to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="getting-started.html">Getting started</a></td>
+<td>Install the package and run a small practice workflow.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="input-preparation.html">Prepare inputs</a></td>
+<td>Align barcodes, validate counts and metadata, and check physical well positions.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="qc-workflow.html">Quality control</a></td>
+<td>Review library metrics, plate maps, marker expression, and optional read-level QC.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="mix-species-workflow.html">Mixed-species analysis</a></td>
+<td>Assign intended species and inspect purity, discordance, and reciprocal off-target signal.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="multi-plate-comparison.html">Multi-plate comparison</a></td>
+<td>Audit controls, diagnose batch effects, measure reproducibility, and fit plate-adjusted treatment effects.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="api-reference.html">API reference</a></td>
+<td>Find function signatures, parameters, returns, and related workflow steps.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Keep <a href="troubleshooting.html">Troubleshooting</a> nearby when adapting the examples.</p>
+<h2 id="understand-the-four-sample-labels">Understand the four sample labels</h2>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Dataset label</th>
+<th>Role in the tutorial</th>
+<th>Folder</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 1</td>
+<td>First plate in the treatment comparison</td>
+<td><code>data/sample_1/</code></td>
+</tr>
+<tr>
+<td>Sample 2</td>
+<td>Second plate with matching treatments and controls</td>
+<td><code>data/sample_2/</code></td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>First mixed-species plate for QC and species review</td>
+<td><code>data/sample_3/</code></td>
+</tr>
+<tr>
+<td>Sample 4</td>
+<td>Second mixed-species plate for QC and species review</td>
+<td><code>data/sample_4/</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Here <strong>Sample 1–4 are labels for plate datasets</strong>. Within a dataset, each observation is one well, and <code>sample_id</code> identifies that well. Sample 3 and Sample 4 form a different example from Sample 1 and Sample 2; do not pool all four for a treatment comparison.</p>
+<p>The detailed chapters retain anonymized worked figures and result tables. The bundled <strong>synthetic practice data</strong> are independently generated and contain no measurements from the worked example. They teach the same input schema and analysis calls, but their numerical results will differ. The practice data include low-depth and mixed wells to make the review steps useful.</p>
+<h2 id="choose-a-route">Choose a route</h2>
+<p>Start with <a href="getting-started.html">Getting started</a> to run the included practice data. If you already have count matrices, continue to <a href="input-preparation.html">Prepare inputs</a>, then run the same workflow on a separate data directory. Mixed-species analysis is optional for a single-species experiment. Enrichment requires suitable local gene-set files; STARsolo read-level QC requires separate read statistics.</p>
+<p><a href="getting-started.html">Start the tutorial →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="getting-started.html"><small>Next</small>Getting started →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="index.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#follow-the-learning-path">Follow the learning path</a><a href="#understand-the-four-sample-labels">Understand the four sample labels</a><a href="#choose-a-route">Choose a route</a></nav></aside></div></body></html>

@@ -1,0 +1,3 @@
+# Only needed to rebuild/check the static website; readers need no build tools.
+mistune>=3.0,<4
+beautifulsoup4>=4.12,<5

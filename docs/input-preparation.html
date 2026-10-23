@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prepare and validate your inputs · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/input-preparation.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html" aria-current="page"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / PREPARE INPUTS</div><article><h1 id="prepare-and-validate-your-inputs">Prepare and validate your inputs</h1>
+<p><a href="index.html">Tutorial home</a> · <a href="getting-started.html">Getting started</a> · <a href="qc-workflow.html">QC</a> · <a href="mix-species-workflow.html">Mixed species</a> · <a href="multi-plate-comparison.html">Multiple plates</a> · <a href="api-reference.html">API</a></p>
+<p>Every workflow starts with raw UMI counts and a table that identifies each measured well. Complete these checks once, then continue to the <a href="qc-workflow.html">QC workflow</a>. The names <strong>Sample 1–4</strong> are neutral tutorial labels. The examples below describe a file contract; they do not include an experimental dataset.</p>
+<h2 id="1-keep-the-matrix-and-metadata-together">1. Keep the matrix and metadata together</h2>
+<p>Use one directory per sample, with the three compressed matrix files directly inside its <code>matrix/</code> subdirectory:</p>
+<pre><code class="language-text">data/
+├── sample_1/
+│   ├── matrix/
+│   │   ├── matrix.mtx.gz
+│   │   ├── features.tsv.gz
+│   │   └── barcodes.tsv.gz
+│   └── metadata.csv
+├── sample_2/
+│   ├── matrix/
+│   └── metadata.csv
+├── sample_3/
+│   ├── matrix/
+│   └── metadata.csv
+└── sample_4/
+    ├── matrix/
+    └── metadata.csv
+</code></pre>
+<p>The matrix bundle stores <strong>features × wells</strong>. Feature rows follow <code>features.tsv.gz</code>; well columns follow <code>barcodes.tsv.gz</code>. The loader returns a <code>DrugSeqData</code> object whose underlying AnnData uses <strong>wells × features</strong>, and keeps raw counts in <code>layers["counts"]</code>.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>matrix.mtx.gz</code></td>
+<td>Nonnegative, finite, integer UMI counts. Use raw counts, not CPM, normalized expression, log values, or z-scores.</td>
+</tr>
+<tr>
+<td><code>features.tsv.gz</code></td>
+<td>Stable feature ID in column 1; gene symbol in column 2 when available. Feature IDs should be unique. Symbols may repeat and are unsuitable as universal join keys.</td>
+</tr>
+<tr>
+<td><code>barcodes.tsv.gz</code></td>
+<td>One barcode per matrix column, in exactly the same order.</td>
+</tr>
+<tr>
+<td>Metadata</td>
+<td>One row per intended measured well. Join by an explicit barcode column; row order alone is insufficient.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Record whether the matrix contains all assigned wells or only wells retained by an upstream filter. A well absent from a filtered matrix is not a measured zero. Keep the inclusion rule consistent when comparing samples and retain an exclusion table when subsetting.</p>
+<h2 id="2-describe-the-experimental-design-explicitly">2. Describe the experimental design explicitly</h2>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Metadata field</th>
+<th>Meaning and checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plate_id</code></td>
+<td>Physical plate identifier. Use <code>Sample 1</code>–<code>Sample 4</code> for the tutorial examples. Use distinct IDs for different plates; a sequencing sample and a physical plate are different concepts.</td>
+</tr>
+<tr>
+<td><code>barcode</code></td>
+<td>Matrix join key. It must be unique within the matrix being loaded. Preserve it as text.</td>
+</tr>
+<tr>
+<td><code>well_id</code></td>
+<td>Well label. If used for plotting, it must encode the correct physical position; see the coordinate check below.</td>
+</tr>
+<tr>
+<td><code>compound</code></td>
+<td>Exact condition label. Use consistent spelling and case for controls and treatments.</td>
+</tr>
+<tr>
+<td><code>dose</code>, <code>dose_unit</code>, <code>time</code></td>
+<td>Explicit experimental values when known. Keep unknown values missing; do not invent a dose or time from a label.</td>
+</tr>
+<tr>
+<td><code>sample_type</code></td>
+<td>Set explicitly where possible: <code>treatment</code>, <code>DMSO</code>, <code>vehicle</code>, <code>positive_ctrl</code>, <code>negative_ctrl</code>, or <code>media</code>.</td>
+</tr>
+<tr>
+<td><code>total_well</code></td>
+<td>Nominal plate capacity, such as 96; this is not the number of measured wells.</td>
+</tr>
+<tr>
+<td><code>x</code>, <code>y</code></td>
+<td>In this tutorial's input convention, <code>x</code> is physical column and <code>y</code> is physical row, both starting at 1.</td>
+</tr>
+<tr>
+<td><code>expected_species</code></td>
+<td>Optional designed species assignment for the mixed-species workflow. It should come from the experimental design.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The loader can derive <code>sample_type</code> from a few exact <code>compound</code> labels, but that convenience does not establish the control design. Keep an explicit list of control well IDs, test conditions, exclusions, and the experimental unit that constitutes an independent replicate.</p>
+<p>For multiple plates, include separate donor, batch, dose, and time fields where they affect the design. Repeated treatment labels within a plate are legitimate replicates; repeated barcode keys within one input matrix are ambiguous.</p>
+<h2 id="3-check-identity-before-importing">3. Check identity before importing</h2>
+<p>Run this from your analysis directory after installing <code>drugseqpy</code>. Every matrix well must have metadata. Metadata can also describe wells absent from the supplied matrix, for example blank wells omitted upstream; the example saves those rows in an inclusion audit. If exact equality is required by your experiment, enable the stricter check below. Keep unoccupied physical positions without barcodes in a separate layout annotation table.</p>
+<pre><code class="language-python">from pathlib import Path
+import gzip
+
+import numpy as np
+import pandas as pd
+from scipy import sparse
+import drugseqpy as ds
+
+matrix_dir = Path("data/sample_1/matrix")
+metadata_path = Path("data/sample_1/metadata.csv")
+
+metadata = pd.read_csv(metadata_path, dtype=str, keep_default_na=False)
+required = {"plate_id", "barcode", "well_id", "compound", "sample_type"}
+assert required &lt;= set(metadata.columns), "Missing required tutorial metadata"
+assert not metadata[list(required)].eq("").any().any(), "Empty identifiers or labels"
+
+with gzip.open(matrix_dir / "barcodes.tsv.gz", "rt") as handle:
+    matrix_ids = pd.Index([line.strip() for line in handle])
+metadata_ids = pd.Index(metadata["barcode"])
+assert metadata_ids.equals(metadata_ids.str.strip()), "Trim metadata barcode whitespace"
+
+# The loader removes a terminal '-1'; check uniqueness after that operation.
+matrix_keys = matrix_ids.str.replace(r"-1$", "", regex=True)
+metadata_keys = metadata_ids.str.replace(r"-1$", "", regex=True)
+assert matrix_keys.is_unique and metadata_keys.is_unique, "Duplicate normalized barcodes"
+assert not matrix_keys.isin([""]).any(), "Empty matrix barcode"
+assert set(matrix_keys) &lt;= set(metadata_keys), "Matrix wells lack metadata"
+require_exact_well_set = False
+if require_exact_well_set:
+    assert set(matrix_keys) == set(metadata_keys), "Matrix and metadata wells differ"
+
+Path("results/input-checks").mkdir(parents=True, exist_ok=True)
+metadata_audit = metadata.copy()
+metadata_audit["in_matrix"] = metadata_keys.isin(matrix_keys)
+metadata_audit.to_csv("results/input-checks/sample_1_metadata_audit.csv", index=False)
+print("Metadata wells absent from matrix:", int((~metadata_audit["in_matrix"]).sum()))
+
+with gzip.open(matrix_dir / "features.tsv.gz", "rt") as handle:
+    features = pd.read_csv(handle, sep="\t", header=None, dtype=str)
+assert features[0].notna().all() and features[0].is_unique, "Invalid feature IDs"
+
+dsd = ds.create_drugseq_from_files(
+    matrix_dir,
+    metadata_path,
+    metadata_key="barcode",
+    min_overlap=1.0,
+)
+assert dsd.shape == (len(matrix_keys), len(features))
+assert dsd.obs_names.equals(matrix_keys), "Unexpected observation order"
+assert dsd.var_names.equals(pd.Index(features[0])), "Unexpected feature order"
+
+counts = dsd.layers["counts"]
+values = counts.data if sparse.issparse(counts) else np.asarray(counts).ravel()
+assert np.isfinite(values).all(), "Nonfinite counts"
+assert (values &gt;= 0).all(), "Negative counts"
+assert np.equal(values, np.floor(values)).all(), "Noninteger counts"
+
+# Retain an independently calculated reference for subsequent QC tables.
+raw_totals = np.asarray(counts.sum(axis=1)).ravel()
+raw_detected = np.asarray((counts &gt; 0).sum(axis=1)).ravel()
+input_audit = dsd.obs[["plate_id", "barcode", "well_id", "compound"]].copy()
+input_audit["raw_umi"] = raw_totals
+input_audit["raw_detected_features"] = raw_detected
+input_audit.to_csv("results/input-checks/sample_1_input_audit.csv")
+</code></pre>
+<p><code>min_overlap=1.0</code> requires every matrix barcode to appear in metadata. It does not reject extra metadata rows. The explicit audit preserves those absent wells, while the optional equality assertion supports experiments that require exactly matching sets. The loader aligns rows by the join key rather than by the original CSV order.</p>
+<p>These checks catch common format and alignment mistakes. Integer-valued expression alone cannot prove that a matrix contains raw counts; confirm how the matrix was produced as part of your private analysis record.</p>
+<p><a id="physical-coordinates"></a></p>
+<h2 id="4-verify-physical-plate-positions">4. Verify physical plate positions</h2>
+<p>The current plate helper gives <strong>parseable <code>well_id</code> values priority over <code>x/y</code></strong>. <code>A1</code> means row A, column 1. Numeric and <code>Well-dT</code> labels use column-major numbering: for an 8-row plate, 1–8 occupy the first column. A barcode label that looks like a numbered well can therefore produce a plausible but incorrect map when numbering differs from physical position.</p>
+<p>Use the current layout annotations to reconcile positions. For an 8 × 12 plate, this example preserves the original well label and gives a plotting copy explicit physical coordinates:</p>
+<pre><code class="language-python">plot_dsd = dsd.copy()
+plot_dsd.obs["well_label"] = plot_dsd.obs["well_id"].astype(str)
+
+x = pd.to_numeric(plot_dsd.obs["x"], errors="raise")
+y = pd.to_numeric(plot_dsd.obs["y"], errors="raise")
+assert x.notna().all() and y.notna().all()
+assert x.eq(x.round()).all() and y.eq(y.round()).all()
+assert x.between(1, 12).all() and y.between(1, 8).all()
+assert not pd.DataFrame({
+    "plate_id": plot_dsd.obs["plate_id"], "x": x, "y": y
+}).duplicated().any(), "Two observations occupy one physical position"
+
+plot_dsd.obs["well_id"] = [
+    f"{chr(64 + int(row))}{int(column)}" for row, column in zip(y, x)
+]
+layout = ds.build_plate_layout(plot_dsd.obs, nrow=8, ncol=12)
+assert np.array_equal(layout["row"].to_numpy(), y.to_numpy())
+assert np.array_equal(layout["column"].to_numpy(), x.to_numpy())
+layout.to_csv("results/input-checks/sample_1_layout_audit.csv", index=False)
+</code></pre>
+<p>Use <code>plot_dsd</code> for plate figures and <code>label_col="well_label"</code> where the plotting function accepts it to display the original labels. Keep the analysis object and barcode identities unchanged. For another plate shape, adapt the row labels and bounds explicitly. Check a known occupied position and a known empty position against your design before interpreting spatial patterns. An empty position is different from an occupied well with zero counts.</p>
+<h2 id="5-make-observation-ids-unique-before-merging">5. Make observation IDs unique before merging</h2>
+<p>Different plates can reuse the same barcode sequence. Keep <code>barcode</code> as the original join key and give observations globally unique names before calling <code>merge_drugseq_objects</code>:</p>
+<pre><code class="language-python"># Run after loading each object; use sample_2, sample_3, or sample_4 as appropriate.
+sample_key = "sample_1"
+dsd.adata.obs_names = pd.Index([
+    f"{sample_key}|{plate}|{barcode}"
+    for plate, barcode in zip(dsd.obs["plate_id"], dsd.obs["barcode"])
+])
+dsd.obs["sample_id"] = dsd.obs_names
+assert dsd.obs_names.is_unique
+</code></pre>
+<p>The merge function rejects duplicate observation IDs. It uses the union of features and fills missing features with zeros, so verify that the samples used compatible gene annotations before merging. A gene absent from a reference is not evidence that it was biologically unexpressed. For a controlled comparison, explicitly reconcile feature IDs and inspect the shared feature set first.</p>
+<h2 id="6-keep-comparisons-and-reports-reproducible">6. Keep comparisons and reports reproducible</h2>
+<ul>
+<li><strong>Record inclusion separately from QC flags.</strong> Save the initial well set, upstream filtered status, your quality rule, and each exclusion reason. Write <code>AND</code> or <code>OR</code> explicitly when combining UMI and detected-gene cutoffs. A flag alone does not authorize exclusion.</li>
+<li><strong>State what each count measures.</strong> Input read pairs, barcode-matched reads, deduplicated UMIs, and detected features are different quantities. Save the denominator of every percentage. If reporting only symbol-annotated genes, label that subset separately from all detected features.</li>
+<li><strong>Separate depth adjustment from normalization.</strong> Equal-read comparisons require defined sampling and alignment inputs. Normalizing a count matrix does not recreate an equal-read sequencing experiment. For paired wells, record the matching key and report wells excluded from the intersection.</li>
+<li><strong>Keep expected species independent of the outcome.</strong> A species inferred from a baseline sample is a derived label, not an independent designed truth. Record that distinction before interpreting agreement or contamination.</li>
+<li><strong>Preserve statistical decisions.</strong> Save the exact control IDs, replicate unit, model formula, contrasts, filtering rule, normalization settings, gene-set snapshot, and tested-gene background. Pairwise correlations sharing a well are not independent replicates.</li>
+<li><strong>Save outputs that explain the figures.</strong> Keep per-well QC and layout tables, complete contrast results, gene-resolution audits, software versions, and seeds with your analysis. Rebuilding HTML from saved results does not refit a model.</li>
+</ul>
+<p>Before sharing a report, verify that its displayed totals agree with the saved tables, its figures load, its links resolve, and its controls and plate labels match the intended analysis. Test the navigation and tables at both desktop and narrow widths. A combined plate viewer changes presentation; it does not justify pooling otherwise incompatible designs.</p>
+<p>Continue to <a href="qc-workflow.html">QC</a>, then choose <a href="mix-species-workflow.html">mixed-species QC</a> or <a href="multi-plate-comparison.html">multi-plate comparison</a>. Use the <a href="api-reference.html">API reference</a> to check parameters and return values.</p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="getting-started.html"><small>Previous</small>Getting started</a><a href="qc-workflow.html"><small>Next</small>Quality control →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="input-preparation.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#1-keep-the-matrix-and-metadata-together">1. Keep the matrix and metadata together</a><a href="#2-describe-the-experimental-design-explicitly">2. Describe the experimental design explicitly</a><a href="#3-check-identity-before-importing">3. Check identity before importing</a><a href="#4-verify-physical-plate-positions">4. Verify physical plate positions</a><a href="#5-make-observation-ids-unique-before-merging">5. Make observation IDs unique before merging</a><a href="#6-keep-comparisons-and-reports-reproducible">6. Keep comparisons and reports reproducible</a></nav></aside></div></body></html>

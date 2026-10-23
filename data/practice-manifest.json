@@ -1,0 +1,48 @@
+{
+  "kind": "synthetic",
+  "seed": 271828,
+  "datasets": [
+    {
+      "dataset": "Sample 1",
+      "wells": 48,
+      "features": 800,
+      "total_umi": 577959
+    },
+    {
+      "dataset": "Sample 2",
+      "wells": 48,
+      "features": 800,
+      "total_umi": 540944
+    },
+    {
+      "dataset": "Sample 3",
+      "wells": 48,
+      "features": 800,
+      "total_umi": 342104
+    },
+    {
+      "dataset": "Sample 4",
+      "wells": 48,
+      "features": 800,
+      "total_umi": 323862
+    }
+  ],
+  "sha256": {
+    "sample_1/metadata.csv": "8b9e91cc389ffb4801fed8a57bc54163ecfe0d1e07ec53d0aecc181f56f22683",
+    "sample_2/metadata.csv": "adac060240acf344e7b5b3bda94b1e80cbd0944010c18d4ff68d8f8601b343e5",
+    "sample_3/metadata.csv": "90ae40666efce1b03a9ca72fad684bb577a086fe9db0ad899631bd36672786de",
+    "sample_4/metadata.csv": "78885530b98eb78961a8c1a66b9155742ab8edd5d890f61e64ce0820679e1e60",
+    "sample_1/matrix/barcodes.tsv.gz": "716b7690c045ff4372763c70b5bd69a60ace4e26d81c9b24d82b30e1ed05b376",
+    "sample_1/matrix/features.tsv.gz": "159b2786f450f9502de198d714c6bdfd781e56b4daa80d9f4c91a6ad3efcd55b",
+    "sample_1/matrix/matrix.mtx.gz": "c5ff34369fdc3bf78097669d51fa6da05f02fd2abe80670ac4e6689829d3bf84",
+    "sample_2/matrix/barcodes.tsv.gz": "716b7690c045ff4372763c70b5bd69a60ace4e26d81c9b24d82b30e1ed05b376",
+    "sample_2/matrix/features.tsv.gz": "159b2786f450f9502de198d714c6bdfd781e56b4daa80d9f4c91a6ad3efcd55b",
+    "sample_2/matrix/matrix.mtx.gz": "2361b88af097dcca7c3a401523f837996f6035e2a453c8c210edc89c554aecae",
+    "sample_3/matrix/barcodes.tsv.gz": "716b7690c045ff4372763c70b5bd69a60ace4e26d81c9b24d82b30e1ed05b376",
+    "sample_3/matrix/features.tsv.gz": "4befcc559d583cf0af63ecaf408629fdafe477c5202e93873fdc748f435daf0b",
+    "sample_3/matrix/matrix.mtx.gz": "61ba7c368b30ba11f963e40cc0c96a28561197aa37d35d0bf023589265454caf",
+    "sample_4/matrix/barcodes.tsv.gz": "716b7690c045ff4372763c70b5bd69a60ace4e26d81c9b24d82b30e1ed05b376",
+    "sample_4/matrix/features.tsv.gz": "4befcc559d583cf0af63ecaf408629fdafe477c5202e93873fdc748f435daf0b",
+    "sample_4/matrix/matrix.mtx.gz": "a53dadac25be09add94703c12f45876951101199282f2ce8020c237b4b905de8"
+  }
+}
