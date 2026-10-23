@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Getting started · drugseqpy tutorials</title>
-<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
 <link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
 <div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/getting-started.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
-<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html" aria-current="page"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html" aria-current="page"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
 <div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
 <main id="main"><div class="chapter-label">DRUGSEQPY / GETTING STARTED</div><article><h1 id="getting-started">Getting started</h1>
 <p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Next: prepare inputs</a></p>
@@ -37,15 +37,16 @@ python -m pip install "git+https://github.com/FupaulHuang/drugseqpy.git"
 <p>To generate another practice copy without overwriting your inputs:</p>
 <pre><code class="language-bash">python scripts/make_practice_data.py --output practice-copy
 </code></pre>
-<h2 id="3-run-qc-species-review-and-comparison">3. Run QC, species review, and comparison</h2>
+<h2 id="3-run-qc-species-review-and-treatment-comparisons">3. Run QC, species review, and treatment comparisons</h2>
 <p>Run from the tutorial repository root. Start with QC:</p>
 <pre><code class="language-bash">python scripts/run_tutorial.py qc --data-dir data --output-dir results
 </code></pre>
-<p>Then run the other two workflows:</p>
+<p>Then run species review and the two treatment-comparison workflows:</p>
 <pre><code class="language-bash">python scripts/run_tutorial.py species --data-dir data --output-dir results
+python scripts/run_tutorial.py single-plate --data-dir data --output-dir results
 python scripts/run_tutorial.py comparison --data-dir data --output-dir results
 </code></pre>
-<p>Or run all three with <code>python scripts/run_tutorial.py all</code>. The runner writes images and tables to <code>results/</code>. It does not change the input matrices. Open the PNGs in an image viewer and the CSV files in a spreadsheet or Python.</p>
+<p>Or run all four with <code>python scripts/run_tutorial.py all</code>. The runner writes images and tables to <code>results/</code>. It does not change the input matrices. Open the PNGs in an image viewer and the CSV files in a spreadsheet or Python.</p>
 <div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
 <thead>
 <tr>
@@ -66,24 +67,37 @@ python scripts/run_tutorial.py comparison --data-dir data --output-dir results
 <td>Do intended and observed species agree, and are fractions supported by enough counts?</td>
 </tr>
 <tr>
-<td>Comparison</td>
+<td>Single-plate comparison</td>
+<td><code>results/single-plate/design_counts.csv</code>, <code>control_review.csv</code>, DE outputs</td>
+<td>Are the treatment and control replicated within Sample 1, and are exclusions justified?</td>
+</tr>
+<tr>
+<td>Multi-plate comparison</td>
 <td><code>results/comparison/design_counts.csv</code>, <code>batch_metrics.csv</code>, DE outputs</td>
 <td>Are treatment and control replicated on both plates, and are effects consistent?</td>
 </tr>
 </tbody>
 </table></div>
-<p>The runner is a concise starting workflow. The detailed chapters add more figure variants and explain the archived worked results. QC uses Sample 3 and Sample 4; comparison computes its own QC on Sample 1 and Sample 2. Existing figure/result names may be overwritten when you rerun into the same output directory, so use a new output directory for each analysis you want to keep.</p>
+<p>The runner is a concise starting workflow. The detailed chapters add more figure variants and explain the archived worked results. QC uses Sample 3 and Sample 4. The single-plate workflow computes QC on Sample 1; multi-plate comparison uses Sample 1 and Sample 2. Existing figure/result names may be overwritten when you rerun into the same output directory, so use a new output directory for each analysis you want to keep.</p>
+<h3 id="additional-comparison-chapters">Additional comparison chapters</h3>
+<p>After QC, inspect <a href="well-to-well-repeatability.html">well-to-well repeatability</a> using the dedicated script and its heatmap/scatter outputs:</p>
+<pre><code class="language-bash">python scripts/compare_well_repeatability.py --max-scatters 3 --synthetic
+</code></pre>
+<p>For an independent reference comparison, run the <a href="bulk-rnaseq-comparison.html">bulk RNA-seq helper</a> on the separately generated synthetic reference tables:</p>
+<pre><code class="language-bash">python scripts/compare_bulk_rnaseq.py
+</code></pre>
+<p>This command uses <code>data/bulk_practice/</code> and writes descriptive results to <code>results/bulk-comparison/</code>. These two additional analyses are separate from <code>run_tutorial.py all</code>; follow their chapters for matching rules, optional exclusions, and output interpretation.</p>
 <h2 id="4-read-the-results-before-changing-settings">4. Read the results before changing settings</h2>
 <p>The practice runner uses a dominant-species threshold of 0.9 and a minimum of 100 species-assigned UMIs. These are illustrative review settings. The archived mixed-species figures use 0.5 and 0 UMIs, so their call categories differ. Fractions and raw counts remain useful at either setting; call labels must be interpreted with their thresholds.</p>
-<p>The runner flags unusual DMSO controls without automatically excluding them. It excludes blank groups from treatment models and requires at least two wells per treatment and DMSO on each plate. A technical replicate is not automatically an independent biological replicate. Confirm the experimental unit before inference.</p>
+<p>Both comparison workflows flag unusual DMSO controls without automatically excluding them. It excludes blank groups from treatment models and requires at least two wells per treatment and DMSO on each plate. A technical replicate is not automatically an independent biological replicate. Confirm the experimental unit before inference.</p>
 <p>For reviewed exclusions, optional embeddings, local GMT enrichment, species mappings, and plate dimensions, inspect the explicit options:</p>
 <pre><code class="language-bash">python scripts/run_tutorial.py --help
 </code></pre>
-<p>The default comparison includes PCA, repeatability, cross-plate reproducibility, and differential expression. Add <code>--full-embeddings</code> for UMAP and t-SNE. Enrichment and STARsolo read-level statistics are not required for the first successful run.</p>
+<p>The <a href="single-plate-comparison.html">single-plate workflow</a> fits treatment effects within Sample 1 and does not estimate between-plate effects. The <a href="multi-plate-comparison.html">multi-plate workflow</a> adds batch diagnostics, repeatability, cross-plate reproducibility, and plate-adjusted differential expression. Add <code>--full-embeddings</code> for UMAP and t-SNE. Enrichment and STARsolo read-level statistics are not required for the first successful run.</p>
 <h2 id="5-bring-your-own-inputs">5. Bring your own inputs</h2>
 <p>Use a separate data directory with the same folder structure. Review <a href="input-preparation.html">Prepare inputs</a> first, particularly barcode matching and physical coordinates. The runner relabels the four datasets as Sample 1–4; it is tailored to these example roles and labels. The chapter code and API reference show how to generalize to other controls, species, plate counts, doses, and time points.</p>
 <p><a href="index.html">← Learning path</a> · <a href="input-preparation.html">Prepare inputs →</a></p>
 </article>
 <nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="index.html"><small>Previous</small>Learning path</a><a href="input-preparation.html"><small>Next</small>Prepare inputs →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="getting-started.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
-<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#1-install-drugseqpy">1. Install drugseqpy</a><a href="#2-inspect-the-practice-inputs">2. Inspect the practice inputs</a><a href="#3-run-qc-species-review-and-comparison">3. Run QC, species review, and comparison</a><a href="#4-read-the-results-before-changing-settings">4. Read the results before changing settings</a><a href="#5-bring-your-own-inputs">5. Bring your own inputs</a></nav></aside></div></body></html>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#1-install-drugseqpy">1. Install drugseqpy</a><a href="#2-inspect-the-practice-inputs">2. Inspect the practice inputs</a><a href="#3-run-qc-species-review-and-treatment-comparisons">3. Run QC, species review, and treatment comparisons</a><a href="#4-read-the-results-before-changing-settings">4. Read the results before changing settings</a><a href="#5-bring-your-own-inputs">5. Bring your own inputs</a></nav></aside></div></body></html>

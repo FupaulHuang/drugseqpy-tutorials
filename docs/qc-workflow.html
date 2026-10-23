@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quality-control workflow · drugseqpy tutorials</title>
-<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
 <link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
 <div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/qc-workflow.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
-<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html" aria-current="page"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html" aria-current="page"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
 <div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
 <main id="main"><div class="chapter-label">DRUGSEQPY / QUALITY CONTROL</div><article><h1 id="quality-control-workflow">Quality-control workflow</h1>
 <p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Prepare inputs</a> · <a href="api-reference.html">API reference</a></p>
@@ -280,7 +280,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     palette="colorblind",  # Seaborn name, color list, or mapping
 )
 </code></pre>
-<p><img alt="QC metric violin panels" decoding="async" loading="lazy" src="assets/figures/qc-01.png"/></p>
+<p><a aria-label="Open full-size figure: QC metric violin panels" class="figure-link" href="assets/figures/qc-01.png" rel="noopener" target="_blank"><img alt="QC metric violin panels" decoding="async" loading="lazy" src="assets/figures/qc-01.png"/></a></p>
 <p><strong>QC metric violin panels.</strong> Each metric has its own y-axis and is grouped by plate_id. Red median annotations sit above the corresponding violin bodies; individual wells remain visible as translucent points.</p>
 <h3 id="outlier-score-scatter">Outlier-score scatter</h3>
 <p><code>ds.generate_outlier_score_scatter_figure()</code> plots one sample per point with <code>outlier_score</code> on the y-axis. <code>groupby</code> controls both point color and sample ordering; its default is <code>plate_id</code>. This worked example sets <code>label_outliers=True</code> and labels the ten highest scores by <code>well_id</code>, verifying the annotation path. The optional <code>threshold</code> can restrict labels to points above a justified review cutoff.</p>
@@ -296,7 +296,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     max_labels=10,
 )
 </code></pre>
-<p><img alt="Sample outlier scores" decoding="async" loading="lazy" src="assets/figures/qc-02.png"/></p>
+<p><a aria-label="Open full-size figure: Sample outlier scores" class="figure-link" href="assets/figures/qc-02.png" rel="noopener" target="_blank"><img alt="Sample outlier scores" decoding="async" loading="lazy" src="assets/figures/qc-02.png"/></a></p>
 <p><strong>Sample outlier scores.</strong> Each point is one retained sample, colored by plate_id and ordered into plate groups along the x-axis. Higher MAD scores indicate more unusual multivariate QC profiles; they identify samples for review rather than automatic deletion.</p>
 <h4 id="colored-and-ordered-by-compound">Colored and ordered by compound</h4>
 <p>The second call changes <code>groupby</code> to <code>compound</code>. It does not recalculate the MAD scores. A custom <code>output_name</code> keeps this figure and its source table alongside the default plate-colored output.</p>
@@ -313,7 +313,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     output_name="Samples_3_4_Outlier_Score_Scatter_by_compound",
 )
 </code></pre>
-<p><img alt="Sample outlier scores colored by compound" decoding="async" loading="lazy" src="assets/figures/qc-03.png"/></p>
+<p><a aria-label="Open full-size figure: Sample outlier scores colored by compound" class="figure-link" href="assets/figures/qc-03.png" rel="noopener" target="_blank"><img alt="Sample outlier scores colored by compound" decoding="async" loading="lazy" src="assets/figures/qc-03.png"/></a></p>
 <p><strong>Sample outlier scores colored by compound.</strong> The MAD score is unchanged from the plate-colored view. Only point color and sample ordering change, making compound-associated QC patterns easier to inspect.</p>
 <h3 id="umi-density">UMI density</h3>
 <p><code>ds.generate_umi_density_figure()</code> creates only the total-UMI distribution figure and uses the same configurable grouping and palette interface.</p>
@@ -325,7 +325,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="Per-well UMI density" decoding="async" loading="lazy" src="assets/figures/qc-04.png"/></p>
+<p><a aria-label="Open full-size figure: Per-well UMI density" class="figure-link" href="assets/figures/qc-04.png" rel="noopener" target="_blank"><img alt="Per-well UMI density" decoding="async" loading="lazy" src="assets/figures/qc-04.png"/></a></p>
 <p><strong>Per-well UMI density.</strong> The density shape compares library-size distributions between Sample 3 and Sample 4 using plate names, not positional codes.</p>
 <h3 id="detected-gene-density">Detected-gene density</h3>
 <p><code>ds.generate_detected_gene_density_figure()</code> creates only the detected-gene distribution figure and uses the same configurable grouping and palette interface.</p>
@@ -337,7 +337,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="Per-well detected-gene density" decoding="async" loading="lazy" src="assets/figures/qc-05.png"/></p>
+<p><a aria-label="Open full-size figure: Per-well detected-gene density" class="figure-link" href="assets/figures/qc-05.png" rel="noopener" target="_blank"><img alt="Per-well detected-gene density" decoding="async" loading="lazy" src="assets/figures/qc-05.png"/></a></p>
 <p><strong>Per-well detected-gene density.</strong> A left-shifted plate would indicate lower sample complexity; a multimodal curve can indicate distinct well-quality populations.</p>
 <p><strong>Combined wrapper.</strong> <code>ds.generate_qc_distribution_figures()</code> now creates all four sample-QC outputs together: the selected violin metrics, outlier-score scatter, UMI density, and detected-gene density. The focused functions above remain useful when each code block should correspond to one figure.</p>
 <p><a id="plate-layout"></a></p>
@@ -362,7 +362,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     cmap="RdYlBu_r",
 )
 </code></pre>
-<p><img alt="Plate layout colored by detected UMI count" decoding="async" loading="lazy" src="assets/figures/qc-06.png"/></p>
+<p><a aria-label="Open full-size figure: Plate layout colored by detected UMI count" class="figure-link" href="assets/figures/qc-06.png" rel="noopener" target="_blank"><img alt="Plate layout colored by detected UMI count" decoding="async" loading="lazy" src="assets/figures/qc-06.png"/></a></p>
 <p><strong>Plate layout colored by detected UMI count.</strong> Compare intensity within and between plates to find spatial gradients, edge effects, or isolated low-yield wells. Labels are intentionally omitted.</p>
 <h3 id="detected-gene-count">Detected gene count</h3>
 <pre><code class="language-python">gene_count_plate = ds.generate_plate_layout_figures(
@@ -378,7 +378,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     cmap="RdYlBu_r",
 )
 </code></pre>
-<p><img alt="Plate layout colored by detected gene count" decoding="async" loading="lazy" src="assets/figures/qc-07.png"/></p>
+<p><a aria-label="Open full-size figure: Plate layout colored by detected gene count" class="figure-link" href="assets/figures/qc-07.png" rel="noopener" target="_blank"><img alt="Plate layout colored by detected gene count" decoding="async" loading="lazy" src="assets/figures/qc-07.png"/></a></p>
 <p><strong>Plate layout colored by detected gene count.</strong> This is a library-complexity view. A well can have many UMIs but relatively few detected genes when a small number of transcripts dominate.</p>
 <h3 id="compound-categories">Compound categories</h3>
 <pre><code class="language-python">compound_plate = ds.generate_plate_layout_figures(
@@ -393,7 +393,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="Plate layout colored by compound" decoding="async" loading="lazy" src="assets/figures/qc-08.png"/></p>
+<p><a aria-label="Open full-size figure: Plate layout colored by compound" class="figure-link" href="assets/figures/qc-08.png" rel="noopener" target="_blank"><img alt="Plate layout colored by compound" decoding="async" loading="lazy" src="assets/figures/qc-08.png"/></a></p>
 <p><strong>Plate layout colored by compound.</strong> The legend and well colors use the same categorical variable. This map checks randomization and the spatial placement of 231, 3T3, and water wells.</p>
 <h3 id="well-labels-with-a-fixed-fill">Well labels with a fixed fill</h3>
 <p><code>well_color="#E2E8F0"</code> sets the literal fill of occupied wells. It is not the name of a metadata field. <code>label_col</code> defaults to <code>None</code>; specifying it enables labels, whose color, size, style, and weight are adjustable. Here <code>nrow_plate=1</code> places one plate in each figure row, stacking Sample 3 and Sample 4 vertically and giving each label substantially more display space.</p>
@@ -417,7 +417,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     label_weight="normal",
 )
 </code></pre>
-<p><img alt="Plate layout labeled by well ID" decoding="async" loading="lazy" src="assets/figures/qc-09.png"/></p>
+<p><a aria-label="Open full-size figure: Plate layout labeled by well ID" class="figure-link" href="assets/figures/qc-09.png" rel="noopener" target="_blank"><img alt="Plate layout labeled by well ID" decoding="async" loading="lazy" src="assets/figures/qc-09.png"/></a></p>
 <p><strong>Plate layout labeled by well ID.</strong> Occupied wells use a pale fill so labels remain legible. Numbering is column-major: 1–8 down the first column.</p>
 <h3 id="single-gene-expression">Single-gene expression</h3>
 <p>When <code>plate_gene</code> is one string, the map displays only that gene's per-well expression. This worked example uses <code>"FN1"</code>. If multiple features share the requested symbol, their counts are summed for that gene.</p>
@@ -434,7 +434,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     cmap="RdYlBu_r",
 )
 </code></pre>
-<p><img alt="Spatial FN1 expression" decoding="async" loading="lazy" src="assets/figures/qc-10.png"/></p>
+<p><a aria-label="Open full-size figure: Spatial FN1 expression" class="figure-link" href="assets/figures/qc-10.png" rel="noopener" target="_blank"><img alt="Spatial FN1 expression" decoding="async" loading="lazy" src="assets/figures/qc-10.png"/></a></p>
 <p><strong>Spatial FN1 expression.</strong> A real single-gene expression map generated for FN1. The same call accepts any available gene symbol or feature ID.</p>
 <h3 id="gene-set-expression">Gene-set expression</h3>
 <p>When <code>plate_gene</code> is a list, each requested gene is resolved and summarized separately before the per-well values are combined. <code>gene_aggregation="mean"</code> is the default; <code>"sum"</code> and <code>"median"</code> are also supported. All requested genes must be present, preventing a partially matched signature from being plotted silently.</p>
@@ -452,7 +452,7 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     cmap="RdYlBu_r",
 )
 </code></pre>
-<p><img alt="Spatial FN1/CDH2 gene-set expression" decoding="async" loading="lazy" src="assets/figures/qc-11.png"/></p>
+<p><a aria-label="Open full-size figure: Spatial FN1/CDH2 gene-set expression" class="figure-link" href="assets/figures/qc-11.png" rel="noopener" target="_blank"><img alt="Spatial FN1/CDH2 gene-set expression" decoding="async" loading="lazy" src="assets/figures/qc-11.png"/></a></p>
 <p><strong>Spatial FN1/CDH2 gene-set expression.</strong> Each gene is first resolved independently and duplicate features for that gene are summed. The displayed value is then the mean expression across FN1 and CDH2 for each well.</p>
 <p><a id="gene-qc"></a></p>
 <h2 id="4-gene-summaries-and-markers">4. Gene summaries and markers</h2>
@@ -467,9 +467,9 @@ outlier_score_i = sqrt(sum_j(z_ij ** 2))
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="UMI totals per Ensembl ID" decoding="async" loading="lazy" src="assets/figures/qc-12.png"/></p>
+<p><a aria-label="Open full-size figure: UMI totals per Ensembl ID" class="figure-link" href="assets/figures/qc-12.png" rel="noopener" target="_blank"><img alt="UMI totals per Ensembl ID" decoding="async" loading="lazy" src="assets/figures/qc-12.png"/></a></p>
 <p><strong>UMI totals per Ensembl ID.</strong> This density uses group-specific feature totals from the actual matrix. groupby='plate_id' overlays the Sample 3 and Sample 4 curves by color in one axes.</p>
-<p><img alt="UMI totals per gene symbol" decoding="async" loading="lazy" src="assets/figures/qc-13.png"/></p>
+<p><a aria-label="Open full-size figure: UMI totals per gene symbol" class="figure-link" href="assets/figures/qc-13.png" rel="noopener" target="_blank"><img alt="UMI totals per gene symbol" decoding="async" loading="lazy" src="assets/figures/qc-13.png"/></a></p>
 <p><strong>UMI totals per gene symbol.</strong> This companion density uses group-specific totals for features with human-readable symbols; Sample 3 and Sample 4 remain overlaid rather than split into separate panels.</p>
 <h3 id="specific-marker-gene-panel">Specific marker-gene panel</h3>
 <p><code>ds.generate_marker_gene_figure()</code> accepts an explicit ordered marker list. The worked example supplies the actual MDA-MB-231 panel rather than using <code>None</code>: VIM, FN1, CDH2, CD44, EGFR, MMP9, TGFB1, SNAI1, TWIST1, and ITGB1. Here <code>groupby="compound"</code> compares the treatment categories <code>3T3</code> and <code>231</code> within each axes, while <code>split_by="plate_id"</code> creates separate Sample 3 and Sample 4 panels. Water controls are retained in <code>dsd</code> but excluded from the marker-only copy.</p>
@@ -493,7 +493,7 @@ marker_files = ds.generate_marker_gene_figure(
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="MDA-MB-231 marker expression by treatment and plate" decoding="async" loading="lazy" src="assets/figures/qc-14.png"/></p>
+<p><a aria-label="Open full-size figure: MDA-MB-231 marker expression by treatment and plate" class="figure-link" href="assets/figures/qc-14.png" rel="noopener" target="_blank"><img alt="MDA-MB-231 marker expression by treatment and plate" decoding="async" loading="lazy" src="assets/figures/qc-14.png"/></a></p>
 <p><strong>MDA-MB-231 marker expression by treatment and plate.</strong> Within each Sample 3 or Sample 4 facet, bars compare mean raw expression between the 3T3 and 231 treatment groups. Water controls are omitted from this marker-specific comparison. Interpret the panel as an identity/signal check, not a differential-expression test.</p>
 <h3 id="marker-dot-plot">Marker dot plot</h3>
 <p><code>ds.generate_marker_gene_dotplot_figure()</code> summarizes two complementary quantities in one compact panel: color is the group mean expression and dot area is the percentage of wells with expression greater than zero. The saved table also records the number of wells contributing to each dot.</p>
@@ -510,7 +510,7 @@ marker_files = ds.generate_marker_gene_figure(
     dot_max_size=280,
 )
 </code></pre>
-<p><img alt="Marker-expression dot plot" decoding="async" loading="lazy" src="assets/figures/qc-15.png"/></p>
+<p><a aria-label="Open full-size figure: Marker-expression dot plot" class="figure-link" href="assets/figures/qc-15.png" rel="noopener" target="_blank"><img alt="Marker-expression dot plot" decoding="async" loading="lazy" src="assets/figures/qc-15.png"/></a></p>
 <p><strong>Marker-expression dot plot.</strong> Color reports mean raw expression and dot area reports the percentage of wells with nonzero expression. Rows compare 3T3 and 231, while separate panels show Sample 3 and Sample 4.</p>
 <h3 id="marker-violin-plot">Marker violin plot</h3>
 <p><code>ds.generate_marker_gene_violin_figure()</code> retains the per-well distributions hidden by group means. Every gene receives an independent panel and y-axis; with <code>split_by="plate_id"</code>, each gene receives one Sample 3 panel and one Sample 4 panel. The 231 and 3T3 violins remain side by side within each panel. It shows raw expression by default; set <code>log_values=True</code> when a long upper tail compresses the lower part of the violins.</p>
@@ -526,7 +526,7 @@ marker_files = ds.generate_marker_gene_figure(
     log_values=False,      # show raw per-well expression
 )
 </code></pre>
-<p><img alt="Marker-expression violin plot" decoding="async" loading="lazy" src="assets/figures/qc-16.png"/></p>
+<p><a aria-label="Open full-size figure: Marker-expression violin plot" class="figure-link" href="assets/figures/qc-16.png" rel="noopener" target="_blank"><img alt="Marker-expression violin plot" decoding="async" loading="lazy" src="assets/figures/qc-16.png"/></a></p>
 <p><strong>Marker-expression violin plot.</strong> Each gene has its own panel and independent y-axis. Within a panel, side-by-side violins show the full per-well raw-expression distributions for 231 and 3T3; Sample 3 and Sample 4 are represented by separate gene panels.</p>
 <p><strong>Compatibility wrapper.</strong> <code>ds.generate_gene_summary_figures()</code> remains available for existing scripts and delegates to the UMI-distribution and grouped-bar functions. Call the dot-plot and violin functions independently when those views are required.</p>
 <p><a id="star-qc"></a></p>
@@ -557,7 +557,7 @@ star_read_files = ds.generate_star_read_qc_figure(
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="STARsolo read-level QC" decoding="async" loading="lazy" src="assets/figures/qc-17.png"/></p>
+<p><a aria-label="Open full-size figure: STARsolo read-level QC" class="figure-link" href="assets/figures/qc-17.png" rel="noopener" target="_blank"><img alt="STARsolo read-level QC" decoding="async" loading="lazy" src="assets/figures/qc-17.png"/></a></p>
 <p><strong>STARsolo read-level QC.</strong> Concentric rings report valid barcodes, Q30 CB+UMI, Q30 RNA, uniquely genome-mapped reads, and uniquely gene-mapped reads as percentages.</p>
 <h3 id="reads-per-well">Reads per well</h3>
 <p><code>ds.generate_star_read_count_violin_figure()</code> reads <code>cbMatch</code> from <code>CellReads.stats</code> and retains every analyzed well in <code>dsd</code>. The violin and overlaid points show the full per-well distribution for each plate; the mean and median labels are placed above the corresponding violin. A well without a matching STAR barcode is represented by zero reads and <code>matched_star_record=False</code> in the saved table rather than silently disappearing.</p>
@@ -572,7 +572,7 @@ star_read_files = ds.generate_star_read_qc_figure(
     annotation_color="#D32F2F",
 )
 </code></pre>
-<p><img alt="STAR matched reads per well" decoding="async" loading="lazy" src="assets/figures/qc-18.png"/></p>
+<p><a aria-label="Open full-size figure: STAR matched reads per well" class="figure-link" href="assets/figures/qc-18.png" rel="noopener" target="_blank"><img alt="STAR matched reads per well" decoding="async" loading="lazy" src="assets/figures/qc-18.png"/></a></p>
 <p><strong>STAR matched reads per well.</strong> Each point is an analyzed well and violin fills compare plates. Mean and median matched-read counts are labeled above each plate distribution; wells lacking a matching STAR record remain in the source table with zero reads and an explicit false match flag.</p>
 <h3 id="read-depth-saturation">Read-depth saturation</h3>
 <p>These saturation diagnostics compare read counts with detected genes across wells; they are not curves obtained by downsampling each library. They use original read and detected-gene values rather than log-scaled axes. <code>groupby</code> controls point color and keeps all groups in one axes by default. The red median label is placed at the upper-left outside the data region so it does not hide points.</p>
@@ -587,9 +587,9 @@ star_read_files = ds.generate_star_read_qc_figure(
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="STAR read saturation: Ensembl IDs" decoding="async" loading="lazy" src="assets/figures/qc-19.png"/></p>
+<p><a aria-label="Open full-size figure: STAR read saturation: Ensembl IDs" class="figure-link" href="assets/figures/qc-19.png" rel="noopener" target="_blank"><img alt="STAR read saturation: Ensembl IDs" decoding="async" loading="lazy" src="assets/figures/qc-19.png"/></a></p>
 <p><strong>STAR read saturation: Ensembl IDs.</strong> Raw read counts are on the x-axis and detected genes on the y-axis. The values are not log-transformed; a plateau suggests additional reads recover fewer new genes.</p>
-<p><img alt="STAR read saturation: gene symbols" decoding="async" loading="lazy" src="assets/figures/qc-20.png"/></p>
+<p><a aria-label="Open full-size figure: STAR read saturation: gene symbols" class="figure-link" href="assets/figures/qc-20.png" rel="noopener" target="_blank"><img alt="STAR read saturation: gene symbols" decoding="async" loading="lazy" src="assets/figures/qc-20.png"/></a></p>
 <p><strong>STAR read saturation: gene symbols.</strong> The same raw-scale saturation diagnostic using detected gene-symbol features. The dashed horizontal line is the median detected-gene count.</p>
 <h4 id="split-into-separate-panels">Split into separate panels</h4>
 <p>Set <code>split_by="plate_id"</code> when separate plate panels are useful. <code>nrow_plate</code> then controls the maximum number of split panels per row. The split output receives a <code>_split_by_plate_id</code> filename suffix and therefore does not overwrite the grouped figure.</p>
@@ -604,9 +604,9 @@ star_read_files = ds.generate_star_read_qc_figure(
     palette="colorblind",
 )
 </code></pre>
-<p><img alt="Split saturation: Ensembl IDs" decoding="async" loading="lazy" src="assets/figures/qc-21.png"/></p>
+<p><a aria-label="Open full-size figure: Split saturation: Ensembl IDs" class="figure-link" href="assets/figures/qc-21.png" rel="noopener" target="_blank"><img alt="Split saturation: Ensembl IDs" decoding="async" loading="lazy" src="assets/figures/qc-21.png"/></a></p>
 <p><strong>Split saturation: Ensembl IDs.</strong> Setting split_by='plate_id' creates one panel per plate while groupby still controls point colors within each panel.</p>
-<p><img alt="Split saturation: gene symbols" decoding="async" loading="lazy" src="assets/figures/qc-22.png"/></p>
+<p><a aria-label="Open full-size figure: Split saturation: gene symbols" class="figure-link" href="assets/figures/qc-22.png" rel="noopener" target="_blank"><img alt="Split saturation: gene symbols" decoding="async" loading="lazy" src="assets/figures/qc-22.png"/></a></p>
 <p><strong>Split saturation: gene symbols.</strong> The split view is useful when overplotting obscures plate-specific trends. Median labels sit outside the data region at the upper-left of each axes.</p>
 <p><a id="subsetting"></a></p>
 <h2 id="6-subset-wells-and-genes">6. Subset wells and genes</h2>

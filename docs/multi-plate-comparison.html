@@ -1,22 +1,22 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Multi-plate comparison workflow · drugseqpy tutorials</title>
-<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
 <link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
 <div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/multi-plate-comparison.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
-<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html" aria-current="page"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html" aria-current="page"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
 <div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
 <main id="main"><div class="chapter-label">DRUGSEQPY / MULTI-PLATE COMPARISON</div><article><h1 id="multi-plate-comparison-workflow">Multi-plate comparison workflow</h1>
 <p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Prepare inputs</a> · <a href="api-reference.html">API reference</a></p>
 <blockquote>
-<p><strong>Before you start:</strong> complete <a href="getting-started.html">Getting started</a>. Run code blocks in order from the repository root. “Sample 1–4” identify example plate datasets; each observation is one well. This chapter uses ** Sample 1 and Sample 2**. Worked results are shown for interpretation. The separately supplied synthetic practice inputs will produce different numbers.</p>
+<p><strong>Before you start:</strong> complete <a href="getting-started.html">Getting started</a>. Run code blocks in order from the repository root. “Sample 1–4” identify example plate datasets; each observation is one well. This chapter uses <strong>Sample 1 and Sample 2</strong>. Worked results are shown for interpretation. The separately supplied synthetic practice inputs will produce different numbers.</p>
 </blockquote>
 <p>Analyze two or more plates with explicit batch diagnosis, validated embedding correction, within-plate repeatability, cross-plate treatment-effect reproducibility, plate-adjusted differential expression, and enrichment.</p>
 <p><a id="overview"></a></p>
 <h2 id="overview-1">Overview</h2>
-<p>Use this workflow when the same treatment panel is measured on two or more plates. It adds three requirements to the single-plate analysis: diagnose batch structure, correct exploratory embeddings without corrupting counts, and quantify whether independently estimated treatment effects reproduce across plates.</p>
+<p>Use this workflow when the same treatment panel is measured on two or more plates. It adds three requirements to the <a href="single-plate-comparison.html">single-plate analysis</a>: diagnose batch structure, correct exploratory embeddings without corrupting counts, and quantify whether independently estimated treatment effects reproduce across plates.</p>
 <p><strong>Historical worked example:</strong> 186 input wells; 184 analysis wells; 13,415 tested genes; 16 cross-plate treatment checks.</p>
 <p><strong>Universal method, worked data.</strong> Sample 1/Sample 2 demonstrate the procedure. For three or more plates, batch regression receives every plate label, the DE design includes the full plate factor, and reproducibility is summarized over all plate pairs or with leave-one-plate-out estimates.</p>
 <p><a id="input"></a></p>
@@ -65,7 +65,7 @@ print(shared)  # review replication before any model is fit
     groupby="plate_id",
 )
 </code></pre>
-<p><img alt="QC distributions across plates" decoding="async" loading="lazy" src="assets/figures/comparison-01.png"/></p>
+<p><a aria-label="Open full-size figure: QC distributions across plates" class="figure-link" href="assets/figures/comparison-01.png" rel="noopener" target="_blank"><img alt="QC distributions across plates" decoding="async" loading="lazy" src="assets/figures/comparison-01.png"/></a></p>
 <p><strong>QC distributions across plates.</strong> Sample 1 and Sample 2 have similar median yield and complexity, with low-yield tails that require sample-level review.</p>
 <p><code>audit_control_outliers()</code> returns the DMSO audit table without plotting or filtering.</p>
 <pre><code class="language-python">control_audit = ds.audit_control_outliers(
@@ -106,7 +106,7 @@ print(shared)  # review replication before any model is fit
 <pre><code class="language-python">fig = ds.plot_control_outlier_audit(control_audit)
 fig.savefig("results/qc/dmso_outlier_audit.png", dpi=180)
 </code></pre>
-<p><img alt="Cross-plate DMSO audit" decoding="async" loading="lazy" src="assets/figures/comparison-02.png"/></p>
+<p><a aria-label="Open full-size figure: Cross-plate DMSO audit" class="figure-link" href="assets/figures/comparison-02.png" rel="noopener" target="_blank"><img alt="Cross-plate DMSO audit" decoding="async" loading="lazy" src="assets/figures/comparison-02.png"/></a></p>
 <p><strong>Cross-plate DMSO audit.</strong> Two DMSO controls exceed the worked outlier-score cutoff; the retained controls remain represented on both plates.</p>
 <p><strong>Control balance after filtering.</strong> Recompute the design table after exclusions. The worked analysis retains controls on both plates, so treatment and plate remain separable.</p>
 <h3 id="record-exclusions-and-prepare-expression">Record exclusions and prepare expression</h3>
@@ -152,12 +152,12 @@ for view in (before, corrected):
 <pre><code class="language-python">fig = ds.plot_pca(before, color_by="plate_id")
 fig.savefig("results/batch/pca_before_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="PCA before correction" decoding="async" loading="lazy" src="assets/figures/comparison-03.png"/></p>
+<p><a aria-label="Open full-size figure: PCA before correction" class="figure-link" href="assets/figures/comparison-03.png" rel="noopener" target="_blank"><img alt="PCA before correction" decoding="async" loading="lazy" src="assets/figures/comparison-03.png"/></a></p>
 <p><strong>PCA before correction.</strong> Plate labels diagnose linear separation in normalized expression.</p>
 <pre><code class="language-python">fig = ds.plot_pca(corrected, color_by="plate_id")
 fig.savefig("results/batch/pca_after_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="PCA after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-04.png"/></p>
+<p><a aria-label="Open full-size figure: PCA after limma batch regression" class="figure-link" href="assets/figures/comparison-04.png" rel="noopener" target="_blank"><img alt="PCA after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-04.png"/></a></p>
 <p><strong>PCA after limma batch regression.</strong> The plate component is reduced while the compound term is retained in the correction model.</p>
 <p>To check biological preservation, use the same global PCA coordinates but color by <code>compound</code> and facet by <code>plate_id</code>. The shared palette makes matched treatments directly comparable between panels.</p>
 <pre><code class="language-python">fig = ds.plot_pca(
@@ -165,66 +165,66 @@ fig.savefig("results/batch/pca_after_batch_correction.png", dpi=180)
 )
 fig.savefig("results/batch/pca_before_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="PCA before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-05.png"/></p>
+<p><a aria-label="Open full-size figure: PCA before correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-05.png" rel="noopener" target="_blank"><img alt="PCA before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-05.png"/></a></p>
 <p><strong>PCA before correction, split by plate and colored by compound.</strong> Each panel subsets the same global coordinates. Matching colors show whether compound structure is consistent across plates before correction.</p>
 <pre><code class="language-python">fig = ds.plot_pca(
     corrected, color_by="compound", split_by="plate_id", label_by=None,
 )
 fig.savefig("results/batch/pca_after_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="PCA after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-06.png"/></p>
+<p><a aria-label="Open full-size figure: PCA after correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-06.png" rel="noopener" target="_blank"><img alt="PCA after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-06.png"/></a></p>
 <p><strong>PCA after correction, split by plate and colored by compound.</strong> Compare matched compound positions with the uncorrected panels to detect loss or recovery of biological structure.</p>
 <h3 id="umap-local-neighborhood-structure">UMAP: local neighborhood structure</h3>
 <p><code>plot_umap()</code> creates one UMAP figure for one supplied object.</p>
 <pre><code class="language-python">fig = ds.plot_umap(before, color_by="plate_id")
 fig.savefig("results/batch/umap_before_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="UMAP before correction" decoding="async" loading="lazy" src="assets/figures/comparison-07.png"/></p>
+<p><a aria-label="Open full-size figure: UMAP before correction" class="figure-link" href="assets/figures/comparison-07.png" rel="noopener" target="_blank"><img alt="UMAP before correction" decoding="async" loading="lazy" src="assets/figures/comparison-07.png"/></a></p>
 <p><strong>UMAP before correction.</strong> UMAP is recomputed from the uncorrected PCA coordinates.</p>
 <pre><code class="language-python">fig = ds.plot_umap(corrected, color_by="plate_id")
 fig.savefig("results/batch/umap_after_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="UMAP after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-08.png"/></p>
+<p><a aria-label="Open full-size figure: UMAP after limma batch regression" class="figure-link" href="assets/figures/comparison-08.png" rel="noopener" target="_blank"><img alt="UMAP after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-08.png"/></a></p>
 <p><strong>UMAP after limma batch regression.</strong> UMAP is recomputed from corrected expression rather than reusing old coordinates.</p>
 <pre><code class="language-python">fig = ds.plot_umap(
     before, color_by="compound", split_by="plate_id", label_by=None,
 )
 fig.savefig("results/batch/umap_before_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="UMAP before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-09.png"/></p>
+<p><a aria-label="Open full-size figure: UMAP before correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-09.png" rel="noopener" target="_blank"><img alt="UMAP before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-09.png"/></a></p>
 <p><strong>UMAP before correction, split by plate and colored by compound.</strong> Shared compound colors reveal whether local treatment neighborhoods recur on both plates before correction.</p>
 <pre><code class="language-python">fig = ds.plot_umap(
     corrected, color_by="compound", split_by="plate_id", label_by=None,
 )
 fig.savefig("results/batch/umap_after_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="UMAP after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-10.png"/></p>
+<p><a aria-label="Open full-size figure: UMAP after correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-10.png" rel="noopener" target="_blank"><img alt="UMAP after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-10.png"/></a></p>
 <p><strong>UMAP after correction, split by plate and colored by compound.</strong> Matched compound neighborhoods should become more comparable without collapsing distinct treatment responses.</p>
 <h3 id="t-sne-local-sample-neighborhoods">t-SNE: local sample neighborhoods</h3>
 <p><code>plot_tsne()</code> creates one t-SNE figure for one supplied object.</p>
 <pre><code class="language-python">fig = ds.plot_tsne(before, color_by="plate_id")
 fig.savefig("results/batch/tsne_before_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="t-SNE before correction" decoding="async" loading="lazy" src="assets/figures/comparison-11.png"/></p>
+<p><a aria-label="Open full-size figure: t-SNE before correction" class="figure-link" href="assets/figures/comparison-11.png" rel="noopener" target="_blank"><img alt="t-SNE before correction" decoding="async" loading="lazy" src="assets/figures/comparison-11.png"/></a></p>
 <p><strong>t-SNE before correction.</strong> The dedicated t-SNE function uses the first 20 PCA components with a fixed seed.</p>
 <pre><code class="language-python">fig = ds.plot_tsne(corrected, color_by="plate_id")
 fig.savefig("results/batch/tsne_after_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="t-SNE after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-12.png"/></p>
+<p><a aria-label="Open full-size figure: t-SNE after limma batch regression" class="figure-link" href="assets/figures/comparison-12.png" rel="noopener" target="_blank"><img alt="t-SNE after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-12.png"/></a></p>
 <p><strong>t-SNE after limma batch regression.</strong> Compare plate mixing without interpreting global t-SNE distances.</p>
 <pre><code class="language-python">fig = ds.plot_tsne(
     before, color_by="compound", split_by="plate_id", label_by=None,
 )
 fig.savefig("results/batch/tsne_before_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="t-SNE before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-13.png"/></p>
+<p><a aria-label="Open full-size figure: t-SNE before correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-13.png" rel="noopener" target="_blank"><img alt="t-SNE before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-13.png"/></a></p>
 <p><strong>t-SNE before correction, split by plate and colored by compound.</strong> Plate facets expose treatment-specific local neighborhoods while retaining a shared compound palette.</p>
 <pre><code class="language-python">fig = ds.plot_tsne(
     corrected, color_by="compound", split_by="plate_id", label_by=None,
 )
 fig.savefig("results/batch/tsne_after_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="t-SNE after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-14.png"/></p>
+<p><a aria-label="Open full-size figure: t-SNE after correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-14.png" rel="noopener" target="_blank"><img alt="t-SNE after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-14.png"/></a></p>
 <p><strong>t-SNE after correction, split by plate and colored by compound.</strong> Use local neighborhood agreement as supporting evidence; do not compare long-range t-SNE distances.</p>
 <h3 id="mds-leading-log-fold-change-distances">MDS: leading log-fold-change distances</h3>
 <p><code>plot_mds()</code> computes and creates one MDS figure per call.</p>
@@ -233,14 +233,14 @@ fig.savefig("results/batch/tsne_after_compound_by_plate.png", dpi=180)
 )
 fig.savefig("results/batch/mds_before_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="MDS before correction" decoding="async" loading="lazy" src="assets/figures/comparison-15.png"/></p>
+<p><a aria-label="Open full-size figure: MDS before correction" class="figure-link" href="assets/figures/comparison-15.png" rel="noopener" target="_blank"><img alt="MDS before correction" decoding="async" loading="lazy" src="assets/figures/comparison-15.png"/></a></p>
 <p><strong>MDS before correction.</strong> Limma-style leading log-fold-change distances use the top 500 variable genes.</p>
 <pre><code class="language-python">fig = ds.plot_mds(
     corrected, group_by="plate_id", label_by=None, n_top_genes=500,
 )
 fig.savefig("results/batch/mds_after_batch_correction.png", dpi=180)
 </code></pre>
-<p><img alt="MDS after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-16.png"/></p>
+<p><a aria-label="Open full-size figure: MDS after limma batch regression" class="figure-link" href="assets/figures/comparison-16.png" rel="noopener" target="_blank"><img alt="MDS after limma batch regression" decoding="async" loading="lazy" src="assets/figures/comparison-16.png"/></a></p>
 <p><strong>MDS after limma batch regression.</strong> MDS is recalculated from the corrected log-expression matrix.</p>
 <pre><code class="language-python">fig = ds.plot_mds(
     before, group_by="compound", split_by="plate_id",
@@ -248,7 +248,7 @@ fig.savefig("results/batch/mds_after_batch_correction.png", dpi=180)
 )
 fig.savefig("results/batch/mds_before_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="MDS before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-17.png"/></p>
+<p><a aria-label="Open full-size figure: MDS before correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-17.png" rel="noopener" target="_blank"><img alt="MDS before correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-17.png"/></a></p>
 <p><strong>MDS before correction, split by plate and colored by compound.</strong> The same leading-logFC coordinate system is faceted by plate to compare matched treatment distances.</p>
 <pre><code class="language-python">fig = ds.plot_mds(
     corrected, group_by="compound", split_by="plate_id",
@@ -256,7 +256,7 @@ fig.savefig("results/batch/mds_before_compound_by_plate.png", dpi=180)
 )
 fig.savefig("results/batch/mds_after_compound_by_plate.png", dpi=180)
 </code></pre>
-<p><img alt="MDS after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-18.png"/></p>
+<p><a aria-label="Open full-size figure: MDS after correction, split by plate and colored by compound" class="figure-link" href="assets/figures/comparison-18.png" rel="noopener" target="_blank"><img alt="MDS after correction, split by plate and colored by compound" decoding="async" loading="lazy" src="assets/figures/comparison-18.png"/></a></p>
 <p><strong>MDS after correction, split by plate and colored by compound.</strong> Comparable compound geometry across panels supports preservation of broad treatment-response distances.</p>
 <p><code>compute_batch_effect_metrics()</code> creates the before/after diagnostic table independently of all plots.</p>
 <pre><code class="language-python">batch_metrics = ds.compute_batch_effect_metrics(
@@ -302,6 +302,7 @@ fig.savefig("results/batch/mds_after_compound_by_plate.png", dpi=180)
 <p><strong>Keep correction and inference separate.</strong> Use batch-corrected normalized expression for PCA, UMAP, t-SNE, and MDS. For differential expression, keep the original raw counts and include <code>plate_id</code> as a model covariate; do not run DE on the corrected matrix.</p>
 <p><a id="repeatability"></a></p>
 <h2 id="5-evaluate-within-plate-repeatability">5. Evaluate within-plate repeatability</h2>
+<p>The <a href="well-to-well-repeatability.html">dedicated well-to-well tutorial</a> explains all-well heatmaps, matched-condition pair selection, and scatter plots in detail. Here the same question is evaluated separately on each plate before cross-plate inference.</p>
 <p>Repeatability asks whether replicate wells agree under the same plate conditions. Correlations are therefore computed only between wells sharing both <code>plate_id</code> and <code>compound</code>; wells from different compounds are never treated as replicates.</p>
 <p><code>compute_within_plate_repeatability()</code> creates one row per valid replicate-well pair without plotting. Pearson correlation on <code>log10(raw UMI + 1)</code> is the default; set <code>method="spearman"</code> for rank agreement or <code>use_norm=True</code> for normalized expression.</p>
 <pre><code class="language-python">correlation_method = "pearson"       # alternative: "spearman"
@@ -701,7 +702,7 @@ plate_a, plate_b = sorted(dsd.obs["plate_id"].astype(str).unique())[:2]
 <pre><code class="language-python">fig = ds.plot_within_plate_repeatability(repeatability)
 fig.savefig("results/reproducibility/within_plate_repeatability_by_compound.png", dpi=180)
 </code></pre>
-<p><img alt="Within-plate repeatability separated by compound" decoding="async" loading="lazy" src="assets/figures/comparison-19.png"/></p>
+<p><a aria-label="Open full-size figure: Within-plate repeatability separated by compound" class="figure-link" href="assets/figures/comparison-19.png" rel="noopener" target="_blank"><img alt="Within-plate repeatability separated by compound" decoding="async" loading="lazy" src="assets/figures/comparison-19.png"/></a></p>
 <p><strong>Within-plate repeatability separated by compound.</strong> Every box contains only correlations between replicate wells for the labeled compound and plate; no different-compound pairs are pooled.</p>
 <h3 id="replicate-well-expression-scatter-plots">Replicate-well expression scatter plots</h3>
 <p><code>plot_within_plate_replicate_scatter()</code> creates one scatter-gallery figure for one selected plate and compound. It defaults to <code>log10(raw UMI + 1)</code>; pass <code>use_norm=True</code> to plot normalized expression instead.</p>
@@ -713,7 +714,7 @@ fig.savefig("results/reproducibility/within_plate_repeatability_by_compound.png"
 )
 fig.savefig("results/reproducibility/" + plate_a + "_DMSO_replicate_scatter.png", dpi=180)
 </code></pre>
-<p><img alt="First-plate DMSO replicate scatter plots" decoding="async" loading="lazy" src="assets/figures/comparison-20.png"/></p>
+<p><a aria-label="Open full-size figure: First-plate DMSO replicate scatter plots" class="figure-link" href="assets/figures/comparison-20.png" rel="noopener" target="_blank"><img alt="First-plate DMSO replicate scatter plots" decoding="async" loading="lazy" src="assets/figures/comparison-20.png"/></a></p>
 <p><strong>First-plate DMSO replicate scatter plots.</strong> Each panel compares two Sample 1 DMSO wells using log10(raw UMI + 1). The identity and fitted lines expose systematic shifts.</p>
 <pre><code class="language-python">fig = ds.plot_within_plate_replicate_scatter(
     dsd, plate=plate_b, compound="DMSO",
@@ -723,7 +724,7 @@ fig.savefig("results/reproducibility/" + plate_a + "_DMSO_replicate_scatter.png"
 )
 fig.savefig("results/reproducibility/" + plate_b + "_DMSO_replicate_scatter.png", dpi=180)
 </code></pre>
-<p><img alt="Second-plate DMSO replicate scatter plots" decoding="async" loading="lazy" src="assets/figures/comparison-21.png"/></p>
+<p><a aria-label="Open full-size figure: Second-plate DMSO replicate scatter plots" class="figure-link" href="assets/figures/comparison-21.png" rel="noopener" target="_blank"><img alt="Second-plate DMSO replicate scatter plots" decoding="async" loading="lazy" src="assets/figures/comparison-21.png"/></a></p>
 <p><strong>Second-plate DMSO replicate scatter plots.</strong> The same raw-UMI calculation is repeated within Sample 2 without creating any Sample 1-to-Sample 2 replicate pairs.</p>
 <h3 id="within-group-correlation-heatmaps">Within-group correlation heatmaps</h3>
 <p><code>plot_within_plate_correlation_heatmap()</code> creates one correlation matrix for one selected plate and compound.</p>
@@ -733,7 +734,7 @@ fig.savefig("results/reproducibility/" + plate_b + "_DMSO_replicate_scatter.png"
 )
 fig.savefig("results/reproducibility/" + plate_a + "_DMSO_correlation_heatmap.png", dpi=180)
 </code></pre>
-<p><img alt="First-plate DMSO replicate heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-22.png"/></p>
+<p><a aria-label="Open full-size figure: First-plate DMSO replicate heatmap" class="figure-link" href="assets/figures/comparison-22.png" rel="noopener" target="_blank"><img alt="First-plate DMSO replicate heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-22.png"/></a></p>
 <p><strong>First-plate DMSO replicate heatmap.</strong> Only Sample 1 DMSO wells are included, so every off-diagonal cell is a valid within-condition replicate comparison.</p>
 <pre><code class="language-python">fig = ds.plot_within_plate_correlation_heatmap(
     dsd, plate=plate_b, compound="DMSO",
@@ -741,7 +742,7 @@ fig.savefig("results/reproducibility/" + plate_a + "_DMSO_correlation_heatmap.pn
 )
 fig.savefig("results/reproducibility/" + plate_b + "_DMSO_correlation_heatmap.png", dpi=180)
 </code></pre>
-<p><img alt="Second-plate DMSO replicate heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-23.png"/></p>
+<p><a aria-label="Open full-size figure: Second-plate DMSO replicate heatmap" class="figure-link" href="assets/figures/comparison-23.png" rel="noopener" target="_blank"><img alt="Second-plate DMSO replicate heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-23.png"/></a></p>
 <p><strong>Second-plate DMSO replicate heatmap.</strong> Only Sample 2 DMSO wells are included. Use the same function for any treatment by changing compound.</p>
 <p>The overall median within-group Pearson correlation is 0.946. Inspect the compound-specific boxes, scatter geometry, and heatmap cells rather than relying on this single aggregate.</p>
 <p><a id="single-plate-de"></a></p>
@@ -771,14 +772,14 @@ plate_priority = reproducibility_summary.sort_values(
 )
 fig.savefig("results/reproducibility/" + plate_a + "_" + str(plate_priority) + "_volcano.png", dpi=180)
 </code></pre>
-<p><img alt="Sample 1 Drug14 single-plate volcano" decoding="async" loading="lazy" src="assets/figures/comparison-24.png"/></p>
+<p><a aria-label="Open full-size figure: Sample 1 Drug14 single-plate volcano" class="figure-link" href="assets/figures/comparison-24.png" rel="noopener" target="_blank"><img alt="Sample 1 Drug14 single-plate volcano" decoding="async" loading="lazy" src="assets/figures/comparison-24.png"/></a></p>
 <p><strong>Sample 1 Drug14 single-plate volcano.</strong> Upregulated, downregulated, and nonsignificant genes come from the independently fitted Sample 1 model.</p>
 <pre><code class="language-python">fig = ds.plot_single_plate_de_volcano(
     reproducibility, plate=plate_b, compound=plate_priority,
 )
 fig.savefig("results/reproducibility/" + plate_b + "_" + str(plate_priority) + "_volcano.png", dpi=180)
 </code></pre>
-<p><img alt="Sample 2 Drug14 single-plate volcano" decoding="async" loading="lazy" src="assets/figures/comparison-25.png"/></p>
+<p><a aria-label="Open full-size figure: Sample 2 Drug14 single-plate volcano" class="figure-link" href="assets/figures/comparison-25.png" rel="noopener" target="_blank"><img alt="Sample 2 Drug14 single-plate volcano" decoding="async" loading="lazy" src="assets/figures/comparison-25.png"/></a></p>
 <p><strong>Sample 2 Drug14 single-plate volcano.</strong> The corresponding Sample 2 model is shown separately rather than pooling plate-specific residual variation.</p>
 <h3 id="spatial-deg-signature-layouts">Spatial DEG-signature layouts</h3>
 <p><code>plot_single_plate_de_layout()</code> maps the signed top-DEG expression score back to physical wells for one plate.</p>
@@ -788,7 +789,7 @@ fig.savefig("results/reproducibility/" + plate_b + "_" + str(plate_priority) + "
 )
 fig.savefig("results/reproducibility/" + plate_a + "_" + str(plate_priority) + "_plate_layout.png", dpi=180)
 </code></pre>
-<p><img alt="Sample 1 Drug14 DEG-signature plate layout" decoding="async" loading="lazy" src="assets/figures/comparison-26.png"/></p>
+<p><a aria-label="Open full-size figure: Sample 1 Drug14 DEG-signature plate layout" class="figure-link" href="assets/figures/comparison-26.png" rel="noopener" target="_blank"><img alt="Sample 1 Drug14 DEG-signature plate layout" decoding="async" loading="lazy" src="assets/figures/comparison-26.png"/></a></p>
 <p><strong>Sample 1 Drug14 DEG-signature plate layout.</strong> Each well is colored by a signed, standardized expression score from the top Sample 1 DEGs, exposing spatial gradients or isolated wells.</p>
 <pre><code class="language-python">fig = ds.plot_single_plate_de_layout(
     dsd, reproducibility, plate=plate_b, compound=plate_priority,
@@ -796,7 +797,7 @@ fig.savefig("results/reproducibility/" + plate_a + "_" + str(plate_priority) + "
 )
 fig.savefig("results/reproducibility/" + plate_b + "_" + str(plate_priority) + "_plate_layout.png", dpi=180)
 </code></pre>
-<p><img alt="Sample 2 Drug14 DEG-signature plate layout" decoding="async" loading="lazy" src="assets/figures/comparison-27.png"/></p>
+<p><a aria-label="Open full-size figure: Sample 2 Drug14 DEG-signature plate layout" class="figure-link" href="assets/figures/comparison-27.png" rel="noopener" target="_blank"><img alt="Sample 2 Drug14 DEG-signature plate layout" decoding="async" loading="lazy" src="assets/figures/comparison-27.png"/></a></p>
 <p><strong>Sample 2 Drug14 DEG-signature plate layout.</strong> The Sample 2 layout uses its own independently selected DEGs and shows whether the response is spatially coherent.</p>
 <h3 id="top-deg-expression-heatmaps">Top-DEG expression heatmaps</h3>
 <p><code>plot_single_plate_de_heatmap()</code> creates one sample heatmap for the selected plate using only that plate's treatment and DMSO wells.</p>
@@ -806,7 +807,7 @@ fig.savefig("results/reproducibility/" + plate_b + "_" + str(plate_priority) + "
 )
 fig.savefig("results/reproducibility/" + plate_a + "_" + str(plate_priority) + "_heatmap.png", dpi=180)
 </code></pre>
-<p><img alt="Sample 1 Drug14 top-DEG heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-28.png"/></p>
+<p><a aria-label="Open full-size figure: Sample 1 Drug14 top-DEG heatmap" class="figure-link" href="assets/figures/comparison-28.png" rel="noopener" target="_blank"><img alt="Sample 1 Drug14 top-DEG heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-28.png"/></a></p>
 <p><strong>Sample 1 Drug14 top-DEG heatmap.</strong> Per-gene z-scores compare the selected treatment wells with Sample 1 DMSO controls.</p>
 <pre><code class="language-python">fig = ds.plot_single_plate_de_heatmap(
     dsd, reproducibility, plate=plate_b, compound=plate_priority,
@@ -814,7 +815,7 @@ fig.savefig("results/reproducibility/" + plate_a + "_" + str(plate_priority) + "
 )
 fig.savefig("results/reproducibility/" + plate_b + "_" + str(plate_priority) + "_heatmap.png", dpi=180)
 </code></pre>
-<p><img alt="Sample 2 Drug14 top-DEG heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-29.png"/></p>
+<p><a aria-label="Open full-size figure: Sample 2 Drug14 top-DEG heatmap" class="figure-link" href="assets/figures/comparison-29.png" rel="noopener" target="_blank"><img alt="Sample 2 Drug14 top-DEG heatmap" decoding="async" loading="lazy" src="assets/figures/comparison-29.png"/></a></p>
 <p><strong>Sample 2 Drug14 top-DEG heatmap.</strong> The Sample 2 heatmap is generated from Sample 2 DEGs and Sample 2 treatment/control wells only.</p>
 <p><a id="reproducibility"></a></p>
 <h2 id="7-evaluate-cross-plate-reproducibility">7. Evaluate cross-plate reproducibility</h2>
@@ -984,7 +985,7 @@ fig.savefig("results/reproducibility/" + plate_b + "_" + str(plate_priority) + "
 )
 fig.savefig("results/reproducibility/cross_plate_reproducibility.png", dpi=180)
 </code></pre>
-<p><img alt="Cross-plate treatment-effect reproducibility" decoding="async" loading="lazy" src="assets/figures/comparison-30.png"/></p>
+<p><a aria-label="Open full-size figure: Cross-plate treatment-effect reproducibility" class="figure-link" href="assets/figures/comparison-30.png" rel="noopener" target="_blank"><img alt="Cross-plate treatment-effect reproducibility" decoding="async" loading="lazy" src="assets/figures/comparison-30.png"/></a></p>
 <p><strong>Cross-plate treatment-effect reproducibility.</strong> Strong signatures reproduce well, whereas weak or null signatures have unstable correlations and little DEG overlap.</p>
 <p><code>plot_plate_logfc_concordance()</code> colors genes as significant on both plates, only plate A, only plate B, or neither. Select <code>value_type="log2fc"</code>, <code>"log10_umi"</code>, or <code>"normalized"</code> for the two axes.</p>
 <pre><code class="language-python">fig = ds.plot_plate_logfc_concordance(
@@ -993,7 +994,7 @@ fig.savefig("results/reproducibility/cross_plate_reproducibility.png", dpi=180)
 )
 fig.savefig("results/reproducibility/plate_specific_logfc_concordance.png", dpi=180)
 </code></pre>
-<p><img alt="Plate-specific log2FC concordance" decoding="async" loading="lazy" src="assets/figures/comparison-31.png"/></p>
+<p><a aria-label="Open full-size figure: Plate-specific log2FC concordance" class="figure-link" href="assets/figures/comparison-31.png" rel="noopener" target="_blank"><img alt="Plate-specific log2FC concordance" decoding="async" loading="lazy" src="assets/figures/comparison-31.png"/></a></p>
 <p><strong>Plate-specific log2FC concordance.</strong> Purple genes are significant on both plates; blue and orange genes are significant on only one plate. Agreement near the diagonal supports reproducible treatment effects.</p>
 <pre><code class="language-python">fig = ds.plot_plate_logfc_concordance(
     reproducibility, max_panels=4, value_type="log10_umi",
@@ -1001,7 +1002,7 @@ fig.savefig("results/reproducibility/plate_specific_logfc_concordance.png", dpi=
 )
 fig.savefig("results/reproducibility/plate_specific_log10_umi_concordance.png", dpi=180)
 </code></pre>
-<p><img alt="Plate-specific log10 mean-UMI concordance" decoding="async" loading="lazy" src="assets/figures/comparison-32.png"/></p>
+<p><a aria-label="Open full-size figure: Plate-specific log10 mean-UMI concordance" class="figure-link" href="assets/figures/comparison-32.png" rel="noopener" target="_blank"><img alt="Plate-specific log10 mean-UMI concordance" decoding="async" loading="lazy" src="assets/figures/comparison-32.png"/></a></p>
 <p><strong>Plate-specific log10 mean-UMI concordance.</strong> Axes show log10(mean raw UMI + 1) for the selected compound on each plate while colors retain the plate-specific DE significance categories.</p>
 <pre><code class="language-python">fig = ds.plot_plate_logfc_concordance(
     reproducibility, max_panels=4, value_type="normalized",
@@ -1009,7 +1010,7 @@ fig.savefig("results/reproducibility/plate_specific_log10_umi_concordance.png", 
 )
 fig.savefig("results/reproducibility/plate_specific_normalized_expression_concordance.png", dpi=180)
 </code></pre>
-<p><img alt="Plate-specific normalized-expression concordance" decoding="async" loading="lazy" src="assets/figures/comparison-33.png"/></p>
+<p><a aria-label="Open full-size figure: Plate-specific normalized-expression concordance" class="figure-link" href="assets/figures/comparison-33.png" rel="noopener" target="_blank"><img alt="Plate-specific normalized-expression concordance" decoding="async" loading="lazy" src="assets/figures/comparison-33.png"/></a></p>
 <p><strong>Plate-specific normalized-expression concordance.</strong> Axes show mean normalized compound expression on each plate; shared and plate-only significance colors use the same legend as the log2FC view.</p>
 <h3 id="worked-result-reproducibility-depends-on-effect-strength">Worked result: reproducibility depends on effect strength</h3>
 <p>The median logFC Pearson correlation is 0.258 across all treatments, and 6 of 16 signatures reach r ≥ 0.5. Null treatments should not be labeled irreproducible solely because noise correlates poorly.</p>
@@ -1167,7 +1168,7 @@ priority = de_summary.sort_values(
 <pre><code class="language-python">fig = ds.plot_deg_counts(dsd)
 fig.savefig("results/comparison/deg_counts.png", dpi=180)
 </code></pre>
-<p><img alt="Plate-adjusted DEG counts" decoding="async" loading="lazy" src="assets/figures/comparison-34.png"/></p>
+<p><a aria-label="Open full-size figure: Plate-adjusted DEG counts" class="figure-link" href="assets/figures/comparison-34.png" rel="noopener" target="_blank"><img alt="Plate-adjusted DEG counts" decoding="async" loading="lazy" src="assets/figures/comparison-34.png"/></a></p>
 <p><strong>Plate-adjusted DEG counts.</strong> Counts come from the combined model after control exclusion and plate adjustment.</p>
 <p><code>plot_comparison_volcano()</code> creates the combined-model volcano plot for one selected contrast.</p>
 <pre><code class="language-python">fig = ds.plot_comparison_volcano(
@@ -1175,7 +1176,7 @@ fig.savefig("results/comparison/deg_counts.png", dpi=180)
 )
 fig.savefig("results/comparison/" + str(priority) + "_volcano.png", dpi=180)
 </code></pre>
-<p><img alt="Drug14 plate-adjusted volcano" decoding="async" loading="lazy" src="assets/figures/comparison-35.png"/></p>
+<p><a aria-label="Open full-size figure: Drug14 plate-adjusted volcano" class="figure-link" href="assets/figures/comparison-35.png" rel="noopener" target="_blank"><img alt="Drug14 plate-adjusted volcano" decoding="async" loading="lazy" src="assets/figures/comparison-35.png"/></a></p>
 <p><strong>Drug14 plate-adjusted volcano.</strong> The combined raw-count model includes plate_id as a covariate; colors identify adjusted upregulated, downregulated, and nonsignificant genes.</p>
 <p><strong>Large changes in DEG count are not automatically better.</strong> Combining plates increases sample size but also changes variance estimation. Compare combined effects with the plate-specific estimates above.</p>
 <p><a id="enrichment"></a></p>
@@ -1201,14 +1202,14 @@ ds.run_enrichment(
 )
 fig.savefig("results/comparison/" + str(priority) + "_up_enrichment_dotplot.png", dpi=180)
 </code></pre>
-<p><img alt="Drug14 upregulated DEG enrichment" decoding="async" loading="lazy" src="assets/figures/comparison-36.png"/></p>
+<p><a aria-label="Open full-size figure: Drug14 upregulated DEG enrichment" class="figure-link" href="assets/figures/comparison-36.png" rel="noopener" target="_blank"><img alt="Drug14 upregulated DEG enrichment" decoding="async" loading="lazy" src="assets/figures/comparison-36.png"/></a></p>
 <p><strong>Drug14 upregulated DEG enrichment.</strong> Only pathways enriched among adjusted upregulated DEGs are shown. Point size reports overlap genes.</p>
 <pre><code class="language-python">fig = ds.plot_enrichment_dotplot(
     dsd, contrast=priority, direction="down", mode="ora",
 )
 fig.savefig("results/comparison/" + str(priority) + "_down_enrichment_dotplot.png", dpi=180)
 </code></pre>
-<p><img alt="Drug14 downregulated DEG enrichment" decoding="async" loading="lazy" src="assets/figures/comparison-37.png"/></p>
+<p><a aria-label="Open full-size figure: Drug14 downregulated DEG enrichment" class="figure-link" href="assets/figures/comparison-37.png" rel="noopener" target="_blank"><img alt="Drug14 downregulated DEG enrichment" decoding="async" loading="lazy" src="assets/figures/comparison-37.png"/></a></p>
 <p><strong>Drug14 downregulated DEG enrichment.</strong> Only pathways enriched among adjusted downregulated DEGs are shown. Point size reports overlap genes.</p>
 <p>1,712 pathway rows pass FDR &lt; 0.05 across all contrasts, libraries, and directions.</p>
 <p><code>enrichment_summary()</code> creates the pathway table independently of the figures.</p>
@@ -1378,8 +1379,8 @@ significant_pathways = pathway_table.query("padj &lt; 0.05")
 <pre><code class="language-bash">python scripts/run_tutorial.py comparison --data-dir data --output-dir results
 </code></pre>
 <hr/>
-<p><a href="mix-species-workflow.html">← Previous chapter</a> · <a href="api-reference.html">Next chapter →</a></p>
+<p><a href="single-plate-comparison.html">← Previous chapter</a> · <a href="bulk-rnaseq-comparison.html">Next chapter →</a></p>
 </article>
-<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="mix-species-workflow.html"><small>Previous</small>Mixed species</a><a href="api-reference.html"><small>Next</small>API reference →</a></nav>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="single-plate-comparison.html"><small>Previous</small>Single-plate comparison</a><a href="bulk-rnaseq-comparison.html"><small>Next</small>Bulk RNA-seq comparison →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="multi-plate-comparison.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
 <aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#overview-1">Overview</a><a href="#1-load-and-merge-plates">1. Load and merge plates</a><a href="#2-check-design-identifiability">2. Check design identifiability</a><a href="#3-qc-and-control-audit-by-plate">3. QC and control audit by plate</a><a href="#4-diagnose-and-remove-batch-effects">4. Diagnose and remove batch effects</a><a href="#5-evaluate-within-plate-repeatability">5. Evaluate within-plate repeatability</a><a href="#6-single-plate-differential-expression">6. Single-plate differential expression</a><a href="#7-evaluate-cross-plate-reproducibility">7. Evaluate cross-plate reproducibility</a><a href="#8-plate-adjusted-differential-expression">8. Plate-adjusted differential expression</a><a href="#9-enrichment-from-adjusted-degs">9. Enrichment from adjusted DEGs</a><a href="#10-saved-outputs">10. Saved outputs</a><a href="#11-important-notes">11. Important notes</a><a href="#glossary-1">Glossary</a><a href="#troubleshooting-1">Troubleshooting</a><a href="#12-complete-reproducible-run">12. Complete reproducible run</a></nav></aside></div></body></html>

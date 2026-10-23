@@ -47,7 +47,7 @@ To generate another practice copy without overwriting your inputs:
 python scripts/make_practice_data.py --output practice-copy
 ```
 
-## 3. Run QC, species review, and comparison
+## 3. Run QC, species review, and treatment comparisons
 
 Run from the tutorial repository root. Start with QC:
 
@@ -55,28 +55,46 @@ Run from the tutorial repository root. Start with QC:
 python scripts/run_tutorial.py qc --data-dir data --output-dir results
 ```
 
-Then run the other two workflows:
+Then run species review and the two treatment-comparison workflows:
 
 ```bash
 python scripts/run_tutorial.py species --data-dir data --output-dir results
+python scripts/run_tutorial.py single-plate --data-dir data --output-dir results
 python scripts/run_tutorial.py comparison --data-dir data --output-dir results
 ```
 
-Or run all three with `python scripts/run_tutorial.py all`. The runner writes images and tables to `results/`. It does not change the input matrices. Open the PNGs in an image viewer and the CSV files in a spreadsheet or Python.
+Or run all four with `python scripts/run_tutorial.py all`. The runner writes images and tables to `results/`. It does not change the input matrices. Open the PNGs in an image viewer and the CSV files in a spreadsheet or Python.
 
 | Workflow | Key outputs | First review |
 | --- | --- | --- |
 | QC | `results/qc/sample_qc.csv`, QC distributions and plate maps | Which wells have low depth, few detected genes, or unusual positions? |
 | Species | `results/species/species_metrics.csv`, species figures | Do intended and observed species agree, and are fractions supported by enough counts? |
-| Comparison | `results/comparison/design_counts.csv`, `batch_metrics.csv`, DE outputs | Are treatment and control replicated on both plates, and are effects consistent? |
+| Single-plate comparison | `results/single-plate/design_counts.csv`, `control_review.csv`, DE outputs | Are the treatment and control replicated within Sample 1, and are exclusions justified? |
+| Multi-plate comparison | `results/comparison/design_counts.csv`, `batch_metrics.csv`, DE outputs | Are treatment and control replicated on both plates, and are effects consistent? |
 
-The runner is a concise starting workflow. The detailed chapters add more figure variants and explain the archived worked results. QC uses Sample 3 and Sample 4; comparison computes its own QC on Sample 1 and Sample 2. Existing figure/result names may be overwritten when you rerun into the same output directory, so use a new output directory for each analysis you want to keep.
+The runner is a concise starting workflow. The detailed chapters add more figure variants and explain the archived worked results. QC uses Sample 3 and Sample 4. The single-plate workflow computes QC on Sample 1; multi-plate comparison uses Sample 1 and Sample 2. Existing figure/result names may be overwritten when you rerun into the same output directory, so use a new output directory for each analysis you want to keep.
+
+### Additional comparison chapters
+
+After QC, inspect [well-to-well repeatability](well-to-well-repeatability.md) using the dedicated script and its heatmap/scatter outputs:
+
+```bash
+python scripts/compare_well_repeatability.py --max-scatters 3 --synthetic
+```
+
+ For an independent reference comparison, run the [bulk RNA-seq helper](bulk-rnaseq-comparison.md) on the separately generated synthetic reference tables:
+
+```bash
+python scripts/compare_bulk_rnaseq.py
+```
+
+This command uses `data/bulk_practice/` and writes descriptive results to `results/bulk-comparison/`. These two additional analyses are separate from `run_tutorial.py all`; follow their chapters for matching rules, optional exclusions, and output interpretation.
 
 ## 4. Read the results before changing settings
 
 The practice runner uses a dominant-species threshold of 0.9 and a minimum of 100 species-assigned UMIs. These are illustrative review settings. The archived mixed-species figures use 0.5 and 0 UMIs, so their call categories differ. Fractions and raw counts remain useful at either setting; call labels must be interpreted with their thresholds.
 
-The runner flags unusual DMSO controls without automatically excluding them. It excludes blank groups from treatment models and requires at least two wells per treatment and DMSO on each plate. A technical replicate is not automatically an independent biological replicate. Confirm the experimental unit before inference.
+Both comparison workflows flag unusual DMSO controls without automatically excluding them. It excludes blank groups from treatment models and requires at least two wells per treatment and DMSO on each plate. A technical replicate is not automatically an independent biological replicate. Confirm the experimental unit before inference.
 
 For reviewed exclusions, optional embeddings, local GMT enrichment, species mappings, and plate dimensions, inspect the explicit options:
 
@@ -84,7 +102,7 @@ For reviewed exclusions, optional embeddings, local GMT enrichment, species mapp
 python scripts/run_tutorial.py --help
 ```
 
-The default comparison includes PCA, repeatability, cross-plate reproducibility, and differential expression. Add `--full-embeddings` for UMAP and t-SNE. Enrichment and STARsolo read-level statistics are not required for the first successful run.
+The [single-plate workflow](single-plate-comparison.md) fits treatment effects within Sample 1 and does not estimate between-plate effects. The [multi-plate workflow](multi-plate-comparison.md) adds batch diagnostics, repeatability, cross-plate reproducibility, and plate-adjusted differential expression. Add `--full-embeddings` for UMAP and t-SNE. Enrichment and STARsolo read-level statistics are not required for the first successful run.
 
 ## 5. Bring your own inputs
 

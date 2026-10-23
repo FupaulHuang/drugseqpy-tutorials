@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Single-plate comparison workflow · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/single-plate-comparison.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html" aria-current="page"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / SINGLE-PLATE COMPARISON</div><article><h1 id="single-plate-comparison-workflow">Single-plate comparison workflow</h1>
+<p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Prepare inputs</a> · <a href="api-reference.html">API reference</a></p>
+<blockquote>
+<p><strong>Before you start:</strong> complete <a href="getting-started.html">Getting started</a> and the <a href="qc-workflow.html">QC workflow</a>. Run the Python blocks in order from the repository root. This chapter uses <strong>Sample 1</strong>, an example plate dataset; each observation is one well. The figures and numerical tables are historical worked results. The bundled synthetic practice inputs produce different numbers and contrasts.</p>
+</blockquote>
+<p>Analyze one plate from physical-well QC through control review, gene filtering, differential expression, and optional directional enrichment. After QC and <a href="well-to-well-repeatability.html">well-to-well repeatability review</a>, use this chapter when every treatment and its matched control occur on the same plate. Continue to <a href="multi-plate-comparison.html">multi-plate comparison</a> when you have independently processed plates.</p>
+<p><a id="overview"></a></p>
+<h2 id="overview-1">Overview</h2>
+<p>The sequence is QC → control audit → reviewed exclusions → gene filtering → normalization → differential expression → enrichment. A one-plate analysis estimates treatment effects within that plate. It cannot establish that those effects reproduce across plates or runs.</p>
+<p>The historical worked analysis removes one reviewed DMSO control, retains seven DMSO controls, and tests 12,807 genes. Its strongest contrast is Drug14. The small synthetic practice dataset contains Drug1 and Drug2 instead, so the code selects an available contrast from your results rather than assuming Drug14 exists.</p>
+<p><a id="choose"></a></p>
+<h2 id="1-when-to-use-one-plate">1. When to use one plate</h2>
+<p>Use this workflow when the case and control wells were processed together. With only one plate, a separate plate effect cannot be estimated; do not add a constant plate covariate or run between-plate correction.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Single-plate decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Are treatment and control on the same plate?</td>
+<td>Required for every contrast in this workflow.</td>
+</tr>
+<tr>
+<td>Should batch correction be run?</td>
+<td>No separate plate effect can be estimated from one plate.</td>
+</tr>
+<tr>
+<td>Can row and column effects be reviewed?</td>
+<td>Yes. Inspect physical maps and consider prespecified covariates when the design supports them.</td>
+</tr>
+<tr>
+<td>Can results generalize across runs?</td>
+<td>One plate cannot establish this. Independently processed plates are needed for empirical reproducibility.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>A well is not automatically a biological replicate.</strong> Several wells from the same culture or preparation may be technical replicates. Identify the independent experimental unit before interpreting uncertainty; treating dependent wells as independent can overstate evidence. The package's minimum well count does not validate the biological design.</p>
+<p>The examples group by <code>compound</code> because each treatment has one dose and time point. If your experiment has multiple doses or times, define a condition column and use it consistently for the control comparison and plots. Controls must be matched to the relevant time, vehicle, and other experimental conditions. Do not pool distinct conditions merely because their compound name is identical.</p>
+<p><a id="input"></a></p>
+<h2 id="2-input-and-metadata">2. Input and metadata</h2>
+<p>The matrix directory contains <code>matrix.mtx.gz</code>, <code>features.tsv.gz</code>, and <code>barcodes.tsv.gz</code>. Each metadata <code>barcode</code> must match one matrix barcode. See <a href="input-preparation.html">Prepare inputs</a> for orientation, coordinates, and required columns.</p>
+<pre><code class="language-python">from pathlib import Path
+import re
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import drugseqpy as ds
+
+# Run from the tutorial repository root.
+data_dir = Path("data/sample_1")
+output_dir = Path("results/single-plate-chapter")
+qc_dir = output_dir / "qc"
+comparison_dir = output_dir / "comparison"
+qc_dir.mkdir(parents=True, exist_ok=True)
+comparison_dir.mkdir(parents=True, exist_ok=True)
+
+dsd = ds.create_drugseq_from_files(
+    expression_path=data_dir / "matrix",
+    metadata_path=data_dir / "metadata.csv",
+    metadata_key="barcode",
+    min_overlap=1.0,
+)
+dsd.adata.obs_names = dsd.obs["sample_id"].astype(str)
+assert dsd.obs_names.is_unique
+if dsd.obs["plate_id"].nunique() != 1:
+    raise ValueError("Use one plate here; see the multi-plate chapter for merged data.")
+print(dsd)
+print(dsd.obs.groupby("compound", observed=True).size())
+</code></pre>
+<p>The chapter output directory is separate from the command-line runner's output. Rerunning these blocks into the same directory replaces files with matching names.</p>
+<p><a id="qc"></a></p>
+<h2 id="3-essential-qc">3. Essential QC</h2>
+<p>Compute metrics before excluding wells. Compare distributions with the physical layout so a local failure is not mistaken for a treatment effect. Low counts, low detected-gene counts, or unusual mitochondrial fractions are review signals whose meaning depends on cell type and treatment.</p>
+<pre><code class="language-python">ds.compute_qc_metrics(dsd, inplace=True)
+dsd.obs.to_csv(qc_dir / "well_qc.csv", index=False)
+</code></pre>
+<p><code>generate_qc_metric_violin_figure()</code> creates the requested QC-distribution figure. It does not filter wells.</p>
+<pre><code class="language-python">qc_distribution_files = ds.generate_qc_metric_violin_figure(
+    dsd, output_dir=qc_dir, formats=("png",),
+    metrics=("total_umi", "n_genes_det", "pct_mito", "pct_ribo"),
+    groupby="plate_id",
+)
+plt.close("all")
+</code></pre>
+<p><a aria-label="Open full-size figure: QC metric distributions for Sample 1" class="figure-link" href="assets/figures/single-plate-01.png" rel="noopener" target="_blank"><img alt="QC metric distributions for Sample 1" decoding="async" loading="lazy" src="assets/figures/single-plate-01.png"/></a></p>
+<p><strong>QC metric distributions for the worked plate.</strong> The low-yield tails identify wells for review. Medians summarize the plate but do not define exclusions.</p>
+<p><code>generate_plate_layout_figures()</code> creates one requested map per call. The example uses an 8 × 12 plate; change these dimensions to match your actual coordinates.</p>
+<pre><code class="language-python">umi_plate_files = ds.generate_plate_layout_figures(
+    dsd, output_dir=qc_dir, plate_value="total_umi",
+    continuous=True, output_name="plate_layout_detected_umi",
+    nrow=8, ncol=12, formats=("png",),
+)
+plt.close("all")
+</code></pre>
+<p><a aria-label="Open full-size figure: Total-UMI plate map for Sample 1" class="figure-link" href="assets/figures/single-plate-02.png" rel="noopener" target="_blank"><img alt="Total-UMI plate map for Sample 1" decoding="async" loading="lazy" src="assets/figures/single-plate-02.png"/></a></p>
+<p><strong>Total-UMI plate map.</strong> Spatial position helps reveal edge effects, gradients, and isolated low-yield wells. An unoccupied position is different from a measured well with zero counts.</p>
+<pre><code class="language-python">compound_plate_files = ds.generate_plate_layout_figures(
+    dsd, output_dir=qc_dir, plate_value="compound",
+    output_name="plate_layout_compound", nrow=8, ncol=12,
+    formats=("png",),
+)
+plt.close("all")
+</code></pre>
+<p><a aria-label="Open full-size figure: Treatment layout for Sample 1" class="figure-link" href="assets/figures/single-plate-03.png" rel="noopener" target="_blank"><img alt="Treatment layout for Sample 1" decoding="async" loading="lazy" src="assets/figures/single-plate-03.png"/></a></p>
+<p><strong>Treatment layout.</strong> Compare treatment placement with the QC map before modeling. A treatment placed entirely along one edge may be confounded with position.</p>
+<p><a id="controls"></a></p>
+<h2 id="4-audit-controls-and-exclusions">4. Audit controls and exclusions</h2>
+<p>The historical example applied <code>outlier_score &gt; 5</code> only to DMSO wells after review. It removed one control and retained seven. This is an example-specific decision, not a package default or a universal exclusion rule.</p>
+<p><code>audit_control_outliers()</code> returns a control-only table and does not remove wells. Its <code>excluded</code> column names a threshold flag; it does not mean the well has already been excluded. Save a clearly named review table and inspect the flagged wells against the QC distributions, physical layout, and experimental notes.</p>
+<pre><code class="language-python">control_audit = ds.audit_control_outliers(
+    dsd, control_label="DMSO", threshold=5.0,
+)
+control_audit.rename(columns={"excluded": "flagged_for_review"}).to_csv(
+    qc_dir / "dmso_outlier_audit.csv", index=False,
+)
+print(control_audit)
+</code></pre>
+<p>The historical flagged control was:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Sample</th>
+<th>Plate</th>
+<th>Well</th>
+<th>Total UMI</th>
+<th>Detected genes</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 1_TTGATCTTAA</td>
+<td>Sample 1</td>
+<td>Well-dT-85</td>
+<td>265,265</td>
+<td>11,366</td>
+<td>6.27</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>plot_control_outlier_audit()</code> plots the table. The code relabels its legend so threshold flags are not mistaken for completed exclusions.</p>
+<pre><code class="language-python">fig = ds.plot_control_outlier_audit(control_audit)
+for label in fig.axes[0].get_legend().get_texts():
+    label.set_text({
+        "Excluded control": "Flagged for review",
+        "Retained control": "Not flagged",
+    }.get(label.get_text(), label.get_text()))
+fig.savefig(qc_dir / "dmso_outlier_audit.png", dpi=180)
+plt.close(fig)
+</code></pre>
+<p><a aria-label="Open full-size figure: Historical DMSO control audit for Sample 1" class="figure-link" href="assets/figures/single-plate-04.png" rel="noopener" target="_blank"><img alt="Historical DMSO control audit for Sample 1" decoding="async" loading="lazy" src="assets/figures/single-plate-04.png"/></a></p>
+<p><strong>Historical DMSO control audit.</strong> The excluded control differs from the retained control cloud in yield and complexity. The figure's exclusion labels describe the reviewed historical decision; running the audit alone makes no such decision.</p>
+<p>Record specific reviewed sample IDs and reasons. The default below retains every well, including flagged controls, until you supply a reviewed decision. Do not copy a historical sample ID into your practice dataset: its barcodes differ.</p>
+<pre><code class="language-python"># Populate only after reviewing your experiment. Empty means no exclusions.
+reviewed_exclusions = pd.DataFrame(columns=["sample_id", "reason"])
+if reviewed_exclusions["sample_id"].duplicated().any():
+    raise ValueError("Each exclusion must have a unique sample_id.")
+unknown = set(reviewed_exclusions["sample_id"]) - set(dsd.obs["sample_id"])
+if unknown:
+    raise ValueError(f"Exclusion IDs not present in this plate: {sorted(unknown)}")
+if reviewed_exclusions["reason"].fillna("").str.strip().eq("").any():
+    raise ValueError("Record a reason for every reviewed exclusion.")
+
+excluded = dsd.obs["sample_id"].isin(reviewed_exclusions["sample_id"])
+exclusion_audit = dsd.obs.loc[excluded].reset_index(drop=True).merge(
+    reviewed_exclusions, on="sample_id", how="left",
+)
+exclusion_audit.to_csv(qc_dir / "reviewed_exclusions.csv", index=False)
+analysis_dsd = dsd.subset(obs_mask=(~excluded).to_numpy())
+design_counts = analysis_dsd.obs.groupby("compound", observed=True).size()
+design_counts.to_csv(comparison_dir / "design_counts.csv", header=["n_wells"])
+if "DMSO" not in design_counts or design_counts["DMSO"] &lt; 2:
+    raise ValueError("At least two retained DMSO wells are required for this example.")
+print(design_counts)
+</code></pre>
+<p>Review control representation again after exclusion. A model that runs successfully can still have inadequate independent biological replication.</p>
+<p><a id="preprocess"></a></p>
+<h2 id="5-filter-genes-and-normalize">5. Filter genes and normalize</h2>
+<p>Low-information genes add to the multiple-testing burden. The historical example retained genes with at least five counts in at least three wells, leaving 12,807 features. These settings illustrate one filtering rule; your synthetic run will retain a different number.</p>
+<pre><code class="language-python">if (np.asarray(analysis_dsd.layers["counts"].sum(axis=1)).ravel() &lt;= 0).any():
+    raise ValueError("Review zero-count wells before normalization or DE.")
+analysis_dsd = ds.filter_genes(
+    analysis_dsd, min_count=5, min_samples=3, group_aware=False,
+)
+if analysis_dsd.n_vars == 0:
+    raise ValueError("No genes passed filtering; review inputs and the filtering rule.")
+ds.normalize_counts(analysis_dsd, method="limma_voom", inplace=True)
+
+# Normalized expression: analysis_dsd.adata.X
+# Raw integer counts: analysis_dsd.adata.layers["counts"]
+print(f"Retained {analysis_dsd.n_obs} wells and {analysis_dsd.n_vars} genes.")
+</code></pre>
+<p>Keep the raw <code>counts</code> layer intact. The DE function uses that layer for the requested model; normalized expression is available for visualization. Do not replace raw counts with log-transformed or batch-corrected values.</p>
+<p><a id="de"></a></p>
+<h2 id="6-differential-expression">6. Differential expression</h2>
+<p>Compare each treatment with the retained within-plate DMSO controls. Water is excluded from the contrast list. No plate covariate is supplied because only one plate is present. <code>within_plate=False</code> disables the multi-plate contrast construction; it does not mix plates here because the input already contains exactly one plate.</p>
+<p><code>compute_multi_de()</code> fits the treatment-versus-control models without creating figures. The example calls a DEG at adjusted p-value &lt; 0.05 and absolute log2 fold change ≥ 0.5. Keep these criteria fixed while comparing contrasts.</p>
+<pre><code class="language-python">ds.compute_multi_de(
+    analysis_dsd,
+    group_col="compound", reference="DMSO", exclude_levels=("water",),
+    methods=("limma_voom",), batch_cols=None, within_plate=False,
+    min_replicates=2, fdr_threshold=0.05, lfc_threshold=0.5,
+    n_jobs=1, inplace=True,
+)
+</code></pre>
+<p><code>summarise_comparison()</code> returns the contrast summary. Check for missing results before selecting a contrast, and inspect <code>comparison_failures</code> for failed comparisons. Ranking by DEG count selects a figure to inspect; it does not select the most biologically important treatment.</p>
+<pre><code class="language-python">if not analysis_dsd.adata.uns.get("comparison_results"):
+    raise ValueError("No fitted contrasts; inspect comparison_failures and replication.")
+de_summary = ds.summarise_comparison(analysis_dsd)
+if de_summary.empty:
+    raise ValueError("The DE summary is empty; inspect comparison_failures.")
+de_summary.to_csv(comparison_dir / "comparison_summary.tsv", sep="\t", index=False)
+priority = de_summary.sort_values(
+    ["n_sig_total", "min_padj"], ascending=[False, True],
+).iloc[0]["contrast"]
+priority_filename = re.sub(r"[^A-Za-z0-9_-]+", "_", str(priority))
+print(de_summary)
+</code></pre>
+<h3 id="complete-historical-contrast-summary">Complete historical contrast summary</h3>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Contrast</th>
+<th>Up</th>
+<th>Down</th>
+<th>Total DEGs</th>
+<th>Minimum FDR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drug14</td>
+<td>4,020</td>
+<td>3,219</td>
+<td>7,239</td>
+<td>2.50e-13</td>
+</tr>
+<tr>
+<td>Drug15</td>
+<td>307</td>
+<td>4,631</td>
+<td>4,938</td>
+<td>1.06e-06</td>
+</tr>
+<tr>
+<td>Drug16</td>
+<td>2,052</td>
+<td>2,872</td>
+<td>4,924</td>
+<td>1.23e-08</td>
+</tr>
+<tr>
+<td>Drug1</td>
+<td>941</td>
+<td>892</td>
+<td>1,833</td>
+<td>6.38e-08</td>
+</tr>
+<tr>
+<td>Drug7</td>
+<td>529</td>
+<td>838</td>
+<td>1,367</td>
+<td>3.87e-07</td>
+</tr>
+<tr>
+<td>Drug8</td>
+<td>420</td>
+<td>397</td>
+<td>817</td>
+<td>4.90e-06</td>
+</tr>
+<tr>
+<td>Drug2</td>
+<td>95</td>
+<td>209</td>
+<td>304</td>
+<td>1.02e-05</td>
+</tr>
+<tr>
+<td>Drug4</td>
+<td>6</td>
+<td>18</td>
+<td>24</td>
+<td>1.35e-04</td>
+</tr>
+<tr>
+<td>Drug3</td>
+<td>2</td>
+<td>15</td>
+<td>17</td>
+<td>1.58e-03</td>
+</tr>
+<tr>
+<td>Drug5</td>
+<td>2</td>
+<td>3</td>
+<td>5</td>
+<td>1.45e-02</td>
+</tr>
+<tr>
+<td>Drug13</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>1.09e-02</td>
+</tr>
+<tr>
+<td>Drug11</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1.86e-02</td>
+</tr>
+<tr>
+<td>Drug6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1.30e-01</td>
+</tr>
+<tr>
+<td>Drug9</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>3.47e-01</td>
+</tr>
+<tr>
+<td>Drug12</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>3.58e-01</td>
+</tr>
+<tr>
+<td>Drug10</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>5.10e-01</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>plot_deg_counts()</code> creates the directional DEG-count figure.</p>
+<pre><code class="language-python">fig = ds.plot_deg_counts(analysis_dsd)
+fig.savefig(comparison_dir / "deg_counts.png", dpi=180)
+plt.close(fig)
+</code></pre>
+<p><a aria-label="Open full-size figure: Historical directional DEG counts" class="figure-link" href="assets/figures/single-plate-05.png" rel="noopener" target="_blank"><img alt="Historical directional DEG counts" decoding="async" loading="lazy" src="assets/figures/single-plate-05.png"/></a></p>
+<p><strong>Directional DEG counts.</strong> Red indicates higher expression and blue lower expression in the treatment relative to DMSO. Empty bars are valid results at the chosen thresholds.</p>
+<p><code>plot_comparison_heatmap()</code> summarizes cross-treatment log fold changes.</p>
+<pre><code class="language-python">fig = ds.plot_comparison_heatmap(analysis_dsd, n_top_genes=50)
+fig.savefig(comparison_dir / "de_logfc_heatmap.png", dpi=180)
+plt.close(fig)
+</code></pre>
+<p><a aria-label="Open full-size figure: Historical cross-treatment log-fold-change heatmap" class="figure-link" href="assets/figures/single-plate-06.png" rel="noopener" target="_blank"><img alt="Historical cross-treatment log-fold-change heatmap" decoding="async" loading="lazy" src="assets/figures/single-plate-06.png"/></a></p>
+<p><strong>Cross-treatment log-fold-change heatmap.</strong> Strong significant effects organize treatments by shared and distinct response patterns. This is a heatmap of estimated treatment effects, rather than individual-well expression.</p>
+<h3 id="historical-worked-result-drug14">Historical worked result: Drug14</h3>
+<p>The largest historical response contains 7,239 DEGs: 4,020 up and 3,219 down. Broad responses require review of toxicity, global expression shifts, QC, and individual replicates. DEG count alone does not establish a specific mechanism.</p>
+<p><code>plot_comparison_volcano()</code> creates one volcano figure for the selected contrast. On synthetic practice data, the selected contrast is Drug1 or Drug2.</p>
+<pre><code class="language-python">fig = ds.plot_comparison_volcano(analysis_dsd, contrast=priority, n_label=5)
+fig.savefig(comparison_dir / f"{priority_filename}_volcano.png", dpi=180)
+plt.close(fig)
+</code></pre>
+<p><a aria-label="Open full-size figure: Historical Drug14 volcano plot" class="figure-link" href="assets/figures/single-plate-07.png" rel="noopener" target="_blank"><img alt="Historical Drug14 volcano plot" decoding="async" loading="lazy" src="assets/figures/single-plate-07.png"/></a></p>
+<p><strong>Drug14 volcano plot.</strong> Effect size and adjusted statistical evidence are shown together. Highlighted genes pass both configured thresholds.</p>
+<p><a id="enrichment"></a></p>
+<h2 id="7-directional-deg-enrichment">7. Directional DEG enrichment</h2>
+<p>This section is optional. Skip all its code blocks until you have local GMT gene-set files with identifiers that match your gene annotations. No GMT files are bundled, and the calls below disable network retrieval. See the <a href="api-reference.html">enrichment API</a> for parameters and result fields.</p>
+<p>Up- and downregulated DEGs are tested separately. The historical result uses all 12,807 modeled genes as the background. For another run, <code>background="all_tested"</code> uses that run's modeled genes. Gene identifiers are mapped through <code>adata.var["gene_symbol"]</code> before matching when appropriate; check actual overlap rather than assuming every identifier maps.</p>
+<pre><code class="language-python"># Optional section: supply these local GMT files before running.
+gene_set_paths = {
+    "hallmark": Path("gene_sets/hallmark.gmt"),
+    "go_bp": Path("gene_sets/go_bp.gmt"),
+    "reactome": Path("gene_sets/reactome.gmt"),
+}
+missing = [str(path) for path in gene_set_paths.values() if not path.is_file()]
+if missing:
+    raise FileNotFoundError(f"Supply local GMT files for this optional section: {missing}")
+ds.run_enrichment(
+    analysis_dsd, libraries=tuple(gene_set_paths), gene_set_paths=gene_set_paths,
+    mode=("ora",), background="all_tested", allow_network=False, inplace=True,
+)
+</code></pre>
+<p><code>plot_enrichment_dotplot()</code> creates one direction-specific figure per call. A direction with no significant genes or matched pathways may have no interpretable enrichment plot.</p>
+<pre><code class="language-python">fig = ds.plot_enrichment_dotplot(
+    analysis_dsd, contrast=priority, direction="up", mode="ora",
+)
+fig.savefig(comparison_dir / f"{priority_filename}_up_enrichment_dotplot.png", dpi=180)
+plt.close(fig)
+</code></pre>
+<p><a aria-label="Open full-size figure: Historical Drug14 upregulated DEG enrichment" class="figure-link" href="assets/figures/single-plate-08.png" rel="noopener" target="_blank"><img alt="Historical Drug14 upregulated DEG enrichment" decoding="async" loading="lazy" src="assets/figures/single-plate-08.png"/></a></p>
+<p><strong>Drug14 upregulated DEG enrichment.</strong> Pathways are tested among genes with higher expression. Dot position reports pathway FDR and point size reports the overlapping gene count.</p>
+<pre><code class="language-python">fig = ds.plot_enrichment_dotplot(
+    analysis_dsd, contrast=priority, direction="down", mode="ora",
+)
+fig.savefig(comparison_dir / f"{priority_filename}_down_enrichment_dotplot.png", dpi=180)
+plt.close(fig)
+</code></pre>
+<p><a aria-label="Open full-size figure: Historical Drug14 downregulated DEG enrichment" class="figure-link" href="assets/figures/single-plate-09.png" rel="noopener" target="_blank"><img alt="Historical Drug14 downregulated DEG enrichment" decoding="async" loading="lazy" src="assets/figures/single-plate-09.png"/></a></p>
+<p><strong>Drug14 downregulated DEG enrichment.</strong> Pathways are tested among genes with lower expression. Point position and size have the same meaning as in the upregulated panel.</p>
+<p>The historical analysis contains 1,018 pathway rows with FDR &lt; 0.05 across all treatment, library, and direction combinations. Overlapping pathways reuse genes and do not represent 1,018 independent biological findings. Enrichment of a directional gene list does not by itself prove pathway activation or inhibition.</p>
+<p><code>enrichment_summary()</code> returns pathway results independently of plotting.</p>
+<pre><code class="language-python">pathway_table = ds.enrichment_summary(analysis_dsd)
+significant_pathways = pathway_table.loc[pathway_table["padj"] &lt; 0.05].copy()
+pathway_table.to_csv(comparison_dir / "pathway_summary.tsv", sep="\t", index=False)
+significant_pathways.to_csv(
+    comparison_dir / "significant_pathways.tsv", sep="\t", index=False,
+)
+</code></pre>
+<p>Selected historical pathway results:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Direction</th>
+<th>Pathway</th>
+<th>Overlap</th>
+<th>Odds ratio</th>
+<th>FDR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hallmark</td>
+<td>up</td>
+<td>TNF-alpha Signaling via NF-kB</td>
+<td>124/175</td>
+<td>5.42</td>
+<td>2.23e-25</td>
+</tr>
+<tr>
+<td>hallmark</td>
+<td>down</td>
+<td>E2F Targets</td>
+<td>109/198</td>
+<td>3.74</td>
+<td>7.51e-18</td>
+</tr>
+<tr>
+<td>hallmark</td>
+<td>down</td>
+<td>G2-M Checkpoint</td>
+<td>94/193</td>
+<td>2.88</td>
+<td>2.53e-11</td>
+</tr>
+<tr>
+<td>reactome</td>
+<td>down</td>
+<td>Cell Cycle Checkpoints R-HSA-69620</td>
+<td>107/251</td>
+<td>2.26</td>
+<td>8.74e-07</td>
+</tr>
+<tr>
+<td>go_bp</td>
+<td>down</td>
+<td>DNA Metabolic Process (GO:0006259)</td>
+<td>108/253</td>
+<td>2.26</td>
+<td>1.50e-06</td>
+</tr>
+<tr>
+<td>reactome</td>
+<td>down</td>
+<td>Resolution Of Sister Chromatid Cohesion R-HSA-2500257</td>
+<td>52/103</td>
+<td>3.07</td>
+<td>1.47e-05</td>
+</tr>
+<tr>
+<td>go_bp</td>
+<td>down</td>
+<td>DNA Replication (GO:0006260)</td>
+<td>37/67</td>
+<td>3.69</td>
+<td>1.78e-04</td>
+</tr>
+<tr>
+<td>hallmark</td>
+<td>up</td>
+<td>Hypoxia</td>
+<td>74/159</td>
+<td>1.92</td>
+<td>1.03e-03</td>
+</tr>
+<tr>
+<td>reactome</td>
+<td>up</td>
+<td>SIRT1 Negatively Regulates rRNA Expression R-HSA-427359</td>
+<td>18/24</td>
+<td>6.24</td>
+<td>8.06e-03</td>
+</tr>
+<tr>
+<td>reactome</td>
+<td>up</td>
+<td>Assembly Of ORC Complex At Origin Of Replication R-HSA-68616</td>
+<td>18/24</td>
+<td>6.24</td>
+<td>8.06e-03</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="tables"></a></p>
+<h2 id="8-saved-outputs">8. Saved outputs</h2>
+<p>Save the individual gene-level results and a model-status table as well as figures. This block can run whether or not you completed optional enrichment.</p>
+<pre><code class="language-python">for contrast, table in analysis_dsd.adata.uns["comparison_results"].items():
+    filename = re.sub(r"[^A-Za-z0-9_-]+", "_", str(contrast))
+    table.to_csv(comparison_dir / f"{filename}_de.tsv", sep="\t", index=False)
+failures = analysis_dsd.adata.uns.get("comparison_failures", {})
+model_status = pd.DataFrame(
+    [{"contrast": key, "status": "succeeded", "message": ""}
+     for key in analysis_dsd.adata.uns["comparison_results"]]
+    + [{"contrast": key, "status": "failed", "message": message}
+       for key, message in failures.items()]
+)
+model_status.to_csv(comparison_dir / "model_status.tsv", sep="\t", index=False)
+print(model_status)
+</code></pre>
+<p>The chapter blocks write:</p>
+<pre><code class="language-text">results/single-plate-chapter/
+├── qc/
+│   ├── well_qc.csv
+│   ├── dmso_outlier_audit.csv
+│   ├── reviewed_exclusions.csv
+│   └── QC distributions and plate-map PNGs
+└── comparison/
+    ├── design_counts.csv
+    ├── comparison_summary.tsv
+    ├── model_status.tsv
+    ├── &lt;contrast&gt;_de.tsv
+    ├── DEG-count, heatmap, and volcano PNGs
+    └── optional pathway tables and enrichment PNGs
+</code></pre>
+<p>Keep the reviewed exclusion table, filtering thresholds, condition definitions, gene-set versions, and software environment with your analysis. The command-line runner below organizes its exports separately and records its configuration.</p>
+<p><a id="notes"></a></p>
+<h2 id="9-important-notes">9. Important notes</h2>
+<ul>
+<li>A one-plate analysis provides within-plate evidence. Use <a href="multi-plate-comparison.html">multi-plate comparison</a> to assess independently estimated effects across plates.</li>
+<li>Match treatment and control by dose design, time, vehicle, and other relevant conditions. Technical wells do not substitute for independent biological replication.</li>
+<li>Review unusual controls before exclusion, document the decision, and check how conclusions change when a questionable well is retained.</li>
+<li>Preserve raw counts for DE and use normalized expression for the intended visualizations.</li>
+<li>Treat zero DEGs as a valid result, and interpret overlapping pathways as related hypotheses rather than independent discoveries.</li>
+</ul>
+<p><a id="glossary"></a></p>
+<h2 id="glossary-1">Glossary</h2>
+<p><strong>Batch effect</strong> — A systematic technical difference associated with plate, run, operator, reagent lot, or processing time.</p>
+<p><strong>Contrast</strong> — A defined treatment-minus-control comparison. Positive log fold change means higher expression in the treatment.</p>
+<p><strong>DEG</strong> — A differentially expressed gene passing both the adjusted p-value and effect-size thresholds.</p>
+<p><strong>FDR</strong> — False discovery rate. Adjusted p-values support controlling the expected proportion of false discoveries among a set of rejected hypotheses under the method's assumptions.</p>
+<p><strong>Batch regression</strong> — A model-based adjustment of normalized expression for an estimable batch effect. This chapter has only one plate and does not perform it.</p>
+<p><strong>ORA</strong> — Over-representation analysis of a selected gene list against a defined tested-gene background.</p>
+<p><strong>Repeatability</strong> — Agreement among replicate wells measured under the same plate conditions.</p>
+<p><strong>Reproducibility</strong> — Agreement of independently estimated treatment effects across plates or runs.</p>
+<p><strong>Within-plate support</strong> — Presence of both treatment and control wells on the same plate, needed for a within-plate contrast.</p>
+<p><a id="troubleshooting"></a></p>
+<h2 id="troubleshooting-1">Troubleshooting</h2>
+<p><strong>The DMSO label is not found.</strong> Check exact spelling and case in <code>analysis_dsd.obs["compound"]</code>. The audit accepts case-insensitive matching, while the model's <code>reference</code> must match the stored condition label. Correct inconsistent metadata before fitting.</p>
+<p><strong>No contrasts are returned.</strong> Review <code>analysis_dsd.adata.uns["comparison_failures"]</code>, treatment/control representation, the raw counts layer, and the minimum-replicate requirement. A summary cannot be selected from an empty result.</p>
+<p><strong>A treatment has zero DEGs.</strong> Inspect effect sizes, replicate values, and uncertainty. Do not relax thresholds solely to obtain a nonempty list.</p>
+<p><strong>No enrichment is returned.</strong> Check that local GMT files exist, gene symbols overlap those libraries, significant DEGs exist in the requested direction, and the tested-gene background is appropriate. The synthetic inputs demonstrate the workflow; their artificial identifiers need not reproduce meaningful biological enrichment.</p>
+<p><strong>The numbers differ from the tables above.</strong> The tables and figures are historical worked results. Synthetic practice inputs, reviewed exclusions, filtering choices, model settings, and library versions determine the output of your own run.</p>
+<p><a id="complete-report"></a></p>
+<h2 id="10-complete-reproducible-run">10. Complete reproducible run</h2>
+<p>For a complete practice run from the repository root:</p>
+<pre><code class="language-bash">python scripts/run_tutorial.py single-plate --data-dir data --output-dir results
+</code></pre>
+<p>This runs Sample 1 through QC, control review, filtering, normalization, DE, and result export. It does not automatically exclude flagged controls. Enrichment requires optional local gene-set files; inspect <code>python scripts/run_tutorial.py --help</code> for those inputs and reviewed-exclusion options. The practice runner uses settings appropriate to the bundled synthetic inputs, so its results need not match the historical example or every chapter setting.</p>
+<p>For a different experiment, use a new output directory and review the <a href="input-preparation.html">input contract</a>, <a href="qc-workflow.html">QC workflow</a>, and <a href="api-reference.html">API reference</a> before adapting the condition labels or thresholds.</p>
+<p><a href="mix-species-workflow.html">← Mixed-species review</a> · <a href="multi-plate-comparison.html">Multi-plate comparison →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="well-to-well-repeatability.html"><small>Previous</small>Well-to-well repeatability</a><a href="multi-plate-comparison.html"><small>Next</small>Multi-plate comparison →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="single-plate-comparison.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#overview-1">Overview</a><a href="#1-when-to-use-one-plate">1. When to use one plate</a><a href="#2-input-and-metadata">2. Input and metadata</a><a href="#3-essential-qc">3. Essential QC</a><a href="#4-audit-controls-and-exclusions">4. Audit controls and exclusions</a><a href="#5-filter-genes-and-normalize">5. Filter genes and normalize</a><a href="#6-differential-expression">6. Differential expression</a><a href="#7-directional-deg-enrichment">7. Directional DEG enrichment</a><a href="#8-saved-outputs">8. Saved outputs</a><a href="#9-important-notes">9. Important notes</a><a href="#glossary-1">Glossary</a><a href="#troubleshooting-1">Troubleshooting</a><a href="#10-complete-reproducible-run">10. Complete reproducible run</a></nav></aside></div></body></html>

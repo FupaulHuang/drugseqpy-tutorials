@@ -186,6 +186,90 @@
     "alt": "Species-specific gene-set expression distributions"
   },
   {
+    "chapter": "well-to-well-repeatability",
+    "index": 1,
+    "asset": "assets/figures/repeatability-01.png",
+    "alt": "Synthetic Sample 1 all-well Pearson correlation heatmap"
+  },
+  {
+    "chapter": "well-to-well-repeatability",
+    "index": 2,
+    "asset": "assets/figures/repeatability-02.png",
+    "alt": "Synthetic Sample 1 DMSO within-condition Pearson heatmap"
+  },
+  {
+    "chapter": "well-to-well-repeatability",
+    "index": 3,
+    "asset": "assets/figures/repeatability-03.png",
+    "alt": "Synthetic DMSO replicate scatter for wells 25 and 33"
+  },
+  {
+    "chapter": "well-to-well-repeatability",
+    "index": 4,
+    "asset": "assets/figures/repeatability-04.png",
+    "alt": "Synthetic Drug2 replicate scatter for wells 15 and 27"
+  },
+  {
+    "chapter": "well-to-well-repeatability",
+    "index": 5,
+    "asset": "assets/figures/repeatability-05.png",
+    "alt": "Synthetic Drug1 replicate scatter for wells 6 and 10"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 1,
+    "asset": "assets/figures/single-plate-01.png",
+    "alt": "QC metric distributions for Sample 1"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 2,
+    "asset": "assets/figures/single-plate-02.png",
+    "alt": "Total-UMI plate map for Sample 1"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 3,
+    "asset": "assets/figures/single-plate-03.png",
+    "alt": "Treatment layout for Sample 1"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 4,
+    "asset": "assets/figures/single-plate-04.png",
+    "alt": "Historical DMSO control audit for Sample 1"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 5,
+    "asset": "assets/figures/single-plate-05.png",
+    "alt": "Historical directional DEG counts"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 6,
+    "asset": "assets/figures/single-plate-06.png",
+    "alt": "Historical cross-treatment log-fold-change heatmap"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 7,
+    "asset": "assets/figures/single-plate-07.png",
+    "alt": "Historical Drug14 volcano plot"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 8,
+    "asset": "assets/figures/single-plate-08.png",
+    "alt": "Historical Drug14 upregulated DEG enrichment"
+  },
+  {
+    "chapter": "single-plate-comparison",
+    "index": 9,
+    "asset": "assets/figures/single-plate-09.png",
+    "alt": "Historical Drug14 downregulated DEG enrichment"
+  },
+  {
     "chapter": "multi-plate-comparison",
     "index": 1,
     "asset": "assets/figures/comparison-01.png",
@@ -406,5 +490,89 @@
     "index": 37,
     "asset": "assets/figures/comparison-37.png",
     "alt": "Drug14 downregulated DEG enrichment"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 1,
+    "asset": "assets/figures/bulk-01.png",
+    "alt": "Sample 3 similarity to bulk RNA-seq"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 2,
+    "asset": "assets/figures/bulk-02.png",
+    "alt": "Sample 4 similarity to bulk RNA-seq"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 3,
+    "asset": "assets/figures/bulk-03.png",
+    "alt": "Human Sample 3 wells"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 4,
+    "asset": "assets/figures/bulk-04.png",
+    "alt": "Human Sample 4 wells"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 5,
+    "asset": "assets/figures/bulk-05.png",
+    "alt": "Mouse Sample 3 wells"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 6,
+    "asset": "assets/figures/bulk-06.png",
+    "alt": "Mouse Sample 4 wells"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 7,
+    "asset": "assets/figures/bulk-07.png",
+    "alt": "Human primary centroid \u00b7 Sample 3"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 8,
+    "asset": "assets/figures/bulk-08.png",
+    "alt": "Human primary centroid \u00b7 Sample 4"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 9,
+    "asset": "assets/figures/bulk-09.png",
+    "alt": "Mouse primary centroid \u00b7 Sample 3"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 10,
+    "asset": "assets/figures/bulk-10.png",
+    "alt": "Mouse primary centroid \u00b7 Sample 4"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 11,
+    "asset": "assets/figures/bulk-11.png",
+    "alt": "Paired Sample 3/Sample 4 public-reference similarity"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 12,
+    "asset": "assets/figures/bulk-12.png",
+    "alt": "Primary Sample 4-minus-Sample 3 decision contrast"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 13,
+    "asset": "assets/figures/bulk-13.png",
+    "alt": "Pseudogene detection in Sample 3 and Sample 4"
+  },
+  {
+    "chapter": "bulk-rnaseq-comparison",
+    "index": 14,
+    "asset": "assets/figures/bulk-14.png",
+    "alt": "Matched pseudogene-bias effects"
   }
 ]

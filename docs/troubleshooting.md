@@ -28,6 +28,10 @@ Keep stable species-prefixed IDs active in `var_names`. Confirm both species pre
 
 The synthetic practice bundles contain count matrices, not read alignments or read statistics. Skip the optional STARsolo section unless you supply the matching `Summary.csv`, `CellReads.stats`, and barcode structure. Raw reads, UMI counts, and normalized counts answer different questions. A read-depth sensitivity analysis requires actual downsampling and reprocessing; library-size normalization does not equalize sequencing reads.
 
+## I have only one plate
+
+Use the [single-plate comparison](single-plate-comparison.md) and run `python scripts/run_tutorial.py single-plate`. It compares treatments against controls on Sample 1 with `batch_cols=None` and `within_plate=False`. One plate cannot establish between-plate effects or cross-plate reproducibility.
+
 ## Batch correction fails or removes treatment separation
 
 Review treatment × plate counts after every exclusion. Cases on one plate and controls on another are confounded. Preserve estimable biological terms in `covariate_cols`, and use the same normalization for before/after views. Inspect treatment structure as well as plate mixing. Use raw counts with a plate term for differential expression, even when exploratory plots use corrected expression.
@@ -43,6 +47,14 @@ The first-run practice workflow skips enrichment. For an optional enrichment run
 ## Numbers differ from the figures
 
 The detailed chapters show fixed anonymized worked results. The bundled practice counts are synthetic and intentionally produce different numbers. Your own data will differ too. Compare table schemas, analysis decisions, and interpretation. For numerical reproducibility, record the exact package revision, dependencies, filters, exclusions, seeds, and input checksums; the package version alone is insufficient.
+
+## A scatter correlation differs from its heatmap cell
+
+Check which genes enter each calculation. The [well-repeatability workflow](well-to-well-repeatability.md) uses the plate-wide detected-gene set for the full heatmap, but the union of genes detected in the two selected wells for each scatter. Zero-only genes in that pair are excluded from the scatter correlation, so the coefficients can differ. Match the transformation and gene universe before comparing values.
+
+## Bulk agreement changes across reference studies
+
+Review cell identity, condition, library type, expression units, gene intersections, and whether each reference was declared primary or sensitivity evidence. Pair Sample 3 and Sample 4 against the same reference and summarize within studies before combining them. The [bulk comparison chapter](bulk-rnaseq-comparison.md) explains why correlations and conditional bootstrap intervals do not remove plate–method confounding.
 
 ## Read the website locally or publish it
 

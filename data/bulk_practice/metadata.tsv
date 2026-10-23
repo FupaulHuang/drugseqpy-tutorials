@@ -1,0 +1,9 @@
+reference_id	study_id	species	compound	unit	primary
+practice_human_1_1	practice_human_study_1	human	231	counts	True
+practice_human_1_2	practice_human_study_1	human	231	counts	True
+practice_human_2_1	practice_human_study_2	human	231	FPKM	True
+practice_human_2_2	practice_human_study_2	human	231	FPKM	True
+practice_mouse_1_1	practice_mouse_study_1	mouse	3T3	counts	True
+practice_mouse_1_2	practice_mouse_study_1	mouse	3T3	counts	True
+practice_mouse_2_1	practice_mouse_study_2	mouse	3T3	FPKM	True
+practice_mouse_2_2	practice_mouse_study_2	mouse	3T3	FPKM	True

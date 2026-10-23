@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bulk RNA-seq comparison · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/bulk-rnaseq-comparison.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html" aria-current="page"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / BULK RNA-SEQ COMPARISON</div><article><h1 id="bulk-rna-seq-comparison">Bulk RNA-seq comparison</h1>
+<p><a href="index.html">Learning path</a> · <a href="mix-species-workflow.html">Mixed-species QC</a> · <a href="multi-plate-comparison.html">Multi-plate comparison</a> · <a href="api-reference.html">API reference</a></p>
+<blockquote>
+<p><strong>Before you start:</strong> complete <a href="getting-started.html">Getting started</a> and review <a href="input-preparation.html">input preparation</a>. This chapter compares <strong>Sample 3 and Sample 4</strong> against biologically matched bulk references. “Study” and “Reference” labels are anonymous identifiers. The worked figures and tables are fixed interpretation examples; the separate synthetic practice references produce different numbers.</p>
+</blockquote>
+<p>Compare local Drug-seq expression with compatible bulk RNA-seq at well, plate × compound, and compound/cell-line levels while controlling batch structure without erasing biological or method effects.</p>
+<p><a id="overview"></a></p>
+<h2 id="workflow-overview">Workflow overview</h2>
+<p>This reusable workflow compares one or more <code>drugseqpy</code> objects with compatible public or in-house bulk RNA-seq data. It moves from individual wells to plate × compound profiles and finally to a study-aware compound-level conclusion, while preserving species, biological condition, plate, and reference-study structure.</p>
+<p>Use it to answer three general questions: whether individual wells agree with a bulk reference, whether plate-level compound profiles reproduce the same expression pattern, and whether the conclusion remains stable across independent RNA-seq studies. Sample 3 and Sample 4 are the worked example used to show every operation and output.</p>
+<h3 id="worked-example-result">Worked example result</h3>
+<p>MDA-MB-231: <strong>inconclusive</strong>. NIH/3T3: <strong>Sample 3 more similar</strong>. Each decision requires the reference-study and matched-well intervals to support the same direction.</p>
+<p><strong>Historical human mean Δz (Sample 4 − Sample 3): −0.0006</strong>, with a reference-resampling interval of −0.0089 to 0.0078.</p>
+<p><strong>Define direction before analysis.</strong> For any two objects A and B, state that negative <code>Δz = z(B) − z(A)</code> favors A and positive values favor B. In this example A is Sample 3 and B is Sample 4. “Inconclusive” is not evidence that the objects are equivalent.</p>
+<p><a id="design"></a></p>
+<h2 id="comparison-design">Comparison design</h2>
+<p>Drug-seq and bulk RNA-seq do not produce identical measurement units. Compare their <em>relative gene-expression structure</em>; do not treat UMI and FPKM values as interchangeable measurements.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Local drugseqpy object(s)</th>
+<th>Bulk RNA-seq reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Observation unit</td>
+<td>One retained plate well</td>
+<td>One population RNA-seq library</td>
+</tr>
+<tr>
+<td>Expression value</td>
+<td>Raw gene-level UMI count with normalized views</td>
+<td>Documented gene-level FPKM or another frozen common scale</td>
+</tr>
+<tr>
+<td>Replicates used</td>
+<td>Retained wells nested within plate and compound</td>
+<td>Eligible samples nested within study</td>
+</tr>
+<tr>
+<td>Primary gene set</td>
+<td>Bulk-expressed protein-coding genes in the species-specific Ensembl-ID intersection</td>
+<td></td>
+</tr>
+<tr>
+<td>Primary similarity</td>
+<td>Spearman rank correlation, calculated separately for every object/reference pair</td>
+<td></td>
+</tr>
+<tr>
+<td>Guardrails</td>
+<td>Never pool species, objects, plates, or validation studies before their independent similarities are available</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="three-analysis-resolutions">Three analysis resolutions</h3>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Resolution</th>
+<th>Drug-seq profile</th>
+<th>Question answered</th>
+<th>Uncertainty / batch handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Well</strong></td>
+<td>One retained well</td>
+<td>Does the result depend on a small subset of wells?</td>
+<td>Correlate every well independently; resample matched well positions when available.</td>
+</tr>
+<tr>
+<td><strong>Plate × compound</strong></td>
+<td>Mean UMI profile for one compound or cell line on one plate</td>
+<td>How closely does each local plate profile match each bulk sample?</td>
+<td>Keep objects and plates separate; pair their similarities against the same reference.</td>
+</tr>
+<tr>
+<td><strong>Compound / cell line</strong></td>
+<td>Plate-level correlations summarized within biological condition</td>
+<td>Is one object or method consistently closer across studies?</td>
+<td>Bootstrap studies first and samples within study; combine with local well/plate uncertainty.</td>
+</tr>
+</tbody>
+</table></div>
+<p><a id="run"></a></p>
+<h2 id="run-a-portable-practice-comparison">Run a portable practice comparison</h2>
+<p>The bundled bulk-reference files are <strong>entirely synthetic</strong>, generated independently of the local practice matrices. They contain eight mock references across two simulation studies per species. They are supplied to test matching, gene alignment, and calculations, not to recreate the historical results below.</p>
+<p>Run from the tutorial repository root in the drugseqpy environment:</p>
+<pre><code class="language-bash">python scripts/compare_bulk_rnaseq.py --data-dir data --bulk-expression data/bulk_practice/expression.tsv --bulk-metadata data/bulk_practice/metadata.tsv --output-dir results/bulk-comparison
+</code></pre>
+<p>The helper loads Sample 3 and Sample 4 and keeps human and mouse comparisons separate. It computes well- and plate-profile correlations, pairs the same reference across the two samples, averages differences within each study, and then gives each study equal weight. It does not remove batch effects, assign a winning method, calculate confidence intervals, or perform the pseudogene audit. Those historical analyses are explained later as extensions with additional design and annotation requirements.</p>
+<pre><code class="language-python">from pathlib import Path
+import pandas as pd
+
+output = Path("results/bulk-comparison")
+profiles = pd.read_csv(output / "profile_correlations.csv")
+paired = pd.read_csv(output / "paired_reference_differences.csv")
+study_summary = pd.read_csv(output / "study_equal_summary.csv")
+print(profiles[["species", "compound", "plate_id", "reference_id", "spearman_rho"]])
+print(study_summary)
+</code></pre>
+<p>Review the individual wells and use <code>--exclude-samples reviewed_exclusions.csv</code> only for an explicit list of Sample 3/4 <code>sample_id</code> values, optionally with a <code>reason</code> column. The default retains wells, including deliberately mixed and low-depth practice wells; compare the <a href="mix-species-workflow.html">species-QC results</a> before deciding which observations are suitable. Changing the well set changes the mean profile and must be recorded.</p>
+<p>To generate a fresh independent-format practice copy without overwriting an existing directory:</p>
+<pre><code class="language-bash">python scripts/make_bulk_practice_data.py --output bulk-practice-copy
+</code></pre>
+<h3 id="bring-your-own-reference-tables">Bring your own reference tables</h3>
+<p>Provide a tab-delimited expression table with <code>feature_id</code> followed by one column per reference, and a metadata table with the fields below. A blank expression cell means <strong>not measured</strong>; an explicit zero is an observed zero. The script rejects duplicate stable gene IDs after stripping version suffixes. It keeps a fixed intersection measured in both local samples and every reference for the same species/condition; it never fills annotation gaps with zeros.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Metadata field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference_id</code></td>
+<td>Unique reference library identifier, matching exactly one expression column.</td>
+</tr>
+<tr>
+<td><code>study_id</code></td>
+<td>Independent study or reference-batch label; repeated libraries from one study remain grouped.</td>
+</tr>
+<tr>
+<td><code>species</code></td>
+<td><code>human</code> or <code>mouse</code> for this helper.</td>
+</tr>
+<tr>
+<td><code>compound</code></td>
+<td>Exact local condition label, such as <code>231</code> or <code>3T3</code>; review cell identity, treatment, dose, and time before declaring a match.</td>
+</tr>
+<tr>
+<td><code>unit</code></td>
+<td><code>counts</code> or <code>FPKM</code>; one declared unit per study. Counts must be nonnegative integers; FPKM can be nonnegative real values.</td>
+</tr>
+<tr>
+<td><code>primary</code></td>
+<td><code>true</code> or <code>false</code>; primary and sensitivity summaries are kept separate.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Both expression scales are accepted to demonstrate the input contract; the script does not convert one into the other. Gene-length normalization can change cross-gene ranks, so counts and FPKM are not equivalent reference choices. Prespecify a comparable scale and report scale sensitivity in a real study.</p>
+<p>The practice helper uses all measured shared genes and has no gene-biotype annotation. It therefore does not reproduce the historical <strong>expressed protein-coding</strong> filter. For research use, construct and document your intended gene universe first, including the annotation version, expression rule, and eligible reference set. A broad intersection may shrink when a sensitivity study uses an older annotation; record that change explicitly.</p>
+<p><a id="inputs"></a></p>
+<h2 id="inputs-and-inclusion-rules">Inputs and inclusion rules</h2>
+<p>A reusable run needs one or more QC-complete <code>drugseqpy</code> objects, explicit plate and compound metadata, a species-resolved gene annotation, and a reviewed manifest of biologically compatible bulk RNA-seq samples. Conditions used for primary inference must be declared before correlations are inspected.</p>
+<h3 id="worked-example-local-sample-3sample-4-data-after-qc">Worked example: local Sample 3/Sample 4 data after QC</h3>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Species</th>
+<th>Cell line</th>
+<th>Wells</th>
+<th>Median UMI</th>
+<th>Median genes</th>
+<th>Median purity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 3</td>
+<td>human</td>
+<td>MDA-MB-231</td>
+<td>46</td>
+<td>896,562.5000</td>
+<td>15,669</td>
+<td>0.9961</td>
+</tr>
+<tr>
+<td>Sample 4</td>
+<td>human</td>
+<td>MDA-MB-231</td>
+<td>46</td>
+<td>1,012,717</td>
+<td>15,573</td>
+<td>0.9974</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>mouse</td>
+<td>NIH/3T3</td>
+<td>46</td>
+<td>353,986.5000</td>
+<td>13,960.5000</td>
+<td>0.9812</td>
+</tr>
+<tr>
+<td>Sample 4</td>
+<td>mouse</td>
+<td>NIH/3T3</td>
+<td>46</td>
+<td>348,988.5000</td>
+<td>13,299</td>
+<td>0.9874</td>
+</tr>
+</tbody>
+</table></div>
+<p>The retained local design is balanced: 46 human and 46 mouse wells in each method. Species purity is used for QC, but human and mouse counts are separated before comparison.</p>
+<h3 id="worked-example-bulk-references">Worked example: bulk references</h3>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Species</th>
+<th>Cell line</th>
+<th>Study</th>
+<th>Role</th>
+<th>Condition</th>
+<th>Samples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>human</td>
+<td>MDA-MB-231</td>
+<td>Study 2</td>
+<td>primary</td>
+<td>parental</td>
+<td>3</td>
+</tr>
+<tr>
+<td>human</td>
+<td>MDA-MB-231</td>
+<td>Study 3</td>
+<td>validation</td>
+<td>untreated</td>
+<td>3</td>
+</tr>
+<tr>
+<td>human</td>
+<td>MDA-MB-231</td>
+<td>Study 1</td>
+<td>primary</td>
+<td>baseline</td>
+<td>2</td>
+</tr>
+<tr>
+<td>mouse</td>
+<td>NIH/3T3</td>
+<td>Study 5</td>
+<td>validation</td>
+<td>DMSO</td>
+<td>3</td>
+</tr>
+<tr>
+<td>mouse</td>
+<td>NIH/3T3</td>
+<td>Study 4</td>
+<td>primary</td>
+<td>wild_type</td>
+<td>3</td>
+</tr>
+</tbody>
+</table></div>
+<p>Primary datasets drive the formal decision. Study 3 is three-prime-focused human RNA-seq and Study 5 contains mouse DMSO controls, so both remain validation evidence. A further candidate study was excluded because the requested gene-level expression scale was unavailable.</p>
+<p><strong>Experimental identity check.</strong> Local metadata labels mouse wells as <code>3T3</code>; this workflow assumes NIH/3T3. Confirm the subline before treating the mouse result as definitive.</p>
+<p><a id="harmonize"></a></p>
+<h2 id="harmonize-unlike-assays">Harmonize unlike assays</h2>
+<p>Harmonization defines comparable features and transformations; it does not force the two assays onto identical numerical values. Apply the same documented rules to every local object and every reference.</p>
+<ol>
+<li>Strip Ensembl version suffixes and join by stable gene ID, never by gene symbol. Detect duplicate stable IDs after stripping; do not silently duplicate or arbitrarily discard rows.</li>
+<li>Restrict every comparison to the expected species and keep annotation-missing genes out of the measured-zero category.</li>
+<li>Average raw UMI per retained well for the group-level Drug-seq profile; retain wells individually for the local uncertainty analysis.</li>
+<li>Use bulk FPKM as requested, with study/sample provenance retained in every row.</li>
+<li>Define the primary universe before looking at agreement, using species annotation and expression in the eligible primary bulk references. Use exactly the same genes for both local profiles in each paired comparison. Save the gene list and report intersection sizes; a gene absent from an annotation is not a measured zero.</li>
+</ol>
+<p><code>ρ(method, reference) = Spearman[ log10(FPKM + 1), log10(mean UMI + 1) ]</code></p>
+<p>Spearman correlation is invariant to a strictly monotone log transform (ties remain ties), but the explicit transformed quantities keep the computation aligned with the diagnostic scatter plots. Pearson correlation on the transformed values is retained as a sensitivity view. The practice helper uses natural-log <code>log1p</code> for display; changing the log base rescales each axis by a positive constant and does not change these Pearson or Spearman coefficients.</p>
+<p><a id="batch"></a></p>
+<h2 id="handle-batch-effects-without-erasing-method-effects">Handle batch effects without erasing method effects</h2>
+<p>Start by asking whether the nuisance batch is statistically separable from the biological object, method, compound, dose, and time point. The design—not the availability of a correction algorithm—determines whether direct adjustment is valid.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Design</th>
+<th>Recommended handling</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One plate per object or method</td>
+<td>Do not directly remove plate; use paired-reference contrasts and hierarchical uncertainty.</td>
+<td>Matched wells, independent reference studies, and sensitivity datasets.</td>
+</tr>
+<tr>
+<td>Technical batch genuinely crossed with method and condition</td>
+<td>Check full design rank, then estimate batch while retaining estimable biological terms.</td>
+<td>Held-out-batch concordance plus pre/post diagnostics.</td>
+</tr>
+<tr>
+<td>Replicate plates nested within method</td>
+<td>Analyze independent plates as the experimental units or use a justified hierarchical model.</td>
+<td>Replicate-plate uncertainty; fixed plate and method terms remain confounded.</td>
+</tr>
+<tr>
+<td>Compound occurs on only one plate</td>
+<td>Treat compound and plate as confounded; report the limitation.</td>
+<td>Add a balanced replicate plate before making a general claim.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Worked example identifiability limit.</strong> Sample 3 is one plate and Sample 4 is one plate. Therefore <code>plate_id</code> and method are perfectly confounded. ComBat, Harmony, mean-centering, or regression across these two plates would remove an inseparable mixture of plate and method signal—and could manufacture agreement with bulk RNA-seq.</p>
+<p>For a confounded design such as Sample 3/Sample 4, use design- and inference-based batch control:</p>
+<ol>
+<li><strong>Normalize locally before comparison:</strong> retain raw UMI for provenance and use the same log-expression/rank-correlation definition for every well, plate, and object.</li>
+<li><strong>Pair on the bulk reference:</strong> calculate each object's similarity to the <em>same</em> bulk sample before taking a difference. Pairing holds the reference identity fixed, but study-by-assay interactions and biological mismatch can remain.</li>
+<li><strong>Respect the study hierarchy:</strong> summarize samples within study and resample studies as the top-level unit. Do not treat every reference library as an independent study.</li>
+<li><strong>Keep validation batches separate:</strong> three-prime-focused human RNA-seq and mouse DMSO controls are sensitivity evidence, not pooled into the primary call.</li>
+<li><strong>Use matched local wells:</strong> when matching metadata verify that positions represent corresponding experimental units, resample those verified pairs together so the decision must survive local plate heterogeneity.</li>
+</ol>
+<h3 id="check-the-full-design-before-correcting">Check the full design before correcting</h3>
+<p>Two or more plates per method improve replication, but do <strong>not</strong> by themselves make a fixed-effect <code>plate_id + method</code> design identifiable. If each plate contains only one method, method remains nested within the plate factor. The same concern applies to a compound, donor, or time point that occurs in only one batch.</p>
+<p>For a future experiment with a technical batch genuinely crossed with method and condition, check the full design matrix for rank deficiency before calling <code>correct_batch()</code>. For methods assigned to independent replicate plates, use an analysis that treats plate as the experimental unit (or a justified hierarchical model); do not subtract a fixed plate effect and assume the method contrast has been preserved. The <a href="multi-plate-comparison.html#design">multi-plate chapter</a> shows the simpler case in which treatments and controls occur across plates.</p>
+<p>No batch correction is applied to Sample 3 versus Sample 4 in this chapter or in the practice script. Reference pairing, study summaries, and matched-well sensitivity checks describe the available data; they do not eliminate plate–method confounding.</p>
+<p><a id="similarity"></a></p>
+<h2 id="plate-compound-comparison">Plate × compound comparison</h2>
+<p>Within each plate, average wells for the same compound or cell line into one gene profile. Keep every object × plate × compound profile independent, correlate it with every compatible bulk sample, and only then form paired differences.</p>
+<p>In the worked example, Sample 3–MDA-MB-231, Sample 4–MDA-MB-231, Sample 3–NIH/3T3, and Sample 4–NIH/3T3 are the four separately computed local profiles. Profiles derived from one plate share its technical context and are not independent method replicates:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Compound / cell line</th>
+<th>Study</th>
+<th>Reference</th>
+<th>Sample 3 plate ρ</th>
+<th>Sample 4 plate ρ</th>
+<th>Δz Sample 4−Sample 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MDA-MB-231</td>
+<td>Study 2</td>
+<td>Study 2_Reference 3</td>
+<td>0.5198</td>
+<td>0.5131</td>
+<td>-0.0092</td>
+</tr>
+<tr>
+<td>MDA-MB-231</td>
+<td>Study 2</td>
+<td>Study 2_Reference 4</td>
+<td>0.5257</td>
+<td>0.5192</td>
+<td>-0.0090</td>
+</tr>
+<tr>
+<td>MDA-MB-231</td>
+<td>Study 2</td>
+<td>Study 2_Reference 5</td>
+<td>0.5213</td>
+<td>0.5154</td>
+<td>-0.0080</td>
+</tr>
+<tr>
+<td>MDA-MB-231</td>
+<td>Study 1</td>
+<td>Study 1_Reference 1</td>
+<td>0.7416</td>
+<td>0.7447</td>
+<td>0.0070</td>
+</tr>
+<tr>
+<td>MDA-MB-231</td>
+<td>Study 1</td>
+<td>Study 1_Reference 2</td>
+<td>0.7409</td>
+<td>0.7445</td>
+<td>0.0081</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>Study 4</td>
+<td>Study 4_Reference 9</td>
+<td>0.7051</td>
+<td>0.6976</td>
+<td>-0.0147</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>Study 4</td>
+<td>Study 4_Reference 10</td>
+<td>0.6940</td>
+<td>0.6888</td>
+<td>-0.0100</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>Study 4</td>
+<td>Study 4_Reference 11</td>
+<td>0.7040</td>
+<td>0.6969</td>
+<td>-0.0140</td>
+</tr>
+</tbody>
+</table></div>
+<p><a aria-label="Open full-size figure: Sample 3 similarity to bulk RNA-seq" class="figure-link" href="assets/figures/bulk-01.png" rel="noopener" target="_blank"><img alt="Sample 3 similarity to bulk RNA-seq" decoding="async" loading="lazy" src="assets/figures/bulk-01.png"/></a></p>
+<p><strong>Sample 3 similarity to bulk RNA-seq.</strong> Sample 3 is summarized independently for human and mouse references. Values are native Spearman correlations; no cross-panel rescaling is applied.</p>
+<p><a aria-label="Open full-size figure: Sample 4 similarity to bulk RNA-seq" class="figure-link" href="assets/figures/bulk-02.png" rel="noopener" target="_blank"><img alt="Sample 4 similarity to bulk RNA-seq" decoding="async" loading="lazy" src="assets/figures/bulk-02.png"/></a></p>
+<p><strong>Sample 4 similarity to bulk RNA-seq.</strong> Sample 4 uses the same gene-set definition and visual scale as Sample 3. The two methods are compared only after both independent correlation matrices exist.</p>
+<p><strong>Batch-aware pairing.</strong> Each row in the table compares Sample 3 and Sample 4 to the same bulk sample. This paired structure is more defensible than globally batch-correcting one Sample 3 plate against one Sample 4 plate. The heatmaps also use identical scales and retain their numeric source matrices.</p>
+<p><a id="wells"></a></p>
+<h2 id="inspect-well-level-similarity">Inspect well-level similarity</h2>
+<p>Plate means can hide failed wells, spatial structure, or heterogeneous response. Correlate each retained well independently with each compatible bulk sample, then summarize by object, plate, compound, study, and evidence role.</p>
+<p>The Sample 3/Sample 4 example yields 230 human and 138 mouse primary correlations per method:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Cell line</th>
+<th>Method</th>
+<th>Bulk samples</th>
+<th>Wells</th>
+<th>Mean Spearman ρ</th>
+<th>Mean Pearson r</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MDA-MB-231</td>
+<td>Sample 3</td>
+<td>5</td>
+<td>46</td>
+<td>0.5965</td>
+<td>0.6321</td>
+</tr>
+<tr>
+<td>MDA-MB-231</td>
+<td>Sample 4</td>
+<td>5</td>
+<td>46</td>
+<td>0.5950</td>
+<td>0.6288</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>Sample 3</td>
+<td>3</td>
+<td>46</td>
+<td>0.6654</td>
+<td>0.7090</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>Sample 4</td>
+<td>3</td>
+<td>46</td>
+<td>0.6584</td>
+<td>0.7030</td>
+</tr>
+</tbody>
+</table></div>
+<p><a aria-label="Open full-size figure: Human Sample 3 wells" class="figure-link" href="assets/figures/bulk-03.png" rel="noopener" target="_blank"><img alt="Human Sample 3 wells" decoding="async" loading="lazy" src="assets/figures/bulk-03.png"/></a></p>
+<p><strong>Human Sample 3 wells.</strong> Each row is one retained MDA-MB-231 well; each column is a matching bulk sample.</p>
+<p><a aria-label="Open full-size figure: Human Sample 4 wells" class="figure-link" href="assets/figures/bulk-04.png" rel="noopener" target="_blank"><img alt="Human Sample 4 wells" decoding="async" loading="lazy" src="assets/figures/bulk-04.png"/></a></p>
+<p><strong>Human Sample 4 wells.</strong> The independent Sample 4 matrix makes well heterogeneity visible before any Sample 4-minus-Sample 3 contrast.</p>
+<p><a aria-label="Open full-size figure: Mouse Sample 3 wells" class="figure-link" href="assets/figures/bulk-05.png" rel="noopener" target="_blank"><img alt="Mouse Sample 3 wells" decoding="async" loading="lazy" src="assets/figures/bulk-05.png"/></a></p>
+<p><strong>Mouse Sample 3 wells.</strong> NIH/3T3 primary references are evaluated without mixing human genes or samples.</p>
+<p><a aria-label="Open full-size figure: Mouse Sample 4 wells" class="figure-link" href="assets/figures/bulk-06.png" rel="noopener" target="_blank"><img alt="Mouse Sample 4 wells" decoding="async" loading="lazy" src="assets/figures/bulk-06.png"/></a></p>
+<p><strong>Mouse Sample 4 wells.</strong> All four panels share the fixed −0.25 to 0.60 correlation scale.</p>
+<p>The Spearman heatmaps include both primary and validation-reference columns (eight human and six mouse references); the summary table above uses only the primary references. The historical workflow also generated Pearson sensitivity views on log-transformed expression.</p>
+<p>The fixed well-heatmap color range ends at 0.60, so larger correlations saturate at the top color. Use the printed/table values to distinguish strong similarities.</p>
+<p>The well-level averages are descriptive because wells from a plate and samples from one reference study are not independent biological replicates. They diagnose within-plate variability and feed the matched-well bootstrap; they do not replace the study-aware compound-level decision.</p>
+<p><a id="scatter"></a></p>
+<h2 id="check-gene-level-agreement">Check gene-level agreement</h2>
+<p>For every object/reference pair, plot <code>log10(population RNA-seq FPKM + 1)</code> on x and <code>log10(mean raw UMI per retained well + 1)</code> on y. Freeze identical, nonnegative axis limits and integer ticks across the complete figure set. Four representative centroid panels from the worked analysis are shown below.</p>
+<p><a aria-label="Open full-size figure: Human primary centroid · Sample 3" class="figure-link" href="assets/figures/bulk-07.png" rel="noopener" target="_blank"><img alt="Human primary centroid · Sample 3" decoding="async" loading="lazy" src="assets/figures/bulk-07.png"/></a></p>
+<p><strong>Human primary centroid · Sample 3.</strong> Gray hexagons show ordinary-gene density; orange points are Ensembl-annotated pseudogenes.</p>
+<p><a aria-label="Open full-size figure: Human primary centroid · Sample 4" class="figure-link" href="assets/figures/bulk-08.png" rel="noopener" target="_blank"><img alt="Human primary centroid · Sample 4" decoding="async" loading="lazy" src="assets/figures/bulk-08.png"/></a></p>
+<p><strong>Human primary centroid · Sample 4.</strong> The axis limits and integer ticks exactly match the Sample 3 panel.</p>
+<p><a aria-label="Open full-size figure: Mouse primary centroid · Sample 3" class="figure-link" href="assets/figures/bulk-09.png" rel="noopener" target="_blank"><img alt="Mouse primary centroid · Sample 3" decoding="async" loading="lazy" src="assets/figures/bulk-09.png"/></a></p>
+<p><strong>Mouse primary centroid · Sample 3.</strong> The mouse comparison uses only mouse Ensembl genes and the NIH/3T3 reference centroid.</p>
+<p><a aria-label="Open full-size figure: Mouse primary centroid · Sample 4" class="figure-link" href="assets/figures/bulk-10.png" rel="noopener" target="_blank"><img alt="Mouse primary centroid · Sample 4" decoding="async" loading="lazy" src="assets/figures/bulk-10.png"/></a></p>
+<p><strong>Mouse primary centroid · Sample 4.</strong> Shared axes make detection-range differences visible without changing the scale.</p>
+<p>Use these plots to detect range compression, zero inflation, and unusual gene classes. Do not use the visible slope as the decision statistic—the paired Spearman analysis below remains primary.</p>
+<p><a id="decision"></a></p>
+<h2 id="apply-the-paired-decision-rule">Apply the paired decision rule</h2>
+<p><code>Δz = atanh(ρ object B ) − atanh(ρ object A )   ;   Δz &lt; 0 favors object A</code></p>
+<p>At the compound/cell-line level, each bulk sample supplies one paired object contrast. Bootstrap reference studies as the top-level unit with samples nested within study. Independently resample matched wells or replicate plates for local uncertainty. The historical rule makes a directional call only when both 95% intervals exclude zero in the same direction. This is a prespecified decision heuristic, not one joint confidence interval or a formal guarantee of method superiority.</p>
+<p>The reference interval uses study-level resampling with samples nested within study. The local well interval instead compares resampled local profiles to a primary-reference centroid. These target related but different summaries; they are not interchangeable estimates of a single pooled effect. With only one primary mouse study, that bootstrap cannot estimate between-study variability.</p>
+<p>For the worked example, object A is Sample 3 and object B is Sample 4:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Cell line</th>
+<th>Studies</th>
+<th>Samples</th>
+<th>Δz Sample 4−Sample 3</th>
+<th>Reference CI low</th>
+<th>Reference CI high</th>
+<th>Well CI low</th>
+<th>Well CI high</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MDA-MB-231</td>
+<td>2</td>
+<td>5</td>
+<td>-0.0006</td>
+<td>-0.0089</td>
+<td>0.0078</td>
+<td>0.0001</td>
+<td>0.0055</td>
+<td>inconclusive</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>1</td>
+<td>3</td>
+<td>-0.0129</td>
+<td>-0.0147</td>
+<td>-0.0100</td>
+<td>-0.0171</td>
+<td>-0.0085</td>
+<td>Sample 3 more similar</td>
+</tr>
+</tbody>
+</table></div>
+<p><a aria-label="Open full-size figure: Paired Sample 3/Sample 4 public-reference similarity" class="figure-link" href="assets/figures/bulk-11.png" rel="noopener" target="_blank"><img alt="Paired Sample 3/Sample 4 public-reference similarity" decoding="async" loading="lazy" src="assets/figures/bulk-11.png"/></a></p>
+<p><strong>Paired Sample 3/Sample 4 public-reference similarity.</strong> Lines connect the two method estimates for the same bulk reference, preserving the paired design.</p>
+<p><a aria-label="Open full-size figure: Primary Sample 4-minus-Sample 3 decision contrast" class="figure-link" href="assets/figures/bulk-12.png" rel="noopener" target="_blank"><img alt="Primary Sample 4-minus-Sample 3 decision contrast" decoding="async" loading="lazy" src="assets/figures/bulk-12.png"/></a></p>
+<p><strong>Primary Sample 4-minus-Sample 3 decision contrast.</strong> Negative values favor Sample 3. A call requires both the reference-sample and matched-well uncertainty analyses to agree.</p>
+<p><strong>Historical interpretation.</strong> Human agreement is inconclusive under the worked rule. Mouse agreement favors Sample 3 within the selected references, with a matched-well interval of (−0.0171, −0.0085). This remains conditional on one primary mouse study and verified local pair identities; it does not isolate a general method advantage.</p>
+<p><a id="pseudogene"></a></p>
+<h2 id="audit-pseudogene-specific-bias">Audit pseudogene-specific bias</h2>
+<p>When library construction or alignment may treat gene classes differently, add a prespecified bias audit. Assign pseudogenes from the frozen annotation's <code>gene_biotype</code>, never from symbol patterns. Match each pseudogene to a protein-coding gene using bulk expression and gene length, then compare object-level detection and residual effects against material-effect thresholds.</p>
+<p>The Sample 3/Sample 4 example uses Ensembl release 115 and reports:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Cell line</th>
+<th>Matched pseudogenes</th>
+<th>Adjusted Sample 4−Sample 3 effect</th>
+<th>CI low</th>
+<th>CI high</th>
+<th>Bias flagged</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MDA-MB-231</td>
+<td>15,160</td>
+<td>-0.0008</td>
+<td>-0.0013</td>
+<td>-0.0003</td>
+<td>False</td>
+</tr>
+<tr>
+<td>NIH/3T3</td>
+<td>13,810</td>
+<td>-0.0003</td>
+<td>-0.0008</td>
+<td>0.0002</td>
+<td>False</td>
+</tr>
+</tbody>
+</table></div>
+<p><a aria-label="Open full-size figure: Pseudogene detection in Sample 3 and Sample 4" class="figure-link" href="assets/figures/bulk-13.png" rel="noopener" target="_blank"><img alt="Pseudogene detection in Sample 3 and Sample 4" decoding="async" loading="lazy" src="assets/figures/bulk-13.png"/></a></p>
+<p><strong>Pseudogene detection in Sample 3 and Sample 4.</strong> Raw detection differences are shown by cell line before expression/length matching.</p>
+<p><a aria-label="Open full-size figure: Matched pseudogene-bias effects" class="figure-link" href="assets/figures/bulk-14.png" rel="noopener" target="_blank"><img alt="Matched pseudogene-bias effects" decoding="async" loading="lazy" src="assets/figures/bulk-14.png"/></a></p>
+<p><strong>Matched pseudogene-bias effects.</strong> Pseudogenes are matched to protein-coding genes on bulk expression and gene length. Neither cell line crosses the worked material-effect threshold.</p>
+<p>The worked rule flags an effect only when its interval excludes zero and the absolute adjusted detection-fraction difference is at least 0.01, or the absolute adjusted log10-UMI residual difference is at least 0.02. These are example-specific thresholds.</p>
+<p>No material pseudogene bias is flagged under that rule. Small nonzero effects should be reported numerically; they are technical diagnostics and do not prove a mapping mechanism.</p>
+<p><a id="interpret"></a></p>
+<h2 id="interpret-without-overclaiming">Interpret without overclaiming</h2>
+<p>A reusable report separates the observation, the supported inference, and the boundary of generalization. State the analysis level, eligible studies, uncertainty criteria, and confounded factors before presenting a preferred object or method.</p>
+<h3 id="worked-example-interpretation">Worked example interpretation</h3>
+<ul>
+<li><strong>Primary human decision:</strong> inconclusive under the prespecified analysis of the selected human bulk references.</li>
+<li><strong>Not supported:</strong> a universal claim that Sample 3 is better for every species, cell line, treatment, or downstream task.</li>
+<li><strong>Mouse limitation:</strong> one primary mouse study and uncertainty in the exact 3T3 subline reduce generalizability.</li>
+<li><strong>Cross-study limitation:</strong> culture, library preparation, annotation, and quantification differ among public datasets.</li>
+<li><strong>Metric limitation:</strong> correlation measures relative profile agreement, not absolute calibration or differential-expression performance.</li>
+</ul>
+<p><a id="outputs"></a></p>
+<h2 id="saved-outputs-and-audit-trail">Saved outputs and audit trail</h2>
+<p>The portable practice script exports well-level correlations, plate-profile correlations, paired reference differences, study summaries, and a descriptive summary. Keep input checksums, stable feature identifiers, study roles, matching conditions, units, and all exclusions with a real analysis. The figures and historical decision intervals in this chapter were computed separately and are not recreated by the practice runner.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Output</th>
+<th>What to inspect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>profile_correlations.csv</code></td>
+<td>One comparison per plate profile and matching reference, with units, well count, feature count, and both correlation metrics.</td>
+</tr>
+<tr>
+<td><code>well_correlations.csv</code></td>
+<td>Each retained well compared with each matching reference; constant vectors have an explicit undefined status.</td>
+</tr>
+<tr>
+<td><code>included_wells.csv</code></td>
+<td>Exact local well IDs contributing to each profile.</td>
+</tr>
+<tr>
+<td><code>shared_features.csv</code></td>
+<td>The fixed measured feature universe for each species and condition.</td>
+</tr>
+<tr>
+<td><code>paired_reference_differences.csv</code></td>
+<td>Sample 4 minus Sample 3 Fisher-z differences against the same references.</td>
+</tr>
+<tr>
+<td><code>study_differences.csv</code></td>
+<td>Means of paired differences within each study.</td>
+</tr>
+<tr>
+<td><code>study_equal_summary.csv</code></td>
+<td>Equal-weight study means, separated by species, condition, and evidence role; descriptive, without confidence intervals.</td>
+</tr>
+<tr>
+<td><code>comparison_settings.json</code></td>
+<td>Transformation, feature-matching, and weighting rules.</td>
+</tr>
+<tr>
+<td><code>scatter_human_231.png</code>, <code>scatter_mouse_3T3.png</code></td>
+<td>The practice profile comparisons with shared axes within each species.</td>
+</tr>
+</tbody>
+</table></div>
+<p>All files are written beneath <code>results/bulk-comparison/</code> by default. The exact scatter filenames follow the species and condition labels. Reviewed exclusions, when supplied, are also exported.</p>
+<p>Use tables for numerical checks and figures for interpretation. An empty, undefined, or unsupported comparison should be recorded explicitly instead of silently filled with zeros.</p>
+<p><a id="troubleshooting"></a></p>
+<h2 id="troubleshooting-1">Troubleshooting</h2>
+<p>These checks apply to any <code>drugseqpy</code>-to-bulk comparison; Sample 3/Sample 4-specific examples are labeled explicitly.</p>
+<h3 id="a-bulk-sample-is-missing-or-has-the-wrong-condition">A bulk sample is missing or has the wrong condition</h3>
+<p>Update and re-review your bulk metadata table. Do not silently substitute a treated sample, derivative cell line, or normalized-count matrix for an eligible FPKM reference.</p>
+<h3 id="human-and-mouse-genes-appear-in-one-correlation">Human and mouse genes appear in one correlation</h3>
+<p>Stop the run. Species separation is a hard invariant. Confirm Ensembl prefixes, annotation species, and the species filter applied before the join.</p>
+<h3 id="sample-3-and-sample-4-have-different-gene-counts">Sample 3 and Sample 4 have different gene counts</h3>
+<p>Build the comparison-specific intersection after species and annotation filters. Never fill a feature missing from one assay annotation as a biological zero.</p>
+<h3 id="should-i-run-combat-on-sample-3-and-sample-4">Should I run ComBat on Sample 3 and Sample 4?</h3>
+<p>Not for this worked example: one Sample 3 plate and one Sample 4 plate make method and plate indistinguishable. Use paired reference contrasts and hierarchical uncertainty. Adding replicate plates per method is not enough for a fixed-effect correction if plates remain nested within method. Review the full design as described above.</p>
+<h3 id="plate-mixing-improves-but-compound-separation-disappears">Plate mixing improves, but compound separation disappears</h3>
+<p>The correction is over-aggressive or the design is confounded. Restore method/compound covariates, reduce correction strength, and validate on a held-out plate. Good batch handling removes technical plate predictability without removing biological structure.</p>
+<h3 id="the-conclusion-changes-with-all-genes-or-pseudogenes">The conclusion changes with all genes or pseudogenes</h3>
+<p>Keep the primary expressed protein-coding analysis primary, then report gene-set sensitivity explicitly. A sensitivity result should not silently replace the prespecified decision rule.</p>
+<h3 id="a-heatmap-looks-stronger-because-its-colors-are-darker">A heatmap looks stronger because its colors are darker</h3>
+<p>Confirm every panel uses the same native-correlation limits and inspect the numeric values for color saturation. Never autoscale panels that are meant for visual comparison.</p>
+<p><a id="glossary"></a></p>
+<h2 id="glossary-1">Glossary</h2>
+<p><strong>FPKM</strong> — Fragments per kilobase of transcript per million mapped fragments; the requested bulk RNA-seq scale in this workflow.</p>
+<p><strong>UMI</strong> — Unique molecular identifier count; the local Drug-seq expression measure.</p>
+<p><strong>Spearman ρ</strong> — Rank correlation used as the primary cross-assay similarity statistic.</p>
+<p><strong>Fisher z</strong> — The atanh transformation applied before taking the paired Sample 4-minus-Sample 3 correlation difference.</p>
+<p><strong>Study-aware bootstrap</strong> — A resampling design that preserves reference study structure instead of treating every sample as exchangeable.</p>
+<p><strong>Matched-well bootstrap</strong> — Joint resampling of verified corresponding well positions from two local objects to represent local uncertainty; Sample 3/Sample 4 supply the worked example.</p>
+<p><strong>Plate × compound profile</strong> — The mean gene-expression profile for one compound or cell line within one physical plate; the intermediate unit between wells and the final compound-level inference.</p>
+<p><strong>Confounding</strong> — A design in which two effects cannot be separately estimated—for Sample 3/Sample 4 here, method and plate are the same two labels.</p>
+<p><strong>Batch correction</strong> — Adjustment for unwanted technical variation; valid only when the batch effect is identifiable without removing the biological factor of interest.</p>
+<p><strong>Primary evidence</strong> — Eligible parental/baseline or wild-type bulk datasets used for the formal decision.</p>
+<p><strong>Validation evidence</strong> — Biologically relevant but non-primary datasets retained as sensitivity checks.</p>
+<p><strong>Pseudogene bias</strong> — A prespecified check for pseudogene-specific Sample 4-minus-Sample 3 detection or residual shifts after matching.</p>
+<p><strong>Inconclusive</strong> — The uncertainty criteria do not support a directional call; this is not an equivalence conclusion.</p>
+<hr/>
+<p><a href="multi-plate-comparison.html">← Previous chapter</a> · <a href="api-reference.html">Next chapter →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="multi-plate-comparison.html"><small>Previous</small>Multi-plate comparison</a><a href="api-reference.html"><small>Next</small>API reference →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="bulk-rnaseq-comparison.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#workflow-overview">Workflow overview</a><a href="#comparison-design">Comparison design</a><a href="#run-a-portable-practice-comparison">Run a portable practice comparison</a><a href="#inputs-and-inclusion-rules">Inputs and inclusion rules</a><a href="#harmonize-unlike-assays">Harmonize unlike assays</a><a href="#handle-batch-effects-without-erasing-method-effects">Handle batch effects without erasing method effects</a><a href="#plate-compound-comparison">Plate × compound comparison</a><a href="#inspect-well-level-similarity">Inspect well-level similarity</a><a href="#check-gene-level-agreement">Check gene-level agreement</a><a href="#apply-the-paired-decision-rule">Apply the paired decision rule</a><a href="#audit-pseudogene-specific-bias">Audit pseudogene-specific bias</a><a href="#interpret-without-overclaiming">Interpret without overclaiming</a><a href="#saved-outputs-and-audit-trail">Saved outputs and audit trail</a><a href="#troubleshooting-1">Troubleshooting</a><a href="#glossary-1">Glossary</a></nav></aside></div></body></html>

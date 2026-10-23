@@ -2,7 +2,7 @@
 
 [Learning path](index.md) · [Prepare inputs](input-preparation.md) · [API reference](api-reference.md)
 
-> **Before you start:** complete [Getting started](getting-started.md). Run code blocks in order from the repository root. “Sample 1–4” identify example plate datasets; each observation is one well. This chapter uses ** Sample 1 and Sample 2**. Worked results are shown for interpretation. The separately supplied synthetic practice inputs will produce different numbers.
+> **Before you start:** complete [Getting started](getting-started.md). Run code blocks in order from the repository root. “Sample 1–4” identify example plate datasets; each observation is one well. This chapter uses **Sample 1 and Sample 2**. Worked results are shown for interpretation. The separately supplied synthetic practice inputs will produce different numbers.
 
 Analyze two or more plates with explicit batch diagnosis, validated embedding correction, within-plate repeatability, cross-plate treatment-effect reproducibility, plate-adjusted differential expression, and enrichment.
 
@@ -10,7 +10,7 @@ Analyze two or more plates with explicit batch diagnosis, validated embedding co
 
 ## Overview
 
-Use this workflow when the same treatment panel is measured on two or more plates. It adds three requirements to the single-plate analysis: diagnose batch structure, correct exploratory embeddings without corrupting counts, and quantify whether independently estimated treatment effects reproduce across plates.
+Use this workflow when the same treatment panel is measured on two or more plates. It adds three requirements to the [single-plate analysis](single-plate-comparison.md): diagnose batch structure, correct exploratory embeddings without corrupting counts, and quantify whether independently estimated treatment effects reproduce across plates.
 
 **Historical worked example:** 186 input wells; 184 analysis wells; 13,415 tested genes; 16 cross-plate treatment checks.
 
@@ -373,6 +373,8 @@ Plate silhouette changes from 0.0269 to -0.0067, and the plate-associated varian
 <a id="repeatability"></a>
 
 ## 5. Evaluate within-plate repeatability
+
+The [dedicated well-to-well tutorial](well-to-well-repeatability.md) explains all-well heatmaps, matched-condition pair selection, and scatter plots in detail. Here the same question is evaluated separately on each plate before cross-plate inference.
 
 Repeatability asks whether replicate wells agree under the same plate conditions. Correlations are therefore computed only between wells sharing both `plate_id` and `compound`; wells from different compounds are never treated as replicates.
 
@@ -939,4 +941,4 @@ python scripts/run_tutorial.py comparison --data-dir data --output-dir results
 
 ---
 
-[← Previous chapter](mix-species-workflow.md) · [Next chapter →](api-reference.md)
+[← Previous chapter](single-plate-comparison.md) · [Next chapter →](bulk-rnaseq-comparison.md)

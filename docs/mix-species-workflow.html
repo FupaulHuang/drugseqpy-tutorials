@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mix-species workflow · drugseqpy tutorials</title>
-<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
 <link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
 <div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/mix-species-workflow.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
-<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html" aria-current="page"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html" aria-current="page"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
 <div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
 <main id="main"><div class="chapter-label">DRUGSEQPY / MIXED SPECIES</div><article><h1 id="mix-species-workflow">Mix-species workflow</h1>
 <p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Prepare inputs</a> · <a href="api-reference.html">API reference</a></p>
@@ -16,6 +16,7 @@
 <p>Configure any two species, assign the intended base species of every well, quantify contamination in both directions, and audit cross-well signal. Human–mouse Sample 3/Sample 4 data provide the real worked example.</p>
 <p><a id="overview"></a></p>
 <h2 id="overview-1">Overview</h2>
+<p>After species review, use <a href="well-to-well-repeatability.html">well-to-well repeatability</a> to inspect matched wells, or <a href="bulk-rnaseq-comparison.html">bulk RNA-seq comparison</a> to compare species-separated profiles with independent references.</p>
 <p>This is a universal two-species workflow for evaluating cross-contamination across wells. You choose the two species names and feature-ID prefixes, assign the intended base species of every well, and measure off-target signal in both directions. Human and mouse are the Sample 3/Sample 4 worked example—not a restriction of the workflow.</p>
 <div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
 <thead>
@@ -124,7 +125,7 @@ species_qc[[
     plate_palette={"Sample 3": "#16B4D1", "Sample 4": "#1B2A40"},
 )
 </code></pre>
-<p><img alt="Mix-species technical QC metrics" decoding="async" loading="lazy" src="assets/figures/species-01.png"/></p>
+<p><a aria-label="Open full-size figure: Mix-species technical QC metrics" class="figure-link" href="assets/figures/species-01.png" rel="noopener" target="_blank"><img alt="Mix-species technical QC metrics" decoding="async" loading="lazy" src="assets/figures/species-01.png"/></a></p>
 <p><strong>Mix-species technical QC metrics.</strong> Separate violin panels compare species purity, assigned-base cross-contamination, total UMI, detected genes, and mitochondrial percentage by plate_id. Red median labels sit above their respective violins so they do not cover the distributions.</p>
 <p><strong>Review before interpretation.</strong> Extremely low-depth or high-mitochondrial wells can have unstable species fractions. Decide whether they are technically usable before interpreting cross-contamination or purity.</p>
 <p><a id="figures"></a></p>
@@ -144,7 +145,7 @@ species_qc[[
     show_observed_style=False,
 )
 </code></pre>
-<p><img alt="Two-species barnyard plot (human–mouse example)" decoding="async" loading="lazy" src="assets/figures/species-02.png"/></p>
+<p><a aria-label="Open full-size figure: Two-species barnyard plot (human–mouse example)" class="figure-link" href="assets/figures/species-02.png" rel="noopener" target="_blank"><img alt="Two-species barnyard plot (human–mouse example)" decoding="async" loading="lazy" src="assets/figures/species-02.png"/></a></p>
 <p><strong>Two-species barnyard plot (human–mouse example).</strong> Each point is one well; axes show raw species-A and species-B UMI counts. The scatter itself has no base species. The optional annotation uses assigned base species and reports purity minimum, mean, median, and maximum. Every coordinate panel has an enforced 1:1 width-to-height ratio and identical axis limits.</p>
 <pre><code class="language-python">purity_files = ds.generate_mix_species_purity_figure(
     dsd,
@@ -158,7 +159,7 @@ species_qc[[
     show_observed_style=False,
 )
 </code></pre>
-<p><img alt="Species-purity plot" decoding="async" loading="lazy" src="assets/figures/species-03.png"/></p>
+<p><a aria-label="Open full-size figure: Species-purity plot" class="figure-link" href="assets/figures/species-03.png" rel="noopener" target="_blank"><img alt="Species-purity plot" decoding="async" loading="lazy" src="assets/figures/species-03.png"/></a></p>
 <p><strong>Species-purity plot.</strong> Species-A and species-B percentages sum to approximately 100% among the configured species counts. In this example, pure human and mouse wells approach opposite corners. Every panel uses identical 0–100% limits and a square 1:1 plotting box.</p>
 <pre><code class="language-python">contamination_files = ds.generate_mix_species_contamination_figure(
     dsd,
@@ -170,7 +171,7 @@ species_qc[[
     plate_palette={"Sample 3": "#16B4D1", "Sample 4": "#1B2A40"},
 )
 </code></pre>
-<p><img alt="Cross-contamination in both directions" decoding="async" loading="lazy" src="assets/figures/species-04.png"/></p>
+<p><a aria-label="Open full-size figure: Cross-contamination in both directions" class="figure-link" href="assets/figures/species-04.png" rel="noopener" target="_blank"><img alt="Cross-contamination in both directions" decoding="async" loading="lazy" src="assets/figures/species-04.png"/></a></p>
 <p><strong>Cross-contamination in both directions.</strong> The left panel uses human as the assigned base and measures off-target mouse signal. The right panel reverses the calculation: mouse is the base and off-target human signal is measured. Thus neither direction is hidden behind an implicit human denominator.</p>
 <pre><code class="language-python">concordance_files = ds.generate_mix_species_concordance_figure(
     dsd,
@@ -186,7 +187,7 @@ species_qc[[
     },
 )
 </code></pre>
-<p><img alt="Expected versus observed species" decoding="async" loading="lazy" src="assets/figures/species-05.png"/></p>
+<p><a aria-label="Open full-size figure: Expected versus observed species" class="figure-link" href="assets/figures/species-05.png" rel="noopener" target="_blank"><img alt="Expected versus observed species" decoding="async" loading="lazy" src="assets/figures/species-05.png"/></a></p>
 <p><strong>Expected versus observed species.</strong> Stacked bars count observed calls within each assigned base-species label and plate. Segment labels are exact retained-well counts.</p>
 <pre><code class="language-python">fraction_files = ds.generate_mix_species_fraction_figure(
     dsd,
@@ -198,7 +199,7 @@ species_qc[[
     plate_palette={"Sample 3": "#16B4D1", "Sample 4": "#1B2A40"},
 )
 </code></pre>
-<p><img alt="Species fractions by expected label" decoding="async" loading="lazy" src="assets/figures/species-06.png"/></p>
+<p><a aria-label="Open full-size figure: Species fractions by expected label" class="figure-link" href="assets/figures/species-06.png" rel="noopener" target="_blank"><img alt="Species fractions by expected label" decoding="async" loading="lazy" src="assets/figures/species-06.png"/></a></p>
 <p><strong>Species fractions by expected label.</strong> Boxplots and individual wells show both configured species fractions for each assigned base species, with Sample 3/Sample 4 separated by color.</p>
 <p><a id="gene-set-expression"></a></p>
 <h2 id="5-species-specific-gene-set-expression">5. Species-specific gene-set expression</h2>
@@ -220,7 +221,7 @@ human_plate_files = ds.generate_plate_layout_figures(
     cmap="Reds",
 )
 </code></pre>
-<p><img alt="Human-specific gene-set expression by well" decoding="async" loading="lazy" src="assets/figures/species-07.png"/></p>
+<p><a aria-label="Open full-size figure: Human-specific gene-set expression by well" class="figure-link" href="assets/figures/species-07.png" rel="noopener" target="_blank"><img alt="Human-specific gene-set expression by well" decoding="async" loading="lazy" src="assets/figures/species-07.png"/></a></p>
 <p><strong>Human-specific gene-set expression by well.</strong> Mean per-well expression across ITGB1, FN1, TGFB1, EPCAM, and EGFR. Exact uppercase symbols resolve to human-reference features; color uses log1p scaling while source tables retain raw expression.</p>
 <h3 id="mouse-specific-gene-set-plate-map">Mouse-specific gene-set plate map</h3>
 <pre><code class="language-python">mouse_gene_set = ["Vim", "Fn1", "Col1a1", "Col1a2", "Acta2"]
@@ -237,7 +238,7 @@ mouse_plate_files = ds.generate_plate_layout_figures(
     cmap="Reds",
 )
 </code></pre>
-<p><img alt="Mouse-specific gene-set expression by well" decoding="async" loading="lazy" src="assets/figures/species-08.png"/></p>
+<p><a aria-label="Open full-size figure: Mouse-specific gene-set expression by well" class="figure-link" href="assets/figures/species-08.png" rel="noopener" target="_blank"><img alt="Mouse-specific gene-set expression by well" decoding="async" loading="lazy" src="assets/figures/species-08.png"/></a></p>
 <p><strong>Mouse-specific gene-set expression by well.</strong> Mean per-well expression across Vim, Fn1, Col1a1, Col1a2, and Acta2. Exact mouse-style symbols prevent the corresponding uppercase human features from being included.</p>
 <h3 id="gene-set-expression-violin-plots">Gene-set expression violin plots</h3>
 <pre><code class="language-python">gene_set_violin_files = ds.generate_gene_set_violin_figure(
@@ -257,7 +258,7 @@ mouse_plate_files = ds.generate_plate_layout_figures(
     output_name="species_gene_set_expression_violin",
 )
 </code></pre>
-<p><img alt="Species-specific gene-set expression distributions" decoding="async" loading="lazy" src="assets/figures/species-09.png"/></p>
+<p><a aria-label="Open full-size figure: Species-specific gene-set expression distributions" class="figure-link" href="assets/figures/species-09.png" rel="noopener" target="_blank"><img alt="Species-specific gene-set expression distributions" decoding="async" loading="lazy" src="assets/figures/species-09.png"/></a></p>
 <p><strong>Species-specific gene-set expression distributions.</strong> Each panel shows per-well mean gene-set expression, grouped by assigned base species and split by plate. Individual wells remain visible, and median labels sit above the violins.</p>
 <p><a id="tables"></a></p>
 <h2 id="6-saved-result-and-audit-tables">6. Saved result and audit tables</h2>
@@ -994,8 +995,8 @@ files += ds.generate_gene_set_violin_figure(
 <p>Contamination direction looks reversed</p>
 <p>Inspect <code>base_species</code>. In species-A-base wells, species B is off target; in species-B-base wells, species A is off target. Use the paired contamination-by-base figure rather than assuming species A is always the denominator target.</p>
 <hr/>
-<p><a href="qc-workflow.html">← Previous chapter</a> · <a href="multi-plate-comparison.html">Next chapter →</a></p>
+<p><a href="qc-workflow.html">← Previous chapter</a> · <a href="well-to-well-repeatability.html">Next chapter →</a></p>
 </article>
-<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="qc-workflow.html"><small>Previous</small>Quality control</a><a href="multi-plate-comparison.html"><small>Next</small>Multi-plate comparison →</a></nav>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="qc-workflow.html"><small>Previous</small>Quality control</a><a href="well-to-well-repeatability.html"><small>Next</small>Well-to-well repeatability →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="mix-species-workflow.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
 <aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#overview-1">Overview</a><a href="#1-load-and-merge-the-data">1. Load and merge the data</a><a href="#2-configure-species-and-assign-wells">2. Configure species and assign wells</a><a href="#3-check-mix-species-technical-qc">3. Check mix-species technical QC</a><a href="#4-read-the-species-purity-figures">4. Read the species-purity figures</a><a href="#5-species-specific-gene-set-expression">5. Species-specific gene-set expression</a><a href="#6-saved-result-and-audit-tables">6. Saved result and audit tables</a><a href="#7-run-the-complete-workflow">7. Run the complete workflow</a><a href="#8-related-functions">8. Related functions</a><a href="#9-important-notes">9. Important notes</a><a href="#glossary-1">Glossary</a><a href="#troubleshooting-1">Troubleshooting</a></nav></aside></div></body></html>

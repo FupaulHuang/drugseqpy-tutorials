@@ -1,6 +1,6 @@
 # drugseqpy tutorials
 
-A connected beginner tutorial for count-matrix preparation, quality control, mixed-species analysis, and multi-plate treatment comparisons.
+A connected beginner tutorial for count-matrix preparation, quality control, mixed-species analysis, well-to-well repeatability, single-plate and multi-plate treatment comparisons, and bulk RNA-seq validation.
 
 **[Visit the tutorial website](https://fupaulhuang.github.io/drugseqpy-tutorials/)** · **[Read on GitHub](docs/index.md)** · **[Get started](docs/getting-started.md)**
 
@@ -14,11 +14,14 @@ The chapters retain anonymized worked results with Sample 1–4 labels. Four sep
 2. [Prepare inputs](docs/input-preparation.md)
 3. [Quality control](docs/qc-workflow.md)
 4. [Mixed-species analysis](docs/mix-species-workflow.md)
-5. [Multi-plate comparison](docs/multi-plate-comparison.md)
-6. [API reference](docs/api-reference.md)
-7. [Troubleshooting](docs/troubleshooting.md)
+5. [Well-to-well repeatability](docs/well-to-well-repeatability.md)
+6. [Single-plate comparison](docs/single-plate-comparison.md)
+7. [Multi-plate comparison](docs/multi-plate-comparison.md)
+8. [Bulk RNA-seq comparison](docs/bulk-rnaseq-comparison.md)
+9. [API reference](docs/api-reference.md)
+10. [Troubleshooting](docs/troubleshooting.md)
 
-Sample 1 and Sample 2 are treatment-comparison plate datasets. Sample 3 and Sample 4 are mixed-species plate datasets. Each observation inside a dataset is one well.
+Sample 1 is the single-plate treatment example; Sample 1 and Sample 2 together demonstrate multi-plate comparison. Sample 3 and Sample 4 are mixed-species plate datasets. Each observation inside a dataset is one well.
 
 ## Run the practice workflow
 
@@ -28,6 +31,8 @@ Install a compatible drugseqpy build following [Getting started](docs/getting-st
 python scripts/check_environment.py
 python scripts/run_tutorial.py all --data-dir data --output-dir results
 ```
+
+The command above runs QC, species review, single-plate comparison, and multi-plate comparison. The [repeatability](docs/well-to-well-repeatability.md) and [bulk RNA-seq](docs/bulk-rnaseq-comparison.md) chapters provide separate runnable scripts.
 
 The examples were checked against a local development build reporting version 0.1.0. Public revisions may expose different APIs; the environment check verifies required functions and parameters. A matching public release is not assumed. The practice runner uses PCA by default; optional UMAP/t-SNE and enrichment are described in `--help`.
 
@@ -43,7 +48,7 @@ Visit `http://localhost:8000`. All styles, scripts, and figures are local; there
 
 This repository publishes the `docs/` folder on the `main` branch at [fupaulhuang.github.io/drugseqpy-tutorials](https://fupaulhuang.github.io/drugseqpy-tutorials/). Pushing updated HTML and assets to that branch triggers a site update. `docs/.nojekyll` disables Jekyll processing.
 
-To publish a fork, open **Settings → Pages**, choose **Deploy from a branch**, select your branch and **/docs**, and save. See the [GitHub Pages publishing guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). The four previous HTML filenames remain as redirect pages, so existing chapter links still lead into the connected site.
+To publish a fork, open **Settings → Pages**, choose **Deploy from a branch**, select your branch and **/docs**, and save. See the [GitHub Pages publishing guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). The six previous HTML filenames remain as redirect pages, so existing chapter links still lead into the connected site.
 
 ## Maintain the tutorials
 

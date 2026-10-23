@@ -1,6 +1,6 @@
 # Prepare and validate your inputs
 
-[Tutorial home](index.md) · [Getting started](getting-started.md) · [QC](qc-workflow.md) · [Mixed species](mix-species-workflow.md) · [Multiple plates](multi-plate-comparison.md) · [API](api-reference.md)
+[Tutorial home](index.md) · [Getting started](getting-started.md) · [QC](qc-workflow.md) · [Mixed species](mix-species-workflow.md) · [Single plate](single-plate-comparison.md) · [Multiple plates](multi-plate-comparison.md) · [API](api-reference.md)
 
 Every workflow starts with raw UMI counts and a table that identifies each measured well. Complete these checks once, then continue to the [QC workflow](qc-workflow.md). The names **Sample 1–4** are neutral tutorial labels. The examples below describe a file contract; they do not include an experimental dataset.
 
@@ -191,4 +191,4 @@ The merge function rejects duplicate observation IDs. It uses the union of featu
 
 Before sharing a report, verify that its displayed totals agree with the saved tables, its figures load, its links resolve, and its controls and plate labels match the intended analysis. Test the navigation and tables at both desktop and narrow widths. A combined plate viewer changes presentation; it does not justify pooling otherwise incompatible designs.
 
-Continue to [QC](qc-workflow.md), then choose [mixed-species QC](mix-species-workflow.md) or [multi-plate comparison](multi-plate-comparison.md). Use the [API reference](api-reference.md) to check parameters and return values.
+Continue to [QC](qc-workflow.md), then choose [mixed-species QC](mix-species-workflow.md), [well-to-well repeatability](well-to-well-repeatability.md), [single-plate comparison](single-plate-comparison.md), or [multi-plate comparison](multi-plate-comparison.md). Use [bulk RNA-seq comparison](bulk-rnaseq-comparison.md) for independent-reference agreement. Use the [API reference](api-reference.md) to check parameters and return values.

@@ -10,6 +10,8 @@ Configure any two species, assign the intended base species of every well, quant
 
 ## Overview
 
+After species review, use [well-to-well repeatability](well-to-well-repeatability.md) to inspect matched wells, or [bulk RNA-seq comparison](bulk-rnaseq-comparison.md) to compare species-separated profiles with independent references.
+
 This is a universal two-species workflow for evaluating cross-contamination across wells. You choose the two species names and feature-ID prefixes, assign the intended base species of every well, and measure off-target signal in both directions. Human and mouse are the Sample 3/Sample 4 worked example—not a restriction of the workflow.
 
 | Historical worked result | Value |
@@ -648,4 +650,4 @@ Inspect `base_species`. In species-A-base wells, species B is off target; in spe
 
 ---
 
-[← Previous chapter](qc-workflow.md) · [Next chapter →](multi-plate-comparison.md)
+[← Previous chapter](qc-workflow.md) · [Next chapter →](well-to-well-repeatability.md)

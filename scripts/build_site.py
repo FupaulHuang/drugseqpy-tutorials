@@ -15,10 +15,15 @@ REPOSITORY_URL = 'https://github.com/FupaulHuang/drugseqpy-tutorials'
 PAGES = [
     ('index', 'Learning path'), ('getting-started', 'Getting started'),
     ('input-preparation', 'Prepare inputs'), ('qc-workflow', 'Quality control'),
-    ('mix-species-workflow', 'Mixed species'), ('multi-plate-comparison', 'Multi-plate comparison'),
+    ('mix-species-workflow', 'Mixed species'), ('well-to-well-repeatability', 'Well-to-well repeatability'),
+    ('single-plate-comparison', 'Single-plate comparison'),
+    ('multi-plate-comparison', 'Multi-plate comparison'),
+    ('bulk-rnaseq-comparison', 'Bulk RNA-seq comparison'),
     ('api-reference', 'API reference'), ('troubleshooting', 'Troubleshooting'),
 ]
 ALIASES = {'qc_workflow_tutorial':'qc-workflow', 'mix_species_workflow_tutorial':'mix-species-workflow',
+           'single_plate_comparison_workflow_tutorial':'single-plate-comparison',
+           'bulk_rnaseq_comparison_tutorial':'bulk-rnaseq-comparison',
            'multi_plate_comparison_workflow_tutorial':'multi-plate-comparison', 'api_reference':'api-reference'}
 
 
@@ -45,6 +50,13 @@ def build():
                     link['href'] = urlunsplit(parts._replace(path=parts.path[:-3]+'.html'))
         for img in content.find_all('img'):
             img['loading'] = 'lazy'; img['decoding'] = 'async'
+            if img.parent.name != 'a':
+                full_size = content.new_tag('a', attrs={
+                    'href': img['src'], 'target': '_blank', 'rel': 'noopener',
+                    'class': 'figure-link',
+                    'aria-label': f'Open full-size figure: {img.get("alt", "Figure")}',
+                })
+                img.wrap(full_size)
         for table in content.find_all('table'):
             wrapper = content.new_tag('div', attrs={'class':'table-scroll','tabindex':'0','role':'region','aria-label':'Scrollable data table'})
             table.wrap(wrapper)
@@ -59,7 +71,7 @@ def build():
         page=f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)} · drugseqpy tutorials</title>
-<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
 <link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>

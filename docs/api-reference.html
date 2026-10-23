@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>API reference · drugseqpy tutorials</title>
-<meta name="description" content="Connected drugseqpy tutorials for quality control, mixed-species analysis and multi-plate comparisons.">
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
 <link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
 <div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/api-reference.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
-<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="multi-plate-comparison.html"><span>06</span>Multi-plate comparison</a><a href="api-reference.html" aria-current="page"><span>07</span>API reference</a><a href="troubleshooting.html"><span>08</span>Troubleshooting</a></nav>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html" aria-current="page"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
 <div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
 <main id="main"><div class="chapter-label">DRUGSEQPY / API REFERENCE</div><article><h1 id="api-reference">API reference</h1>
-<p>Use this reference alongside the <a href="index.html">learning path</a>, <a href="qc-workflow.html">QC</a>, <a href="mix-species-workflow.html">mixed-species</a>, and <a href="multi-plate-comparison.html">multi-plate</a> chapters. Functions are grouped by task. Each entry documents the reviewed Python signature, default values, parameters, outputs, side effects, and workflow-specific notes. Signature blocks describe the API; use the workflow chapters for executable calls.</p>
+<p>Use this reference alongside the <a href="index.html">learning path</a>, <a href="qc-workflow.html">QC</a>, <a href="mix-species-workflow.html">mixed-species</a>, <a href="single-plate-comparison.html">single-plate</a>, and <a href="multi-plate-comparison.html">multi-plate</a> chapters. Functions are grouped by task. Each entry documents the reviewed Python signature, default values, parameters, outputs, side effects, and workflow-specific notes. Signature blocks describe the API; use the workflow chapters for executable calls.</p>
 <p><strong>Compatibility.</strong> Run <code>python scripts/check_environment.py</code> before starting. These contracts were checked against a development build reporting version 0.1.0; a matching public release is not assumed. Signatures below are reference displays, not complete runnable cells.</p>
 <p><strong>Import convention.</strong> Use <code>import drugseqpy as ds</code>, then call any public function directly—for example, <code>ds.merge_drugseq_objects()</code> or <code>ds.generate_qc_report()</code>. The names below are all exported from the package root.</p>
 <h2 id="read-the-data-object">Read the data object</h2>
@@ -3718,6 +3718,15 @@
 <p><strong>Returns / side effects:</strong> A list of figure paths plus CSV tables: per-well metrics, summaries, concordance counts, contamination-by-base data, audit candidates, and a figure manifest.</p>
 <p>Set <code>expected_col='expected_species'</code> after <code>assign_well_species()</code> to make the intended species and off-target direction explicit and reproducible.</p>
 <h2 id="comparison-batch-effects-and-reproducibility">Comparison, batch effects and reproducibility</h2>
+<p>Use these functions in the <a href="single-plate-comparison.html">single-plate</a>, <a href="multi-plate-comparison.html">multi-plate</a>, and <a href="well-to-well-repeatability.html">well-repeatability</a> chapters. The <a href="bulk-rnaseq-comparison.html#run">bulk comparison script</a> is a separate tutorial helper, not a package API.</p>
+<h3 id="normalize_counts"><code>normalize_counts</code></h3>
+<pre><code class="language-python">ds.normalize_counts(dsd, method='limma_voom', log_transform=True, prior_count=1.0, target_sum=1000000.0, inplace=True)
+</code></pre>
+<p>Replaces <code>adata.X</code> with normalized expression and preserves <code>layers['counts']</code>. The <code>limma_voom</code> option produces TMM-normalized log2-CPM; design-specific precision weights are estimated during DE. <code>prior_count</code> applies to the CPM/TMM transformations; limma-voom uses its fixed count offset. Returns <code>None</code> in place or a copied object with <code>inplace=False</code>.</p>
+<h3 id="plot_comparison_heatmap"><code>plot_comparison_heatmap</code></h3>
+<pre><code class="language-python">ds.plot_comparison_heatmap(dsd, contrasts=None, n_top_genes=60, value_col='logFC', fdr_threshold=0.05, lfc_threshold=0.5, significant_only=True, cluster_rows=True, cluster_cols=True, cmap='RdBu_r', figsize=None)
+</code></pre>
+<p>Returns a Matplotlib figure containing gene-level effects across contrasts. The gene list is the union of the top absolute-effect genes per selected contrast, significant only by default. This differs from a sample-by-gene expression heatmap and from a well-by-well correlation heatmap. Save the figure with <code>fig.savefig(...)</code>.</p>
 <p>These signatures describe the installed DRUGseqPy 0.1.0 implementation used to verify this tutorial. Positional parameters and defaults are preserved; type annotations are omitted for readability.</p>
 <h3 id="audit_control_outliers"><code>audit_control_outliers</code></h3>
 <pre><code class="language-python">ds.audit_control_outliers(dsd, control_label='DMSO', control_col='compound', score_col='outlier_score', threshold=5.0, columns=None)
@@ -3833,8 +3842,8 @@
 </code></pre>
 <p>For <code>plot_plate_logfc_concordance</code>, <code>value_type="normalized"</code> uses the X values present when reproducibility was computed. Use <code>value_type="log2fc"</code> to compare treatment effects. Plotting cutoffs should match the DE run.</p>
 <hr/>
-<p><a href="multi-plate-comparison.html">← Previous chapter</a> · <a href="troubleshooting.html">Next chapter →</a></p>
+<p><a href="bulk-rnaseq-comparison.html">← Previous chapter</a> · <a href="troubleshooting.html">Next chapter →</a></p>
 </article>
-<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="multi-plate-comparison.html"><small>Previous</small>Multi-plate comparison</a><a href="troubleshooting.html"><small>Next</small>Troubleshooting →</a></nav>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="bulk-rnaseq-comparison.html"><small>Previous</small>Bulk RNA-seq comparison</a><a href="troubleshooting.html"><small>Next</small>Troubleshooting →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="api-reference.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
 <aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#read-the-data-object">Read the data object</a><a href="#input-and-data-objects">Input and data objects</a><a href="#quality-control-metrics">Quality-control metrics</a><a href="#subsetting-and-filtering">Subsetting and filtering</a><a href="#plate-layouts-1">Plate layouts</a><a href="#qc-report-figures">QC report figures</a><a href="#mix-species-analysis">Mix-species analysis</a><a href="#comparison-batch-effects-and-reproducibility">Comparison, batch effects and reproducibility</a></nav></aside></div></body></html>

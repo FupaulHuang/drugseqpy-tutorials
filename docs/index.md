@@ -1,6 +1,6 @@
 # Learn drugseqpy
 
-Build a complete analysis from count matrices and plate metadata: inspect well quality, check mixed-species signal, compare treatments across plates, and interpret the saved results.
+Build a complete analysis from count matrices and plate metadata: inspect well quality and species identity, assess well-to-well repeatability, compare treatments within and across plates, and assess agreement with bulk RNA-seq.
 
 These tutorials are written for new users. Each chapter explains the inputs, shows the Python calls, and connects the outputs to the next decision. You can read the same chapters as a website or directly on GitHub.
 
@@ -12,8 +12,11 @@ These tutorials are written for new users. Each chapter explains the inputs, sho
 | 2 | [Prepare inputs](input-preparation.md) | Align barcodes, validate counts and metadata, and check physical well positions. |
 | 3 | [Quality control](qc-workflow.md) | Review library metrics, plate maps, marker expression, and optional read-level QC. |
 | 4 | [Mixed-species analysis](mix-species-workflow.md) | Assign intended species and inspect purity, discordance, and reciprocal off-target signal. |
-| 5 | [Multi-plate comparison](multi-plate-comparison.md) | Audit controls, diagnose batch effects, measure reproducibility, and fit plate-adjusted treatment effects. |
-| 6 | [API reference](api-reference.md) | Find function signatures, parameters, returns, and related workflow steps. |
+| 5 | [Well-to-well repeatability](well-to-well-repeatability.md) | Read well-correlation heatmaps and inspect treatment-matched replicate scatter plots. |
+| 6 | [Single-plate comparison](single-plate-comparison.md) | Audit controls and estimate treatment effects within one plate. |
+| 7 | [Multi-plate comparison](multi-plate-comparison.md) | Audit controls, diagnose batch effects, measure reproducibility, and fit plate-adjusted treatment effects. |
+| 8 | [Bulk RNA-seq comparison](bulk-rnaseq-comparison.md) | Align features, compare matched reference profiles, and respect study and plate structure. |
+| 9 | [API reference](api-reference.md) | Find function signatures, parameters, returns, and related workflow steps. |
 
 Keep [Troubleshooting](troubleshooting.md) nearby when adapting the examples.
 
@@ -21,7 +24,7 @@ Keep [Troubleshooting](troubleshooting.md) nearby when adapting the examples.
 
 | Dataset label | Role in the tutorial | Folder |
 | --- | --- | --- |
-| Sample 1 | First plate in the treatment comparison | `data/sample_1/` |
+| Sample 1 | Single-plate example and first plate in the multi-plate comparison | `data/sample_1/` |
 | Sample 2 | Second plate with matching treatments and controls | `data/sample_2/` |
 | Sample 3 | First mixed-species plate for QC and species review | `data/sample_3/` |
 | Sample 4 | Second mixed-species plate for QC and species review | `data/sample_4/` |
@@ -32,6 +35,6 @@ The detailed chapters retain anonymized worked figures and result tables. The bu
 
 ## Choose a route
 
-Start with [Getting started](getting-started.md) to run the included practice data. If you already have count matrices, continue to [Prepare inputs](input-preparation.md), then run the same workflow on a separate data directory. Mixed-species analysis is optional for a single-species experiment. Enrichment requires suitable local gene-set files; STARsolo read-level QC requires separate read statistics.
+Start with [Getting started](getting-started.md) to run the included practice data. If you already have count matrices, continue to [Prepare inputs](input-preparation.md), then run the same workflow on a separate data directory. Mixed-species analysis is optional for a single-species experiment. For treatment analysis, start with [Single-plate comparison](single-plate-comparison.md), then extend to [Multi-plate comparison](multi-plate-comparison.md) when matched treatments and controls are available on another plate. The [repeatability chapter](well-to-well-repeatability.md) helps review replicate consistency before treatment modeling. The [bulk comparison](bulk-rnaseq-comparison.md) extends Sample 3/4 QC to independently prepared references. Enrichment requires suitable local gene-set files; STARsolo read-level QC requires separate read statistics.
 
 [Start the tutorial →](getting-started.md)

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Well-to-well repeatability · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/well-to-well-repeatability.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html" aria-current="page"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / WELL-TO-WELL REPEATABILITY</div><article><h1 id="well-to-well-repeatability">Well-to-well repeatability</h1>
+<p><a href="index.html">Learning path</a> · <a href="input-preparation.html">Prepare inputs</a> · <a href="api-reference.html">API reference</a></p>
+<blockquote>
+<p><strong>Before you start:</strong> complete <a href="getting-started.html">Getting started</a> and <a href="qc-workflow.html">QC</a>. This chapter's figures and numerical results are generated from the bundled <strong>synthetic Sample 1</strong> inputs. They are reproducible practice illustrations, not biological findings or the historical results in other chapters.</p>
+</blockquote>
+<p>Compare expression profiles across wells before interpreting treatment effects. Use an all-well heatmap to inspect the plate, condition-specific heatmaps to inspect matched wells, and gene-expression scatter plots to understand individual pairs. This complements <a href="mix-species-workflow.html">mixed-species review</a> and prepares you for <a href="single-plate-comparison.html">single-plate differential expression</a>.</p>
+<p><a id="overview"></a></p>
+<h2 id="1-define-which-wells-are-replicates">1. Define which wells are replicates</h2>
+<p>The all-well heatmap contains every pair of wells, including different treatments. Those cells show profile similarity; they are not all replicate comparisons.</p>
+<p>For the replicate-pair table and scatter plots, wells must share <strong>plate, compound, dose, and time</strong>. For example, two Drug1 wells with different doses must not be pooled as replicates. Add other design variables, such as cell type, donor, or processing subgroup, when they define comparable conditions.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Wells compared</th>
+<th>What it answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All-well heatmap</td>
+<td>Every well against every other well on one plate</td>
+<td>Are there unusual profiles, broad groups, or blank-versus-cell differences?</td>
+</tr>
+<tr>
+<td>Within-condition heatmap</td>
+<td>Wells sharing compound, dose, and time on that plate</td>
+<td>Are the matched profiles broadly consistent?</td>
+</tr>
+<tr>
+<td>Replicate scatter</td>
+<td>One eligible within-condition pair; one dot per retained gene</td>
+<td>Which expression ranges or genes account for the pair's agreement or discrepancy?</td>
+</tr>
+</tbody>
+</table></div>
+<p>For a condition with <code>n</code> wells, the script evaluates all <code>n × (n − 1) / 2</code> unordered pairs. A condition with one well has no replicate pair. It still appears in the all-well heatmap and the condition index.</p>
+<p><strong>The experimental unit still matters.</strong> Technical wells may share one biological preparation. Gene dots are features, not independent biological replicates; pairwise correlations also share wells. Do not treat the number of genes or pair combinations as the biological sample size, and do not use these descriptive correlations to claim a treatment effect. Cross-plate reproducibility requires the <a href="multi-plate-comparison.html">multi-plate workflow</a>.</p>
+<p><a id="method"></a></p>
+<h2 id="2-understand-the-expression-scale-and-gene-set">2. Understand the expression scale and gene set</h2>
+<p>The default uses raw UMI counts transformed as <code>log10(count + 1)</code>. The added one permits zero counts; the log transform compresses the influence of highly expressed genes. This is not library-size normalization. Depth, detection sensitivity, treatment response, and technical variation can all affect the resulting pattern.</p>
+<p>The gene set depends on the view:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Calculation</th>
+<th>Included genes</th>
+<th>Treatment of zeros</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All-well heatmap</td>
+<td>Detected in at least one well on the plate</td>
+<td>A gene absent from both members of a particular pair remains if another well detected it.</td>
+</tr>
+<tr>
+<td>Condition heatmap</td>
+<td>Detected in at least one well of that condition</td>
+<td>A gene absent from the entire condition is removed.</td>
+</tr>
+<tr>
+<td>Pair scatter and pair-table statistics</td>
+<td>Detected in either member of that pair</td>
+<td>A gene with zero counts in both wells is removed.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>A scatter's correlation may differ from the corresponding heatmap cell.</strong> The expression transform is the same, but the included genes may differ. The script records the gene count for each view so this difference is visible. A pair uses the same gene mask for both correlation measures and its fitted line.</p>
+<p>Pearson correlation measures linear association between the transformed profiles. Spearman correlation measures association between gene ranks, using average ranks for ties. A strictly increasing log transform preserves ranks, but many zero counts create tied ranks. The script reports both measures for every eligible pair; <code>--heatmap-method</code> chooses which one appears in heatmaps.</p>
+<p>Fewer than three retained genes or a constant expression profile yields an undefined value. Such values are saved as missing, drawn grey in heatmaps, and omitted from scatter rendering. They are not silently assigned zero or one. The heatmap color scale spans −1 to 1.</p>
+<p><a id="run"></a></p>
+<h2 id="3-run-the-complete-practice-analysis">3. Run the complete practice analysis</h2>
+<p>From the tutorial repository root, run:</p>
+<pre><code class="language-bash">python scripts/compare_well_repeatability.py \
+  --data-dir data --sample sample_1 \
+  --output-dir results/well-repeatability \
+  --max-scatters 3 --synthetic
+</code></pre>
+<p>The script loads <code>data/sample_1/matrix/</code> and <code>data/sample_1/metadata.csv</code> through <code>drugseqpy.create_drugseq_from_files()</code>, joins on <code>barcode</code> with complete overlap, and uses unique sample IDs for the calculations. It requires exactly one plate, complete condition metadata, unique well IDs, and nonnegative integer counts.</p>
+<p>All eligible pairs are computed regardless of <code>--max-scatters</code>. That setting caps the number of scatter figures, which can otherwise grow quickly. By default, the illustrative selection is the lowest-Pearson DMSO pair, the lowest-Pearson nonblank treatment pair, and the highest-Pearson nonblank treatment pair. Additional requested slots are filled in ascending Pearson order. This deliberately illustrates the range; it is not a representative sample or an unbiased comparison of conditions.</p>
+<p>The default cap without an explicit option is six. <code>--max-scatters 0</code> writes the heatmaps and complete tables without scatter figures. Use a fresh output directory for each analysis; rerunning into an existing directory can overwrite matching files, while unrelated files from an earlier run may remain.</p>
+<p><a id="repeatability"></a></p>
+<h2 id="4-read-the-all-well-heatmap">4. Read the all-well heatmap</h2>
+<p><a aria-label="Open full-size figure: Synthetic Sample 1 all-well Pearson correlation heatmap" class="figure-link" href="assets/figures/repeatability-01.png" rel="noopener" target="_blank"><img alt="Synthetic Sample 1 all-well Pearson correlation heatmap" decoding="async" loading="lazy" src="assets/figures/repeatability-01.png"/></a></p>
+<p><strong>All-well profile similarity.</strong> This practice plate contains 48 wells and 800 genes detected somewhere on the plate. Wells are ordered by condition and then well number, with boundaries between conditions. The matrix is symmetric; its diagonal compares each nonconstant profile with itself and is not evidence of repeatability.</p>
+<p>The synthetic cell-containing wells form similar profiles, while water wells have much sparser detection. Cross-treatment similarity can remain high because much of the transcriptome is shared. High overall correlation does not show that a treatment had no effect; low correlation does not identify its cause.</p>
+<p>Review an unusual well with its UMI depth, detected-gene count, mitochondrial fraction, physical location, and metadata. Do not remove it only because it has the lowest correlation.</p>
+<p>The complete numerical matrix is saved as <code>all_wells_correlations.csv</code>. <code>well_order.csv</code> records the displayed order and review flags.</p>
+<p>On the website, open a figure to inspect the full-size well labels. The downloadable PNGs also retain the complete labels.</p>
+<p><a id="condition-heatmaps"></a></p>
+<h2 id="5-examine-matched-conditions-separately">5. Examine matched conditions separately</h2>
+<p><a aria-label="Open full-size figure: Synthetic Sample 1 DMSO within-condition Pearson heatmap" class="figure-link" href="assets/figures/repeatability-02.png" rel="noopener" target="_blank"><img alt="Synthetic Sample 1 DMSO within-condition Pearson heatmap" decoding="async" loading="lazy" src="assets/figures/repeatability-02.png"/></a></p>
+<p><strong>DMSO control profiles.</strong> These 12 wells share the same recorded control, dose, and time. The script also creates separate heatmaps for Drug1, Drug2, and water. <code>condition_index.csv</code> maps each numbered heatmap to its exact metadata values; a water heatmap is a blank-profile QC view, not a biological replicate analysis.</p>
+<p>The synthetic run produces these descriptive pair summaries:</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Dose</th>
+<th>Time</th>
+<th>Wells</th>
+<th>Pairs</th>
+<th>Median Pearson r</th>
+<th>Pearson range</th>
+<th>Median Spearman rho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DMSO</td>
+<td>0</td>
+<td>24h</td>
+<td>12</td>
+<td>66</td>
+<td>0.8301</td>
+<td>0.7932–0.8558</td>
+<td>0.8407</td>
+</tr>
+<tr>
+<td>Drug1</td>
+<td>1</td>
+<td>24h</td>
+<td>12</td>
+<td>66</td>
+<td>0.8749</td>
+<td>0.8496–0.8902</td>
+<td>0.8811</td>
+</tr>
+<tr>
+<td>Drug2</td>
+<td>1</td>
+<td>24h</td>
+<td>12</td>
+<td>66</td>
+<td>0.8294</td>
+<td>0.8035–0.8510</td>
+<td>0.8394</td>
+</tr>
+<tr>
+<td>water, blank-profile QC</td>
+<td>0</td>
+<td>24h</td>
+<td>12</td>
+<td>66</td>
+<td>−0.8494</td>
+<td>−0.9382–−0.7285</td>
+<td>−0.8597</td>
+</tr>
+</tbody>
+</table></div>
+<p>Dose values above are the synthetic metadata values; use explicit, consistent units in a real experiment. The summaries use pair-specific gene sets, so they do not summarize the heatmap cells exactly. All 264 pair rows remain available, including blank pairs.</p>
+<p><strong>Why are the blank-pair values negative?</strong> Synthetic water wells detect very few, often different genes. Restricting a pair to genes detected in either member removes their many shared zeros and leaves mostly genes present in one well only. That selection can produce strong negative correlation. It does not demonstrate biological opposition between water wells. Compare detection depth and gene-set sizes before interpreting a sparse-profile correlation. These water pairs contain only 78–97 retained genes, whereas the cell-containing pairs contain 793–800.</p>
+<p>Do not compare conditions solely by the largest median correlation. The gene universe, detection level, biological variability, and number of independent units all matter. The 66 pairs within a condition reuse the same 12 wells; their range is descriptive, not a confidence interval based on 66 independent replicates.</p>
+<p><a id="replicate-scatter"></a></p>
+<h2 id="6-inspect-replicate-gene-expression-scatters">6. Inspect replicate gene-expression scatters</h2>
+<p>Each dot is one gene detected in at least one member of the pair. Both axes use <code>log10(raw UMI + 1)</code> with the same limits and a square aspect ratio. The dashed identity line is <code>y = x</code>; the orange line is an ordinary least-squares fit of y on x. Correlation does not measure agreement with the identity line: profiles can correlate strongly while differing systematically in magnitude.</p>
+<p><a aria-label="Open full-size figure: Synthetic DMSO replicate scatter for wells 25 and 33" class="figure-link" href="assets/figures/repeatability-03.png" rel="noopener" target="_blank"><img alt="Synthetic DMSO replicate scatter for wells 25 and 33" decoding="async" loading="lazy" src="assets/figures/repeatability-03.png"/></a></p>
+<p><strong>Lowest-Pearson control pair.</strong> Well-dT-25 and Well-dT-33 are matched DMSO wells. Their Pearson r is 0.7932 and Spearman rho is 0.8138, using 800 genes. Inspect dispersion and depth together; this selection alone is not an exclusion decision.</p>
+<p><a aria-label="Open full-size figure: Synthetic Drug2 replicate scatter for wells 15 and 27" class="figure-link" href="assets/figures/repeatability-04.png" rel="noopener" target="_blank"><img alt="Synthetic Drug2 replicate scatter for wells 15 and 27" decoding="async" loading="lazy" src="assets/figures/repeatability-04.png"/></a></p>
+<p><strong>Lowest-Pearson treatment pair.</strong> Well-dT-15 and Well-dT-27 share Drug2, dose 1, and time 24h. Their Pearson r is 0.8035 and Spearman rho is 0.8261, using 800 genes. Genes detected in just one well lie on an axis. Differences near the detection limit may contribute substantially to the pattern.</p>
+<p><a aria-label="Open full-size figure: Synthetic Drug1 replicate scatter for wells 6 and 10" class="figure-link" href="assets/figures/repeatability-05.png" rel="noopener" target="_blank"><img alt="Synthetic Drug1 replicate scatter for wells 6 and 10" decoding="async" loading="lazy" src="assets/figures/repeatability-05.png"/></a></p>
+<p><strong>Highest-Pearson treatment pair.</strong> Well-dT-6 and Well-dT-10 share Drug1, dose 1, and time 24h. Their Pearson r is 0.8902 and Spearman rho is 0.8982, using 799 genes. This is the selected high-correlation example, not evidence that every Drug1 pair is better than every other condition.</p>
+<p>The default figures have no jitter. <code>--display-jitter 0.007</code> can reveal overlapping dots with small, seeded visual offsets. The pair mask, Pearson/Spearman statistics, and fitted line always use the exact unjittered values. The figure states when jitter is enabled.</p>
+<p><a id="select-pairs"></a></p>
+<h2 id="7-select-pairs-explicitly">7. Select pairs explicitly</h2>
+<p>Read <code>replicate_pairs.csv</code> to find a pair by condition, well ID, sample ID, or correlation. Then pass its <code>pair_id</code> to the script. For example, the first pair in the unchanged synthetic dataset is:</p>
+<pre><code class="language-bash">python scripts/compare_well_repeatability.py \
+  --data-dir data --sample sample_1 \
+  --output-dir results/well-repeatability-selected \
+  --pair pair-00001 --max-scatters 1 --synthetic
+</code></pre>
+<p>Repeat <code>--pair</code> to request several figures and set <code>--max-scatters</code> high enough for them. Pair IDs depend on the input well set and condition ordering; use the table from the same inputs. An unknown or undefined pair is rejected rather than silently replaced by another pair. <code>selected_pairs.csv</code> records each rendered pair, its selection reason, and its figure filename.</p>
+<p>To show Spearman heatmaps, add <code>--heatmap-method spearman</code>. Pair tables and scatter annotations still report both correlation measures. Automatic illustration selection remains based on Pearson r, as recorded in <code>selected_pairs.csv</code>.</p>
+<p>For a design with additional matching variables, supply all required condition columns:</p>
+<pre><code class="language-bash">python scripts/compare_well_repeatability.py \
+  --data-dir my-data --sample sample_1 \
+  --condition-columns compound dose time cell_type \
+  --output-dir results/my-repeatability --max-scatters 6
+</code></pre>
+<p>This last command requires your own input metadata, including <code>cell_type</code>. Missing condition fields are rejected. If a condition field is absent because it is constant by design, add an explicit documented value to metadata instead of silently pooling unknown values.</p>
+<p><a id="flags"></a></p>
+<h2 id="8-retain-and-mark-wells-under-review">8. Retain and mark wells under review</h2>
+<p>An optional CSV can list wells already flagged during QC:</p>
+<pre><code class="language-csv">sample_id,reason
+Sample 1_DEMO0001,Review recorded QC metrics and physical position
+</code></pre>
+<p>The ID above is only an example of the input format, not a recommendation to flag that synthetic well. Save your reviewed table as <code>review-flags.csv</code>, then run:</p>
+<pre><code class="language-bash">python scripts/compare_well_repeatability.py \
+  --data-dir data --sample sample_1 \
+  --flagged-samples review-flags.csv \
+  --output-dir results/well-repeatability-flagged \
+  --max-scatters 3 --synthetic
+</code></pre>
+<p>Flagged wells remain in every applicable calculation. Their heatmap labels are red, their scatter annotations show the flag, and the pair table records each member's status. A review flag is not an exclusion. If you later exclude a well for a documented reason, rerun on the reviewed input set and compare the results; removing wells may change both pair membership and the heatmap gene universe.</p>
+<p><a id="outputs"></a></p>
+<h2 id="9-saved-outputs-and-checks">9. Saved outputs and checks</h2>
+<pre><code class="language-text">results/well-repeatability/
+├── run_settings.json
+├── well_order.csv
+├── all_wells_correlations.csv
+├── condition_index.csv
+├── condition-001_correlations.csv, ...
+├── replicate_pairs.csv
+├── condition_summary.csv
+├── selected_pairs.csv
+└── figures/
+    ├── all_wells_heatmap.png
+    ├── condition-001_heatmap.png, ...
+    └── scatter-01.png, ...
+</code></pre>
+<p><code>run_settings.json</code> records the transformation, gene-set rules, condition columns, heatmap statistic, pair count, undefined-value policy, display jitter, and whether synthetic labeling was requested. No original matrix is copied into these outputs.</p>
+<p>Before drawing conclusions, check that the metadata define the intended matched conditions, the expected number of wells and pairs are present, raw counts are the intended expression input, and low-detection pairs have enough genes to interpret. Review <code>status</code> and <code>n_genes_pair</code> alongside each coefficient. There is no universal correlation cutoff for accepting a well.</p>
+<p>The helper uses drugseqpy for loading and alignment and explicit NumPy/SciPy calculations for these plots. The package's <code>compute_within_plate_repeatability()</code> also supports Pearson and Spearman, but its default grouping is plate plus compound and its gene universe is the entire supplied matrix. Do not expect exact agreement unless condition definitions, expression scale, and gene masks match. See the <a href="api-reference.html">API reference</a> and the <a href="multi-plate-comparison.html">multi-plate repeatability section</a> for that complementary workflow.</p>
+<p><a id="troubleshooting"></a></p>
+<h2 id="troubleshooting-1">Troubleshooting</h2>
+<p><strong>The heatmap and scatter give different r values.</strong> Compare the retained gene counts. Heatmaps use genes detected anywhere in their displayed well set; scatter statistics exclude genes absent from both members of the pair.</p>
+<p><strong>A blank pair has a large negative correlation.</strong> Inspect the number of detected genes and the pair mask. Excluding shared zeros from two sparse profiles can leave mostly mutually exclusive detections.</p>
+<p><strong>A pair is undefined.</strong> Check for a zero or constant profile and very few retained genes. Undefined values remain missing; more figures cannot resolve insufficient information.</p>
+<p><strong>A condition has no scatter.</strong> It may contain only one well, have undefined pair statistics, or fall outside the figure cap. The complete pair table distinguishes these cases; <code>condition_index.csv</code> also lists singleton groups.</p>
+<p><strong>A pair has high r but lies away from the identity line.</strong> Correlation describes association, not equal expression or equal library size. Inspect total UMIs, the fitted slope and intercept, and relevant QC measures.</p>
+<p><strong>A plate has many wells or genes.</strong> The script guards against count matrices exceeding 512 MiB when made dense. Analyze a scientifically justified smaller well set or use a more memory-efficient implementation; do not silently sample genes and compare the changed coefficients as if they used the original gene set.</p>
+<p><a href="mix-species-workflow.html">← Mixed-species review</a> · <a href="single-plate-comparison.html">Single-plate comparison →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="mix-species-workflow.html"><small>Previous</small>Mixed species</a><a href="single-plate-comparison.html"><small>Next</small>Single-plate comparison →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="well-to-well-repeatability.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#1-define-which-wells-are-replicates">1. Define which wells are replicates</a><a href="#2-understand-the-expression-scale-and-gene-set">2. Understand the expression scale and gene set</a><a href="#3-run-the-complete-practice-analysis">3. Run the complete practice analysis</a><a href="#4-read-the-all-well-heatmap">4. Read the all-well heatmap</a><a href="#5-examine-matched-conditions-separately">5. Examine matched conditions separately</a><a href="#6-inspect-replicate-gene-expression-scatters">6. Inspect replicate gene-expression scatters</a><a href="#7-select-pairs-explicitly">7. Select pairs explicitly</a><a href="#8-retain-and-mark-wells-under-review">8. Retain and mark wells under review</a><a href="#9-saved-outputs-and-checks">9. Saved outputs and checks</a><a href="#troubleshooting-1">Troubleshooting</a></nav></aside></div></body></html>

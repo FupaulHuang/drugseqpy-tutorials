@@ -23,6 +23,8 @@ contracts = {
     'correct_batch': ('method', 'covariate_cols'),
     'compute_batch_effect_metrics': ('before', 'after'),
     'compute_multi_de': ('batch_cols',),
+    'normalize_counts': ('method',),
+    'plot_comparison_heatmap': ('n_top_genes',),
     'compute_cross_plate_reproducibility': ('reference',),
     'run_comparison_workflow': ('within_plate', 'gene_set_paths'),
     'run_enrichment': ('allow_network',),

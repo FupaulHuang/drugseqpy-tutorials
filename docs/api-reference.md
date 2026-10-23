@@ -1,6 +1,6 @@
 # API reference
 
-Use this reference alongside the [learning path](index.md), [QC](qc-workflow.md), [mixed-species](mix-species-workflow.md), and [multi-plate](multi-plate-comparison.md) chapters. Functions are grouped by task. Each entry documents the reviewed Python signature, default values, parameters, outputs, side effects, and workflow-specific notes. Signature blocks describe the API; use the workflow chapters for executable calls.
+Use this reference alongside the [learning path](index.md), [QC](qc-workflow.md), [mixed-species](mix-species-workflow.md), [single-plate](single-plate-comparison.md), and [multi-plate](multi-plate-comparison.md) chapters. Functions are grouped by task. Each entry documents the reviewed Python signature, default values, parameters, outputs, side effects, and workflow-specific notes. Signature blocks describe the API; use the workflow chapters for executable calls.
 
 **Compatibility.** Run `python scripts/check_environment.py` before starting. These contracts were checked against a development build reporting version 0.1.0; a matching public release is not assumed. Signatures below are reference displays, not complete runnable cells.
 
@@ -1209,6 +1209,25 @@ Set `expected_col='expected_species'` after `assign_well_species()` to make the 
 
 ## Comparison, batch effects and reproducibility
 
+Use these functions in the [single-plate](single-plate-comparison.md), [multi-plate](multi-plate-comparison.md), and [well-repeatability](well-to-well-repeatability.md) chapters. The [bulk comparison script](bulk-rnaseq-comparison.md#run) is a separate tutorial helper, not a package API.
+
+### `normalize_counts`
+
+```python
+ds.normalize_counts(dsd, method='limma_voom', log_transform=True, prior_count=1.0, target_sum=1000000.0, inplace=True)
+```
+
+Replaces `adata.X` with normalized expression and preserves `layers['counts']`. The `limma_voom` option produces TMM-normalized log2-CPM; design-specific precision weights are estimated during DE. `prior_count` applies to the CPM/TMM transformations; limma-voom uses its fixed count offset. Returns `None` in place or a copied object with `inplace=False`.
+
+### `plot_comparison_heatmap`
+
+```python
+ds.plot_comparison_heatmap(dsd, contrasts=None, n_top_genes=60, value_col='logFC', fdr_threshold=0.05, lfc_threshold=0.5, significant_only=True, cluster_rows=True, cluster_cols=True, cmap='RdBu_r', figsize=None)
+```
+
+Returns a Matplotlib figure containing gene-level effects across contrasts. The gene list is the union of the top absolute-effect genes per selected contrast, significant only by default. This differs from a sample-by-gene expression heatmap and from a well-by-well correlation heatmap. Save the figure with `fig.savefig(...)`.
+
+
 These signatures describe the installed DRUGseqPy 0.1.0 implementation used to verify this tutorial. Positional parameters and defaults are preserved; type annotations are omitted for readability.
 
 ### `audit_control_outliers`
@@ -1439,4 +1458,4 @@ For `plot_plate_logfc_concordance`, `value_type="normalized"` uses the X values 
 
 ---
 
-[← Previous chapter](multi-plate-comparison.md) · [Next chapter →](troubleshooting.md)
+[← Previous chapter](bulk-rnaseq-comparison.md) · [Next chapter →](troubleshooting.md)
