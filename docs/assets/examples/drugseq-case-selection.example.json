@@ -1,0 +1,14 @@
+{
+  "compounds": {
+    "compound_name_1": "Drug1",
+    "compound_name_2": "Drug2",
+    "compound_name_3": "Drug3"
+  },
+  "doses": [
+    0.10029,
+    1.00144
+  ],
+  "dose_unit": "uM",
+  "time": 24,
+  "control": "DMSO"
+}

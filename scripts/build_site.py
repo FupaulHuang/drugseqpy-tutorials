@@ -18,6 +18,7 @@ PAGES = [
     ('mix-species-workflow', 'Mixed species'), ('well-to-well-repeatability', 'Well-to-well repeatability'),
     ('single-plate-comparison', 'Single-plate comparison'),
     ('multi-plate-comparison', 'Multi-plate comparison'),
+    ('drugseq-case-study', 'Drug-seq worked case'),
     ('bulk-rnaseq-comparison', 'Bulk RNA-seq comparison'),
     ('api-reference', 'API reference'), ('troubleshooting', 'Troubleshooting'),
 ]

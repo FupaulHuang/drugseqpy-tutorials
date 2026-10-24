@@ -10,6 +10,8 @@ Analyze one plate from physical-well QC through control review, gene filtering, 
 
 ## Overview
 
+The [Drug-seq worked case](drugseq-case-study.md) applies this workflow to a selected real plate, then extends the same condition panel to three plates. Its case-specific Sample 1 is separate from the historical and synthetic example on this page.
+
 The sequence is QC → control audit → reviewed exclusions → gene filtering → normalization → differential expression → enrichment. A one-plate analysis estimates treatment effects within that plate. It cannot establish that those effects reproduce across plates or runs.
 
 The historical worked analysis removes one reviewed DMSO control, retains seven DMSO controls, and tests 12,807 genes. Its strongest contrast is Drug14. The small synthetic practice dataset contains Drug1 and Drug2 instead, so the code selects an available contrast from your results rather than assuming Drug14 exists.

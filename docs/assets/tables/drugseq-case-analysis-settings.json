@@ -1,0 +1,75 @@
+{
+  "samples": [
+    "Sample 1",
+    "Sample 2",
+    "Sample 3"
+  ],
+  "input_wells": 126,
+  "retained_wells": 126,
+  "reviewed_exclusions": 0,
+  "features_input": 58777,
+  "spike_features_excluded": 86,
+  "spike_rule": "gene_symbol starts ERCC-; endogenous ERCC genes retained",
+  "biological_features_before_filter": 58691,
+  "features_after_filter": 9839,
+  "gene_filter": {
+    "min_count": 5,
+    "min_samples": 3,
+    "group_aware": true,
+    "group_col": "condition"
+  },
+  "shared_filter_scope": "all selected plates; identical retained input genes in every DE fit",
+  "de": {
+    "method": "limma_voom",
+    "reference": "DMSO",
+    "fdr": 0.05,
+    "absolute_log2fc": 0.5,
+    "single_plate_covariates": [],
+    "combined_covariates": [
+      "plate_id"
+    ]
+  },
+  "design": {
+    "columns": [
+      "intercept",
+      "plate_id_Sample 2",
+      "plate_id_Sample 3",
+      "condition_Drug1_0.10029uM",
+      "condition_Drug1_1.00144uM",
+      "condition_Drug2_0.10029uM",
+      "condition_Drug2_1.00144uM",
+      "condition_Drug3_0.10029uM",
+      "condition_Drug3_1.00144uM"
+    ],
+    "rank": 9,
+    "n_columns": 9,
+    "n_observations": 126
+  },
+  "exploratory_contrast": "Drug2_1.00144uM",
+  "repeatability_illustration": {
+    "plate": "Sample 1",
+    "condition": "Drug1_0.10029uM",
+    "selection": "first condition in lexical order; no correlation-based selection",
+    "gene_universe": "all retained filtered genes, including shared zeros"
+  },
+  "counts_preserved": true,
+  "independent_first_plate_refit_agrees": true,
+  "qc_scope": "selected wells only; total UMI/detected features include ERCC; biological_umi excludes ERCC-",
+  "qc_annotation": "mitochondrial MT- and ribosomal-associated RPL/RPS symbol prefixes",
+  "control_review_score": "outlier scores computed across all selected wells, including treatments; threshold 5 is only a review heuristic",
+  "correction_scope": "visual diagnostics only; before view is exact batch_uncorrected transformation",
+  "enrichment": "not run; no compatible local gene set supplied",
+  "limitations": [
+    "Selected plates share one cell preparation batch; no independent cell-batch validation",
+    "Independent culture replication is unverified; wells are observations, not claimed biological replicates",
+    "Combined analysis includes the first plate and is not external validation",
+    "Repeated fixed layouts partially confound treatment/dose with position; plate adjustment does not remove this",
+    "Strongest combined contrast is exploratory; six contrasts have separate within-contrast FDR adjustment"
+  ],
+  "versions": {
+    "drugseqpy": "0.1.0",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scipy": "1.15.3"
+  }
+}

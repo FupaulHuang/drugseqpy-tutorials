@@ -106,6 +106,8 @@ The [single-plate workflow](single-plate-comparison.md) fits treatment effects w
 
 ## 5. Bring your own inputs
 
+The [Drug-seq worked case](drugseq-case-study.md) shows a separate measured-data example on three selected plates. Its preparation and analysis helpers accept your own compatible inputs; the underlying study matrices are not included in the synthetic practice directory. Use that chapter to see how dose groups, feature alignment, plate covariates, and design limitations carry through a real analysis.
+
 Use a separate data directory with the same folder structure. Review [Prepare inputs](input-preparation.md) first, particularly barcode matching and physical coordinates. The runner relabels the four datasets as Sample 1–4; it is tailored to these example roles and labels. The chapter code and API reference show how to generalize to other controls, species, plate counts, doses, and time points.
 
 [← Learning path](index.md) · [Prepare inputs →](input-preparation.md)

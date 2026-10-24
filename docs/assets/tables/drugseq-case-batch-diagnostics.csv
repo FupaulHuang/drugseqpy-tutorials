@@ -1,0 +1,6 @@
+metric,before,after
+plate_silhouette,0.22263625668553652,-0.05305783684964513
+plate_variance_fraction,0.31370264626532585,1.116727400732497e-14
+plate_classifier_balanced_accuracy,1.0,0.15873015873015872
+median_matched_compound_centroid_distance,37.20130817851234,10.25191889829896
+cross_plate_compound_retrieval_accuracy,0.47619047619047616,0.7619047619047619

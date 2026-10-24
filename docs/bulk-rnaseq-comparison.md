@@ -422,4 +422,4 @@ Confirm every panel uses the same native-correlation limits and inspect the nume
 
 ---
 
-[← Previous chapter](multi-plate-comparison.md) · [Next chapter →](api-reference.md)
+[← Previous chapter](drugseq-case-study.md) · [Next chapter →](api-reference.md)

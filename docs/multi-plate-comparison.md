@@ -10,6 +10,8 @@ Analyze two or more plates with explicit batch diagnosis, validated embedding co
 
 ## Overview
 
+For a compact measured-data example that applies both comparison workflows to one experiment, continue to the [Drug-seq worked case](drugseq-case-study.md). It uses a separate three-plate cohort and keeps treatment doses distinct.
+
 Use this workflow when the same treatment panel is measured on two or more plates. It adds three requirements to the [single-plate analysis](single-plate-comparison.md): diagnose batch structure, correct exploratory embeddings without corrupting counts, and quantify whether independently estimated treatment effects reproduce across plates.
 
 **Historical worked example:** 186 input wells; 184 analysis wells; 13,415 tested genes; 16 cross-plate treatment checks.
@@ -941,4 +943,4 @@ python scripts/run_tutorial.py comparison --data-dir data --output-dir results
 
 ---
 
-[← Previous chapter](single-plate-comparison.md) · [Next chapter →](bulk-rnaseq-comparison.md)
+[← Previous chapter](single-plate-comparison.md) · [Next chapter →](drugseq-case-study.md)

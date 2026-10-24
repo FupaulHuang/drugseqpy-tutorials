@@ -17,11 +17,14 @@ The chapters retain anonymized worked results with Sample 1–4 labels. Four sep
 5. [Well-to-well repeatability](docs/well-to-well-repeatability.md)
 6. [Single-plate comparison](docs/single-plate-comparison.md)
 7. [Multi-plate comparison](docs/multi-plate-comparison.md)
-8. [Bulk RNA-seq comparison](docs/bulk-rnaseq-comparison.md)
-9. [API reference](docs/api-reference.md)
-10. [Troubleshooting](docs/troubleshooting.md)
+8. [Drug-seq worked case](docs/drugseq-case-study.md)
+9. [Bulk RNA-seq comparison](docs/bulk-rnaseq-comparison.md)
+10. [API reference](docs/api-reference.md)
+11. [Troubleshooting](docs/troubleshooting.md)
 
-Sample 1 is the single-plate treatment example; Sample 1 and Sample 2 together demonstrate multi-plate comparison. Sample 3 and Sample 4 are mixed-species plate datasets. Each observation inside a dataset is one well.
+The [Drug-seq worked case](docs/drugseq-case-study.md) adds a separate real-data cohort: three selected plates and six treatment–dose contrasts, with anonymized results and portable preparation/analysis scripts. Its raw study inputs are not bundled.
+
+In the original example cohort, Sample 1 is the single-plate treatment example; Sample 1 and Sample 2 together demonstrate multi-plate comparison. Sample 3 and Sample 4 are mixed-species plate datasets. Each observation inside a dataset is one well.
 
 ## Run the practice workflow
 

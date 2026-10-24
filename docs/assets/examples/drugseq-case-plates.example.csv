@@ -1,0 +1,4 @@
+label,source_plate,counts
+Sample 1,plate_input_1,../private-inputs/plate_1_counts.tsv.gz
+Sample 2,plate_input_2,../private-inputs/plate_2_counts.tsv.gz
+Sample 3,plate_input_3,../private-inputs/plate_3_counts.tsv.gz

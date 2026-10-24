@@ -6,7 +6,7 @@
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
 <div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/index.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
-<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html" aria-current="page"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><span>09</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>10</span>API reference</a><a href="troubleshooting.html"><span>11</span>Troubleshooting</a></nav>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html" aria-current="page"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="drugseq-case-study.html"><span>09</span>Drug-seq worked case</a><a href="bulk-rnaseq-comparison.html"><span>10</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>11</span>API reference</a><a href="troubleshooting.html"><span>12</span>Troubleshooting</a></nav>
 <div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
 <main id="main"><div class="chapter-label">DRUGSEQPY / LEARNING PATH</div><article><h1 id="learn-drugseqpy">Learn drugseqpy</h1>
 <p>Build a complete analysis from count matrices and plate metadata: inspect well quality and species identity, assess well-to-well repeatability, compare treatments within and across plates, and assess agreement with bulk RNA-seq.</p>
@@ -58,11 +58,16 @@
 </tr>
 <tr>
 <td>8</td>
+<td><a href="drugseq-case-study.html">Drug-seq worked case</a></td>
+<td>Analyze a selected real Drug-seq experiment from one plate to three matched plates.</td>
+</tr>
+<tr>
+<td>9</td>
 <td><a href="bulk-rnaseq-comparison.html">Bulk RNA-seq comparison</a></td>
 <td>Align features, compare matched reference profiles, and respect study and plate structure.</td>
 </tr>
 <tr>
-<td>9</td>
+<td>10</td>
 <td><a href="api-reference.html">API reference</a></td>
 <td>Find function signatures, parameters, returns, and related workflow steps.</td>
 </tr>
@@ -101,10 +106,11 @@
 </tr>
 </tbody>
 </table></div>
+<p>The <a href="drugseq-case-study.html">Drug-seq worked case</a> uses a <strong>separate cohort</strong>, with case-specific Sample 1–3 labels and its own input directory. Those labels do not refer to the datasets in this table.</p>
 <p>Here <strong>Sample 1–4 are labels for plate datasets</strong>. Within a dataset, each observation is one well, and <code>sample_id</code> identifies that well. Sample 3 and Sample 4 form a different example from Sample 1 and Sample 2; do not pool all four for a treatment comparison.</p>
 <p>The detailed chapters retain anonymized worked figures and result tables. The bundled <strong>synthetic practice data</strong> are independently generated and contain no measurements from the worked example. They teach the same input schema and analysis calls, but their numerical results will differ. The practice data include low-depth and mixed wells to make the review steps useful.</p>
 <h2 id="choose-a-route">Choose a route</h2>
-<p>Start with <a href="getting-started.html">Getting started</a> to run the included practice data. If you already have count matrices, continue to <a href="input-preparation.html">Prepare inputs</a>, then run the same workflow on a separate data directory. Mixed-species analysis is optional for a single-species experiment. For treatment analysis, start with <a href="single-plate-comparison.html">Single-plate comparison</a>, then extend to <a href="multi-plate-comparison.html">Multi-plate comparison</a> when matched treatments and controls are available on another plate. The <a href="well-to-well-repeatability.html">repeatability chapter</a> helps review replicate consistency before treatment modeling. The <a href="bulk-rnaseq-comparison.html">bulk comparison</a> extends Sample 3/4 QC to independently prepared references. Enrichment requires suitable local gene-set files; STARsolo read-level QC requires separate read statistics.</p>
+<p>Start with <a href="getting-started.html">Getting started</a> to run the included practice data. If you already have count matrices, continue to <a href="input-preparation.html">Prepare inputs</a>, then run the same workflow on a separate data directory. Mixed-species analysis is optional for a single-species experiment. For treatment analysis, start with <a href="single-plate-comparison.html">Single-plate comparison</a>, then extend to <a href="multi-plate-comparison.html">Multi-plate comparison</a> when matched treatments and controls are available on another plate. The <a href="drugseq-case-study.html">Drug-seq worked case</a> applies the workflow to three selected real plates with a compact matched treatment panel. The <a href="well-to-well-repeatability.html">repeatability chapter</a> helps review replicate consistency before treatment modeling. The <a href="bulk-rnaseq-comparison.html">bulk comparison</a> extends Sample 3/4 QC to independently prepared references. Enrichment requires suitable local gene-set files; STARsolo read-level QC requires separate read statistics.</p>
 <p><a href="getting-started.html">Start the tutorial →</a></p>
 </article>
 <nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="getting-started.html"><small>Next</small>Getting started →</a></nav>

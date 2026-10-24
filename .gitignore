@@ -5,3 +5,8 @@ results/
 site-preview/
 .DS_Store
 drugseqpy-tutorials.zip
+
+# Real-case inputs and private source-to-alias configurations
+/private-inputs/
+/private-case-data/
+/private-case-config/

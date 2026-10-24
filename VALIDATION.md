@@ -23,12 +23,26 @@ The default bundled workflow and the detailed chapter examples passed. Enrichmen
 
 ## Documentation checks
 
-All eleven chapters passed browser checks at 1440 px and 390 px: no horizontal page overflow, chapter navigation present, and mobile navigation opens and closes. Desktop and mobile screenshots were visually reviewed. Every figure has a working link to its full-size asset. All 96 PNG files decode successfully; the static checker verifies their references.
+All twelve chapters passed browser checks at 1440 px and 390 px: no horizontal page overflow, chapter navigation present, and mobile navigation opens and closes. Desktop and mobile screenshots were visually reviewed. Every figure has a working link to its full-size asset. All 110 PNG files decode successfully; the static checker verifies their references.
 
 
-The expanded static validation passes 32 documents, 1,073 local links/assets, 115 Python block syntax checks, all 96 figure references, and both synthetic-data checksum manifests. Run `python scripts/validate_site.py` after rebuilding. It checks local page/asset links, fragment targets, duplicate HTML IDs, runnable Python-block syntax, image descriptions, old sample identifiers, private filesystem references, and synthetic-data checksums. API signature displays are not executable examples.
+The current static check passes 34 documents, 1,208 local links/assets, 116 Python-block syntax checks, and all 110 figure references. Run `python scripts/validate_site.py` after rebuilding. It checks local page/asset links, fragment targets, duplicate HTML IDs, runnable Python-block syntax, image descriptions, old sample identifiers, private filesystem references, and synthetic-data checksums. API signature displays are not executable examples.
 
-The eleven Markdown chapters are the editable source for eleven generated HTML chapters. Six old HTML names redirect to the corresponding revised chapters. Figures and browser assets are local, and all internal site links are relative so the site works below a GitHub Pages repository path.
+The twelve Markdown chapters are the editable source for twelve generated HTML chapters. Six old HTML names redirect to the corresponding revised chapters. Figures and browser assets are local, and all internal site links are relative so the site works below a GitHub Pages repository path.
+
+## Measured Drug-seq case
+
+The added Drug-seq case uses a prespecified subset of three same-batch plates, three anonymized compounds at two doses, and all DMSO controls on those plates: 42 wells per plate, 126 total. It uses separate case-scoped Sample 1–3 labels; these are not the earlier worked or synthetic sample datasets.
+
+- Every prepared value matches the source count after an explicit barcode join and shared-feature alignment. Physical coordinates were independently checked against the plate-layout API. Source identities, raw matrices, and private mapping configurations stay outside the public repository.
+- Shared inputs contain 58,777 feature rows, including 86 ERCC spike features. Only the `ERCC-` spike prefix is removed; endogenous ERCC genes are preserved. A shared condition-aware filter retains 9,839 modeled features representing 9,835 unique symbols.
+- All 126 wells and 72 DMSO controls are retained. One control per plate is flagged for review. QC metrics and the recurring low-depth control position were independently checked.
+- The plate-plus-condition design has nine columns and rank nine. All 24 final contrast summaries (three separate plates plus the combined model, six conditions each) were recomputed from the gene-level results. Every model contains 9,839 tested and estimable features.
+- Six independent first-plate refits reproduce the one-plate estimates. All 18 cross-plate effect correlations and significant-feature overlap results were independently verified. Counts are hashed and checked unchanged through QC, filtering of retained values, normalization, visualization correction, and DE.
+- Fourteen new figures, eight summary CSVs, and sanitized analysis settings were inspected for numerical consistency, legibility, and source-identity removal. The chapter's Python summary-reading example executed successfully; all twelve pages passed browser checks at desktop and phone widths. The strongest combined contrast is explicitly an exploratory display choice.
+- Preparation fixtures check shuffled metadata, nonshared features, count equality, incompatible conditions, fractional-count rejection, and mixed/missing cell models. Case analysis rejects incompatible units/exposure, incomplete designs, invalid coordinates, and unsupported exclusion IDs.
+
+The three plates share a cell-preparation batch and repeat the same spatial layout. Treatment/dose and position are not fully separable; adding row to this selected fixed-effect design makes it rank deficient. The combined model includes the one-plate example, and the common gene filter was computed over all selected plates. These constraints are described in the chapter; no independent biological-batch or held-out-validation claim is made.
 
 ## Reproduction boundaries
 

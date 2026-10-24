@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Drug-seq worked case: one plate to three plates · drugseqpy tutorials</title>
+<meta name="description" content="Connected drugseqpy tutorials for QC, mixed-species analysis, well repeatability, treatment comparisons, and bulk RNA-seq validation.">
+<link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">ds</span>drugseqpy <small>tutorials</small></a>
+<div class="top-actions"><a href="https://github.com/FupaulHuang/drugseqpy-tutorials/blob/main/docs/drugseq-case-study.md">Markdown</a><a href="api-reference.html">API</a><button class="menu-toggle" aria-controls="chapter-nav" aria-expanded="false">Chapters</button></div></header>
+<div class="layout"><aside class="sidebar" id="chapter-nav"><p class="nav-label">LEARN THE WORKFLOW</p><nav aria-label="Chapters"><a href="index.html"><span>01</span>Learning path</a><a href="getting-started.html"><span>02</span>Getting started</a><a href="input-preparation.html"><span>03</span>Prepare inputs</a><a href="qc-workflow.html"><span>04</span>Quality control</a><a href="mix-species-workflow.html"><span>05</span>Mixed species</a><a href="well-to-well-repeatability.html"><span>06</span>Well-to-well repeatability</a><a href="single-plate-comparison.html"><span>07</span>Single-plate comparison</a><a href="multi-plate-comparison.html"><span>08</span>Multi-plate comparison</a><a href="drugseq-case-study.html" aria-current="page"><span>09</span>Drug-seq worked case</a><a href="bulk-rnaseq-comparison.html"><span>10</span>Bulk RNA-seq comparison</a><a href="api-reference.html"><span>11</span>API reference</a><a href="troubleshooting.html"><span>12</span>Troubleshooting</a></nav>
+<div class="sidebar-note">From counts to interpretation.<br>Sample 1–4 · Python workflows<br><a href="https://github.com/FupaulHuang/drugseqpy-tutorials">GitHub repository ↗</a></div></aside>
+<main id="main"><div class="chapter-label">DRUGSEQPY / DRUG-SEQ WORKED CASE</div><article><h1 id="drug-seq-worked-case-one-plate-to-three-plates">Drug-seq worked case: one plate to three plates</h1>
+<p><a href="index.html">Learning path</a> · <a href="single-plate-comparison.html">Single-plate workflow</a> · <a href="multi-plate-comparison.html">Multi-plate workflow</a></p>
+<blockquote>
+<p>This is a separate Drug-seq case study using measured UMI counts. Sample 1–3 are labels within this case; they do not identify the earlier worked datasets or bundled synthetic practice plates. The case illustrates one plate first and then the same selected conditions on three plates. Source identities and raw study inputs are not distributed with the tutorial.</p>
+</blockquote>
+<h2 id="define-a-compact-experiment-before-examining-results">Define a compact experiment before examining results</h2>
+<p>The subset was chosen from plate and treatment metadata before inspecting differential-expression results. It uses three replicate plates from one processing batch, three compounds, two recorded doses, and all DMSO controls on the selected plates. The compound labels are anonymized as Drug1–Drug3. The first plate is selected by its recorded replicate order, not by its apparent signal or QC rank.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Design feature</th>
+<th>Selected case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cell model</td>
+<td>Human U2OS</td>
+</tr>
+<tr>
+<td>Exposure</td>
+<td>24 hours</td>
+</tr>
+<tr>
+<td>Plates</td>
+<td>Sample 1, Sample 2, Sample 3; one processing batch</td>
+</tr>
+<tr>
+<td>Physical layout</td>
+<td>384-well format, 16 rows × 24 columns</td>
+</tr>
+<tr>
+<td>Treatment panel</td>
+<td>Drug1–Drug3 at 0.10029 and 1.00144 µM</td>
+</tr>
+<tr>
+<td>Wells per treatment–dose group</td>
+<td>Three per plate</td>
+</tr>
+<tr>
+<td>DMSO controls</td>
+<td>24 per plate</td>
+</tr>
+<tr>
+<td>Selected wells</td>
+<td>42 per plate; 126 total</td>
+</tr>
+<tr>
+<td>Contrasts</td>
+<td>Six treatment–dose conditions versus DMSO</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each plate contains other experimental wells outside this teaching subset. They are not counted as failed wells and do not enter the selected analysis. The displayed plate maps therefore show deliberate gaps. The three plates use the same layout: repeating it does not eliminate spatial confounding. Dose groups occupy different rows, and control wells have a structured placement. Interpret spatial maps together with the modeled treatment effects.</p>
+<p>The metadata identify plate replicates and matched well conditions, but do not establish that each well represents an independently prepared biological replicate. Inference is conditional on the replicate assumptions. These same-batch plates provide a limited repeatability/reproducibility demonstration, not independent-batch validation or a universal statement about Drug-seq performance.</p>
+<h2 id="keep-raw-counts-and-align-features-explicitly">Keep raw counts and align features explicitly</h2>
+<p>The input matrices are nonnegative integer UMI counts, arranged as genes × wells. Their column order differs from metadata order; matching uses both the source plate identifier and the well barcode before assigning neutral labels. Metadata row order is never used as an implicit join.</p>
+<p>Feature IDs are composite annotation identifiers, not Ensembl IDs. They are retained exactly as stable row keys for this case. The gene-symbol column is kept separately for plotting; duplicated symbols are not silently collapsed. The three input feature sets differ slightly, so preparation uses their explicit shared-feature intersection and reorders every plate to that same list. A feature missing from an input annotation is not filled as a measured zero.</p>
+<p>The shared input contains 58,777 rows, including 86 ERCC spike-ins. Spike-ins are recorded during input auditing and excluded before biological filtering, normalization, and differential expression. The remaining 58,691 feature rows are then assessed by a common documented gene-filtering rule. QC descriptions distinguish all-input UMI totals from the biological-gene counts used for inference.</p>
+<p>The prepared folder uses the same portable contract as the other chapters, in its own directory:</p>
+<pre><code class="language-text">private-case-data/
+├── sample_1/
+│   ├── metadata.csv
+│   └── matrix/{matrix.mtx.gz,features.tsv.gz,barcodes.tsv.gz}
+├── sample_2/…
+├── sample_3/…
+└── preparation_summary.json
+</code></pre>
+<p>The preparation helper accepts a gene-by-well count table per plate and a metadata CSV, including compressed <code>.gz</code> files. It joins each original matrix column using <code>plate_barcode + "_" + well_index</code>, then substitutes neutral plate and well identifiers. Physical positions are taken from <code>plate_well</code> and validated as A01–P24, not reconstructed from barcode order.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Metadata field</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plate_barcode</code></td>
+<td>Input plate identifier used to find the corresponding count file.</td>
+</tr>
+<tr>
+<td><code>well_index</code></td>
+<td>Well barcode used with the plate identifier to match a count column.</td>
+</tr>
+<tr>
+<td><code>plate_well</code></td>
+<td>Verified physical A01–P24 position on a 384-well plate.</td>
+</tr>
+<tr>
+<td><code>compound</code></td>
+<td>Input treatment label, mapped to Drug1–Drug3 by your private selection file.</td>
+</tr>
+<tr>
+<td><code>treatment_dose</code>, <code>treatment_dose_unit</code></td>
+<td>Numeric concentration and its explicit unit.</td>
+</tr>
+<tr>
+<td><code>timepoint</code></td>
+<td>Exposure duration in hours.</td>
+</tr>
+<tr>
+<td><code>cell.line.name</code></td>
+<td>If present, must be complete and identify one cell model across the selected wells.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Download the generic <a href="assets/examples/drugseq-case-plates.example.csv">plate-manifest example</a> and <a href="assets/examples/drugseq-case-selection.example.json">condition-selection example</a>, or copy them locally:</p>
+<pre><code class="language-bash">mkdir -p private-case-config
+cp docs/assets/examples/drugseq-case-plates.example.csv private-case-config/plates.csv
+cp docs/assets/examples/drugseq-case-selection.example.json private-case-config/selection.json
+</code></pre>
+<p>Replace the example input plate IDs, file locations, and compound names with your own reviewed values. The manifest maps input plates to Sample 1–3; relative count-file paths resolve against the manifest's folder. The selection names the recorded DMSO control label, the compounds to include, doses, dose unit, and exposure. Other control chemistries require corresponding changes to the analysis rather than simply calling them DMSO.</p>
+<pre><code class="language-bash">python scripts/prepare_drugseq_case.py \
+  --metadata private-inputs/metadata.csv.gz \
+  --manifest private-case-config/plates.csv \
+  --selection private-case-config/selection.json \
+  --output-dir private-case-data
+</code></pre>
+<p>The helper validates full plate-to-metadata identities before selecting wells. It refuses an existing output directory, aligns the shared feature IDs, exports compressed sparse matrices and neutral metadata, and records the selection counts and checksums. No QC exclusion or count normalization occurs during preparation. If you request <code>--private-audit</code>, keep that source-to-alias audit outside a public repository.</p>
+<p>The actual study inputs are not included here. The published figures and summary tables below are from the measured case, while these generic templates let readers prepare their own compatible inputs. The original synthetic <code>data/sample_1/</code> and <code>data/sample_2/</code> remain separate and should not be substituted when trying to reproduce these exact numbers.</p>
+<h2 id="inspect-qc-and-well-repeatability">Inspect QC and well repeatability</h2>
+<p>All 126 prespecified wells are retained. The lowest-depth selected well is the same DMSO position, L24, on each plate. That recurring spatial pattern merits review; it is not a reason to remove a different well from each plate until the comparison looks favorable.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Case plate</th>
+<th>Wells</th>
+<th>Median total UMI</th>
+<th>Minimum total UMI</th>
+<th>Median detected features</th>
+<th>Median mitochondrial %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample 1</td>
+<td>42</td>
+<td>290,930.0</td>
+<td>108,000</td>
+<td>11,658.5</td>
+<td>1.51</td>
+</tr>
+<tr>
+<td>Sample 2</td>
+<td>42</td>
+<td>338,538.0</td>
+<td>119,972</td>
+<td>11,581.5</td>
+<td>2.09</td>
+</tr>
+<tr>
+<td>Sample 3</td>
+<td>42</td>
+<td>361,092.5</td>
+<td>133,028</td>
+<td>12,256.5</td>
+<td>2.04</td>
+</tr>
+</tbody>
+</table></div>
+<p>The total-UMI and detected-feature summaries include the ERCC rows present in the shared input. Biological-UMI medians after subtracting spike counts are 290,923.5, 338,527.5, and 361,078.5 for Samples 1–3. Mitochondrial percentages use the <code>MT-</code> symbol prefix. The <code>RPL</code>/<code>RPS</code> prefix-associated fractions are about 34.30%, 32.54%, and 30.26%; this definition includes associated/pseudogene features and is <strong>not an rRNA contamination estimate</strong>.</p>
+<p><a aria-label="Open full-size figure: Measured Drug-seq QC distributions across three selected plates" class="figure-link" href="assets/figures/drugseq-case-01.png" rel="noopener" target="_blank"><img alt="Measured Drug-seq QC distributions across three selected plates" decoding="async" loading="lazy" src="assets/figures/drugseq-case-01.png"/></a></p>
+<p><strong>Selected-well QC distributions.</strong> Compare variation within each plate as well as differences in its median. These summaries describe the selected case subset, not every well in the original experiment.
+<a aria-label="Open full-size figure: Selected Drug-seq treatment-dose layouts on three 384-well plates" class="figure-link" href="assets/figures/drugseq-case-02.png" rel="noopener" target="_blank"><img alt="Selected Drug-seq treatment-dose layouts on three 384-well plates" decoding="async" loading="lazy" src="assets/figures/drugseq-case-02.png"/></a></p>
+<p><strong>Physical design.</strong> The selected conditions occupy the same well positions across plates. Blank positions here are outside the teaching subset; they are not automatically missing measurements or failed wells. Open the image at full size to inspect positions.
+<a aria-label="Open full-size figure: Biological UMI plate maps for the selected Drug-seq wells" class="figure-link" href="assets/figures/drugseq-case-03.png" rel="noopener" target="_blank"><img alt="Biological UMI plate maps for the selected Drug-seq wells" decoding="async" loading="lazy" src="assets/figures/drugseq-case-03.png"/></a></p>
+<p><strong>Biological UMI layout.</strong> Color uses log-transformed UMI totals after excluding ERCC spikes. Inspect location and condition together; plate adjustment alone cannot separate a repeated row-associated effect from a treatment placed in that row.
+<a aria-label="Open full-size figure: DMSO review across three selected Drug-seq plates" class="figure-link" href="assets/figures/drugseq-case-04.png" rel="noopener" target="_blank"><img alt="DMSO review across three selected Drug-seq plates" decoding="async" loading="lazy" src="assets/figures/drugseq-case-04.png"/></a></p>
+<p><strong>Control review.</strong> One DMSO well per plate exceeds the illustrative outlier-score cutoff of 5; all controls remain in the models. Scores are computed across all 126 selected wells, including treatments, so the flags depend on the selected analysis set and are not validated exclusion decisions.</p>
+<h3 id="check-matched-well-agreement">Check matched-well agreement</h3>
+<p>For model comparison, the shared gene filter retains features with at least five counts in at least three wells of a condition somewhere in the selected three-plate set. This yields <strong>9,839 modeled features</strong>, representing 9,835 distinct symbols. Distinct composite IDs for duplicated symbols are retained; a significant-feature count is not necessarily a count of unique gene symbols.</p>
+<p>The following repeatability plots use Pearson correlation on <code>log10(raw UMI + 1)</code> across all 9,839 retained features, including pairwise shared zeros. This is the package repeatability convention. The <a href="well-to-well-repeatability.html#method">dedicated well-to-well chapter</a> also explains a pair-specific detected-gene convention; its coefficients will differ if the gene sets differ.</p>
+<p><a aria-label="Open full-size figure: Within-condition well repeatability across the selected Drug-seq plates" class="figure-link" href="assets/figures/drugseq-case-07.png" rel="noopener" target="_blank"><img alt="Within-condition well repeatability across the selected Drug-seq plates" decoding="async" loading="lazy" src="assets/figures/drugseq-case-07.png"/></a></p>
+<p><strong>Repeatability by condition.</strong> Each three-well treatment condition contributes three pairs per plate; the 24 DMSO controls contribute 276 pairs. These pairs share wells and are not independent biological replicates. Median DMSO correlations are 0.888, 0.891, and 0.901.
+<a aria-label="Open full-size figure: Drug-seq Sample 1 matched-condition correlation heatmap" class="figure-link" href="assets/figures/drugseq-case-08.png" rel="noopener" target="_blank"><img alt="Drug-seq Sample 1 matched-condition correlation heatmap" decoding="async" loading="lazy" src="assets/figures/drugseq-case-08.png"/></a></p>
+<p><strong>A condition-specific heatmap.</strong> This view shows Sample 1 and Drug1 at 0.10029 µM, selected by condition-name order before looking at the correlations.
+<a aria-label="Open full-size figure: Gene-expression scatter plots for a selected Drug-seq replicate group" class="figure-link" href="assets/figures/drugseq-case-09.png" rel="noopener" target="_blank"><img alt="Gene-expression scatter plots for a selected Drug-seq replicate group" decoding="async" loading="lazy" src="assets/figures/drugseq-case-09.png"/></a></p>
+<p><strong>Gene-expression scatter plots.</strong> The three matched-well comparisons use the same retained-feature universe as the heatmap. A high profile correlation does not establish that a treatment effect reproduces; treatment-effect agreement is evaluated separately below.</p>
+<h2 id="analyze-sample-1-on-its-own">Analyze Sample 1 on its own</h2>
+<p>The one-plate analysis uses only Sample 1: 42 wells, 24 DMSO controls, and three wells for each of six treatment–dose conditions. The <code>condition</code> column distinguishes dose groups; grouping by compound alone would incorrectly pool the two concentrations.</p>
+<p>The model compares each condition with DMSO using raw UMI counts, the Python <code>limma_voom</code> implementation, and no plate covariate. Normalized expression is used for plots, while <code>layers['counts']</code> supplies the inferential models. A separate plate effect cannot be estimated from this one plate.</p>
+<p>The common feature filter was established on all three selected plates and then reused for every fit. This makes the feature universe comparable, but the one-plate branch is not an independently selected or held-out dataset. A workflow that filtered Sample 1 alone could retain a different feature list.</p>
+<p>Across both one-plate and combined analyses, a feature is called significant when its adjusted p-value is below 0.05 and its absolute log2 fold change is at least 0.5. FDR adjustment is performed across features within each contrast; these thresholds do not describe one multiplicity-adjusted test over all six conditions.</p>
+<p><a aria-label="Open full-size figure: Sample 1 Drug-seq treatment-versus-DMSO volcano plot" class="figure-link" href="assets/figures/drugseq-case-12.png" rel="noopener" target="_blank"><img alt="Sample 1 Drug-seq treatment-versus-DMSO volcano plot" decoding="async" loading="lazy" src="assets/figures/drugseq-case-12.png"/></a></p>
+<p><strong>Sample 1 example.</strong> Drug2 at 1.00144 µM has 1,501 significant features on Sample 1. The illustrated contrast was chosen by the combined analysis's DEG count for presentation, so it is exploratory rather than an independently chosen validation target.</p>
+<h2 id="extend-the-same-conditions-to-three-plates">Extend the same conditions to three plates</h2>
+<p>Merge the three aligned plates using globally unique well IDs. Each condition has nine wells across the plates, and the combined control set has 72 DMSO wells. The adjusted expression model includes both condition and plate:</p>
+<p><code>expression ~ plate_id + condition</code></p>
+<p>The actual design has 126 rows, nine columns including the intercept, and rank nine. Treatment and plate can therefore be estimated in this model. Adding row as a further fixed effect would make the selected design rank deficient because of the repeated layouts; it is not a valid automatic fix for spatial confounding.</p>
+<h3 id="diagnose-plate-structure-on-comparable-expression-scales">Diagnose plate structure on comparable expression scales</h3>
+<p>The before and after views use the same normalized log-expression transformation. The before matrix is copied from <code>batch_uncorrected</code> after <code>correct_batch(..., covariate_cols=['condition'])</code>, and PCA is fitted again for each view. Raw counts are verified unchanged.</p>
+<p><a aria-label="Open full-size figure: Drug-seq PCA before and after plate correction colored by plate" class="figure-link" href="assets/figures/drugseq-case-05.png" rel="noopener" target="_blank"><img alt="Drug-seq PCA before and after plate correction colored by plate" decoding="async" loading="lazy" src="assets/figures/drugseq-case-05.png"/></a></p>
+<p><strong>Plate-colored views.</strong> Plate silhouette decreases from 0.223 to −0.053 in these exploratory embeddings. PCA axes are fitted separately, so an apparent rotation or displacement is not a literal well trajectory.
+<a aria-label="Open full-size figure: Drug-seq PCA before and after plate correction colored by treatment-dose condition" class="figure-link" href="assets/figures/drugseq-case-06.png" rel="noopener" target="_blank"><img alt="Drug-seq PCA before and after plate correction colored by treatment-dose condition" decoding="async" loading="lazy" src="assets/figures/drugseq-case-06.png"/></a></p>
+<p><strong>Condition-colored views.</strong> Inspect biological structure alongside plate mixing. Condition is explicitly preserved in the correction model; apparent preservation on this same dataset is not independent evidence that correction improves future experiments.</p>
+<p>The raw-count combined DE model includes plate directly. It does not run DE on the corrected visualization matrix. All six adjusted contrasts succeed and retain the same 9,839 modeled feature IDs as the separate plate fits.</p>
+<p><a aria-label="Open full-size figure: Combined three-plate Drug-seq treatment-versus-DMSO volcano plot" class="figure-link" href="assets/figures/drugseq-case-11.png" rel="noopener" target="_blank"><img alt="Combined three-plate Drug-seq treatment-versus-DMSO volcano plot" decoding="async" loading="lazy" src="assets/figures/drugseq-case-11.png"/></a></p>
+<p><strong>Combined example.</strong> Drug2 at 1.00144 µM has 2,860 significant features in the plate-adjusted fit. This model contains Sample 1 as part of its input; the larger count is not an external confirmation of the Sample 1 result.</p>
+<h2 id="compare-estimates-without-treating-the-pooled-model-as-independent-validation">Compare estimates without treating the pooled model as independent validation</h2>
+<p>The significant-feature totals below use the same thresholds and feature universe. Counts can increase in the combined model because it has more well observations and a different fitted variance structure. The repeated layout and shared cell-preparation batch remain limitations.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Treatment–dose condition</th>
+<th>Sample 1</th>
+<th>Sample 2</th>
+<th>Sample 3</th>
+<th>Combined, plate-adjusted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drug1_0.10029uM</td>
+<td>0</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Drug1_1.00144uM</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Drug2_0.10029uM</td>
+<td>830</td>
+<td>980</td>
+<td>1,032</td>
+<td>1,975</td>
+</tr>
+<tr>
+<td>Drug2_1.00144uM</td>
+<td>1,501</td>
+<td>1,558</td>
+<td>1,682</td>
+<td>2,860</td>
+</tr>
+<tr>
+<td>Drug3_0.10029uM</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Drug3_1.00144uM</td>
+<td>9</td>
+<td>15</td>
+<td>34</td>
+<td>191</td>
+</tr>
+</tbody>
+</table></div>
+<p><a aria-label="Open full-size figure: Drug-seq significant-feature counts from three independent plate fits and one combined model" class="figure-link" href="assets/figures/drugseq-case-10.png" rel="noopener" target="_blank"><img alt="Drug-seq significant-feature counts from three independent plate fits and one combined model" decoding="async" loading="lazy" src="assets/figures/drugseq-case-10.png"/></a></p>
+<p><strong>Compare all conditions.</strong> Drug2 has a large modeled response at both concentrations. Drug1 has little evidence at the declared combined threshold, and Drug3 varies by dose. Do not change the thresholds solely to obtain a nonempty list.</p>
+<h3 id="fit-each-plate-separately-to-compare-effect-vectors">Fit each plate separately to compare effect vectors</h3>
+<p>The three plate-specific fits are computed independently, then each pair of plates is compared using its full vector of treatment-versus-DMSO log2 fold changes. The separately refitted Sample 1 coefficients and adjusted p-values agree with the one-plate branch. The table reports Pearson correlation across the retained features, not a correlation of raw well profiles.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Sample 1 / 2</th>
+<th>Sample 1 / 3</th>
+<th>Sample 2 / 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drug1_0.10029uM</td>
+<td>0.058</td>
+<td>0.024</td>
+<td>0.049</td>
+</tr>
+<tr>
+<td>Drug1_1.00144uM</td>
+<td>0.045</td>
+<td>0.031</td>
+<td>0.006</td>
+</tr>
+<tr>
+<td>Drug2_0.10029uM</td>
+<td>0.521</td>
+<td>0.511</td>
+<td>0.520</td>
+</tr>
+<tr>
+<td>Drug2_1.00144uM</td>
+<td>0.617</td>
+<td>0.624</td>
+<td>0.634</td>
+</tr>
+<tr>
+<td>Drug3_0.10029uM</td>
+<td>0.013</td>
+<td>0.016</td>
+<td>0.039</td>
+</tr>
+<tr>
+<td>Drug3_1.00144uM</td>
+<td>0.158</td>
+<td>0.140</td>
+<td>0.160</td>
+</tr>
+</tbody>
+</table></div>
+<p><a aria-label="Open full-size figure: Pairwise Drug-seq log2-fold-change scatter plots for the illustrated condition" class="figure-link" href="assets/figures/drugseq-case-13.png" rel="noopener" target="_blank"><img alt="Pairwise Drug-seq log2-fold-change scatter plots for the illustrated condition" decoding="async" loading="lazy" src="assets/figures/drugseq-case-13.png"/></a></p>
+<p><strong>Effect-vector concordance.</strong> The illustrated Drug2 high-dose condition has cross-plate Pearson correlations of 0.617–0.634. Read effect sizes and direction as well as whether a feature crosses a significance cutoff.
+<a aria-label="Open full-size figure: Drug-seq cross-plate log2-fold-change correlation heatmap for every selected condition" class="figure-link" href="assets/figures/drugseq-case-14.png" rel="noopener" target="_blank"><img alt="Drug-seq cross-plate log2-fold-change correlation heatmap for every selected condition" decoding="async" loading="lazy" src="assets/figures/drugseq-case-14.png"/></a></p>
+<p><strong>Agreement across all six conditions.</strong> Strong modeled responses give clearer effect-vector agreement. Near-null contrasts can have unstable, near-zero correlations even when their raw expression profiles correlate well. This does not by itself show technical failure or equivalence.</p>
+<p>These are three plates from one cell-preparation batch with a repeated layout. Their agreement shows that the estimated signatures recur under those shared conditions; it does not separate drug action from every spatial or shared-preparation influence. Wells and genes are not independent replications of a new cell batch.</p>
+<h2 id="run-the-case-on-prepared-inputs">Run the case on prepared inputs</h2>
+<p>Run the portable case helper after preparing your own compatible neutral input bundles:</p>
+<pre><code class="language-bash">python scripts/run_drugseq_case.py \
+  --data-dir private-case-data \
+  --sample-numbers 1 2 3 \
+  --output-dir results/drugseq-case
+</code></pre>
+<p>The first sample number selects the one-plate branch. The same command then runs the combined analysis, independent per-plate comparisons, QC, repeatability, PCA diagnostics, and result export. <code>--sample-numbers</code> can select a different prepared set with at least two plates. The case helper expects one shared exposure, consistent dose units, DMSO controls, a full-rank matched condition design, and explicit 16 × 24 physical coordinates.</p>
+<p>The script retains all wells by default. To apply an independently reviewed exclusion list, add <code>--exclude-samples reviewed_exclusions.csv</code>; that file must contain unique <code>sample_id</code> values and may include a reason. The helper records the exclusions and rechecks the condition design. Reruns overwrite matching output filenames, so use a fresh directory for any analysis you need to retain.</p>
+<p>No pathway enrichment is run in this case because no gene-set collection was supplied to the case helper. To extend the fitted results, use the <a href="single-plate-comparison.html#enrichment">single-plate enrichment section</a> or <a href="multi-plate-comparison.html#enrichment">multi-plate enrichment section</a> with compatible gene symbols and an explicit tested-feature background. Do not assume the composite IDs are Ensembl IDs.</p>
+<h2 id="saved-results-and-interpretation-limits">Saved results and interpretation limits</h2>
+<p>The runner writes detailed well-level QC and review tables, the retained feature list, gene-level contrast results, figures, and analysis settings to the chosen result directory. The public tutorial includes compact summaries and figures, without the study's raw matrices or original identifiers.</p>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Download</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="assets/tables/drugseq-case-design-counts.csv">Design counts</a></td>
+<td>Wells per condition and plate.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-qc-summary.csv">QC summary</a></td>
+<td>Plate-level UMI, feature, and composition summaries.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-control-review-summary.csv">Control review</a></td>
+<td>Review flags and retained control counts.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-repeatability-summary.csv">Repeatability summary</a></td>
+<td>Within-condition pair counts and descriptive correlations.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-de-summary.csv">DE summary</a></td>
+<td>Every separate-plate and combined contrast at the same thresholds.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-cross-plate-summary.csv">Cross-plate summary</a></td>
+<td>Paired logFC correlations, significant-feature overlap, and direction agreement.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-batch-diagnostics.csv">Batch diagnostics</a></td>
+<td>Exploratory before/after metrics on the same selected dataset.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-spatial-design.csv">Spatial design</a></td>
+<td>Condition-by-row counts for checking the repeated layout.</td>
+</tr>
+<tr>
+<td><a href="assets/tables/drugseq-case-analysis-settings.json">Analysis settings</a></td>
+<td>Filters, model configuration, software versions, and scope limits.</td>
+</tr>
+</tbody>
+</table></div>
+<p>You can inspect the distributed summaries without access to the raw case inputs:</p>
+<pre><code class="language-python">from pathlib import Path
+import pandas as pd
+
+root = Path("docs/assets/tables")
+summary = pd.read_csv(root / "drugseq-case-de-summary.csv")
+print(summary.pivot(index="contrast", columns="analysis", values="n_sig_total"))
+concordance = pd.read_csv(root / "drugseq-case-cross-plate-summary.csv")
+print(concordance[["plate_a", "plate_b", "compound", "pearson_logfc"]])
+</code></pre>
+<p>Keep the central interpretation boundaries visible: same cell batch; repeated physical layout; unknown biological independence of wells; shared feature filtering; exploratory contrast selection; and a pooled model that includes the one-plate example. These do not prevent a useful workflow demonstration, but they determine which biological claims the results can support.</p>
+<p><a href="multi-plate-comparison.html">← Multi-plate workflow</a> · <a href="bulk-rnaseq-comparison.html">Bulk RNA-seq comparison →</a></p>
+</article>
+<nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="multi-plate-comparison.html"><small>Previous</small>Multi-plate comparison</a><a href="bulk-rnaseq-comparison.html"><small>Next</small>Bulk RNA-seq comparison →</a></nav>
+<footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="drugseq-case-study.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#define-a-compact-experiment-before-examining-results">Define a compact experiment before examining results</a><a href="#keep-raw-counts-and-align-features-explicitly">Keep raw counts and align features explicitly</a><a href="#inspect-qc-and-well-repeatability">Inspect QC and well repeatability</a><a href="#analyze-sample-1-on-its-own">Analyze Sample 1 on its own</a><a href="#extend-the-same-conditions-to-three-plates">Extend the same conditions to three plates</a><a href="#compare-estimates-without-treating-the-pooled-model-as-independent-validation">Compare estimates without treating the pooled model as independent validation</a><a href="#run-the-case-on-prepared-inputs">Run the case on prepared inputs</a><a href="#saved-results-and-interpretation-limits">Saved results and interpretation limits</a></nav></aside></div></body></html>

@@ -492,6 +492,90 @@
     "alt": "Drug14 downregulated DEG enrichment"
   },
   {
+    "chapter": "drugseq-case-study",
+    "index": 1,
+    "asset": "assets/figures/drugseq-case-01.png",
+    "alt": "Measured Drug-seq QC distributions across three selected plates"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 2,
+    "asset": "assets/figures/drugseq-case-02.png",
+    "alt": "Selected Drug-seq treatment-dose layouts on three 384-well plates"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 3,
+    "asset": "assets/figures/drugseq-case-03.png",
+    "alt": "Biological UMI plate maps for the selected Drug-seq wells"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 4,
+    "asset": "assets/figures/drugseq-case-04.png",
+    "alt": "DMSO review across three selected Drug-seq plates"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 5,
+    "asset": "assets/figures/drugseq-case-07.png",
+    "alt": "Within-condition well repeatability across the selected Drug-seq plates"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 6,
+    "asset": "assets/figures/drugseq-case-08.png",
+    "alt": "Drug-seq Sample 1 matched-condition correlation heatmap"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 7,
+    "asset": "assets/figures/drugseq-case-09.png",
+    "alt": "Gene-expression scatter plots for a selected Drug-seq replicate group"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 8,
+    "asset": "assets/figures/drugseq-case-12.png",
+    "alt": "Sample 1 Drug-seq treatment-versus-DMSO volcano plot"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 9,
+    "asset": "assets/figures/drugseq-case-05.png",
+    "alt": "Drug-seq PCA before and after plate correction colored by plate"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 10,
+    "asset": "assets/figures/drugseq-case-06.png",
+    "alt": "Drug-seq PCA before and after plate correction colored by treatment-dose condition"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 11,
+    "asset": "assets/figures/drugseq-case-11.png",
+    "alt": "Combined three-plate Drug-seq treatment-versus-DMSO volcano plot"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 12,
+    "asset": "assets/figures/drugseq-case-10.png",
+    "alt": "Drug-seq significant-feature counts from three independent plate fits and one combined model"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 13,
+    "asset": "assets/figures/drugseq-case-13.png",
+    "alt": "Pairwise Drug-seq log2-fold-change scatter plots for the illustrated condition"
+  },
+  {
+    "chapter": "drugseq-case-study",
+    "index": 14,
+    "asset": "assets/figures/drugseq-case-14.png",
+    "alt": "Drug-seq cross-plate log2-fold-change correlation heatmap for every selected condition"
+  },
+  {
     "chapter": "bulk-rnaseq-comparison",
     "index": 1,
     "asset": "assets/figures/bulk-01.png",
