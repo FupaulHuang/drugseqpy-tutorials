@@ -8,9 +8,9 @@ The tutorial package was checked on 23 October 2026. The analysis environment us
 - The original three-workflow run produced 20 figures and 30 CSV/TSV tables. Both treatment contrasts succeeded with no failed or partial comparison-manifest entries.
 - The reviewed-exclusion option completed a separate comparison run: the requested well was removed, its reason preserved, control counts updated, and both contrasts succeeded.
 - All four bundled metadata tables pass `validate_metadata`. The seed, data classification, and checksums are in `data/practice-manifest.json`.
-- All 23 non-STAR QC blocks, 13 mixed-species blocks, and 48 non-enrichment comparison blocks completed sequentially against the bundled inputs. This included both PCA, UMAP, and t-SNE views, reproducibility, and differential-expression plots.
+- All 23 non-STAR QC blocks, 13 mixed-species blocks, and 48 non-enrichment comparison blocks completed sequentially against the bundled inputs. This included both PCA, UMAP, and t-SNE views, cross-plate treatment-effect concordance, and differential-expression plots.
 - Input-guide examples were exercised with shuffled metadata, terminal barcode suffixes, a metadata-only well, duplicate-ID prevention, and physical-coordinate reconciliation.
-- The 37 comparison figures were regenerated through the worked pipeline with revised labels. That run exercised PCA, UMAP, t-SNE, differential expression, reproducibility, and enrichment.
+- The 37 comparison figures were regenerated through the worked pipeline with revised labels. That run exercised PCA, UMAP, t-SNE, differential expression, cross-plate treatment-effect concordance, and enrichment.
 - The 31 QC/species figures had their sample-label text revised from vector figures, with plotted data preserved. Figure metadata were stripped, extracted labels checked, and all figure groups visually reviewed.
 
 - The single-plate practice route retained 36 biological wells and 800 genes and fitted both treatment contrasts. Its saved configuration uses no plate covariate and `within_plate=False`. All 15 non-enrichment chapter code blocks ran sequentially; the chapter's stronger gene filter retained 795 genes.
@@ -26,7 +26,7 @@ The default bundled workflow and the detailed chapter examples passed. Enrichmen
 All twelve chapters passed browser checks at 1440 px and 390 px: no horizontal page overflow, chapter navigation present, and mobile navigation opens and closes. Desktop and mobile screenshots were visually reviewed. Every figure has a working link to its full-size asset. All 110 PNG files decode successfully; the static checker verifies their references.
 
 
-The current static check passes 34 documents, 1,208 local links/assets, 116 Python-block syntax checks, and all 110 figure references. Run `python scripts/validate_site.py` after rebuilding. It checks local page/asset links, fragment targets, duplicate HTML IDs, runnable Python-block syntax, image descriptions, old sample identifiers, private filesystem references, and synthetic-data checksums. API signature displays are not executable examples.
+The current static check passes 34 documents, 1,223 local links/assets, 116 Python-block syntax checks, and all 110 figure references. Run `python scripts/validate_site.py` after rebuilding. It checks local page/asset links, fragment targets, duplicate HTML IDs, runnable Python-block syntax, image descriptions, old sample identifiers, private filesystem references, and synthetic-data checksums. API signature displays are not executable examples.
 
 The twelve Markdown chapters are the editable source for twelve generated HTML chapters. Six old HTML names redirect to the corresponding revised chapters. Figures and browser assets are local, and all internal site links are relative so the site works below a GitHub Pages repository path.
 
@@ -49,3 +49,14 @@ The three plates share a cell-preparation batch and repeat the same spatial layo
 The worked figures and tables are fixed analysis examples with Sample 1–4 labels. The bundled practice data were generated independently and do not reproduce those numerical values. The practice runner deliberately uses a smaller gene-filtering rule, explicit species review settings, and no automatic DMSO exclusions. Bulk practice outputs are descriptive and do not recreate the historical bootstraps or pseudogene audit. Chapter text explains these differences.
 
 Some report functions warn when optional housekeeping genes are not present in the synthetic feature list; the warning does not invalidate the core QC output. Matching the displayed package version alone is not enough to reproduce an analysis. Record the exact compatible source revision, environment, inputs, parameters, exclusions, and gene-set versions for real work.
+
+
+## Terminology revision — 27 October 2026
+
+The tutorials distinguish within-plate repeatability, between-plate consistency within one batch, and cross-plate treatment-effect concordance. The measured three-plate case does not claim experimental reproducibility under changed conditions. The input guide explains experimental and computational reproducibility separately, including the limited role of correlations.
+
+Public drugseqpy API and signature names are unchanged. Tutorial result variables and newly generated output paths use concordance terminology; legacy chapter anchors remain available. This editorial revision does not change analysis inputs, numerical tables, filters, fitted models, or existing plotted values.
+
+Revision checks passed: the rebuilt site resolves all local links; all 116 Python examples parse; every CSV and PNG matches its pre-revision bytes. A normalized-AST comparison confirms that the two edited analysis runners retain the same calculations, changing only local names, the concordance output filename, and terminology metadata.
+
+The synthetic comparison workflow completed successfully after the terminology revision (two successful contrasts) and produced `cross_plate_concordance.png`. All twelve chapters passed desktop/mobile navigation and overflow checks; existing chapter anchors remain valid.

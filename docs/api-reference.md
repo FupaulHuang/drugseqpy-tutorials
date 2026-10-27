@@ -1207,7 +1207,9 @@ generate_mix_species_report(dsd: 'DrugSeqData', output_dir: 'str | Path', *, for
 Set `expected_col='expected_species'` after `assign_well_species()` to make the intended species and off-target direction explicit and reproducible.
 
 
-## Comparison, batch effects and reproducibility
+<a id="comparison-batch-effects-and-reproducibility"></a>
+
+## Comparison, batch effects, repeatability and concordance
 
 Use these functions in the [single-plate](single-plate-comparison.md), [multi-plate](multi-plate-comparison.md), and [well-repeatability](well-to-well-repeatability.md) chapters. The [bulk comparison script](bulk-rnaseq-comparison.md#run) is a separate tutorial helper, not a package API.
 
@@ -1288,7 +1290,7 @@ ds.run_umap(dsd, dims=20, n_neighbors=15, min_dist=0.3, metric='euclidean', use_
 
 With inplace=True, returns None; otherwise returns a copy. Writes X_umap and the Scanpy neighbor graph.
 
-Requires a precomputed representation, normally X_pca. A fixed random_state helps reproducibility; the embedding is exploratory.
+Requires a precomputed representation, normally X_pca. A fixed random_state helps computational reproducibility; the embedding is exploratory.
 
 ### `run_tsne`
 
@@ -1308,7 +1310,7 @@ ds.compute_within_plate_repeatability(dsd, plate_col='plate_id', group_col='comp
 
 Returns a pandas DataFrame of within-plate, within-treatment replicate-pair correlations. Does not mutate the object.
 
-use_norm=False uses log10(raw UMI + 1); True uses X as supplied. Correlations between replicate wells measure repeatability, not treatment-effect reproducibility.
+use_norm=False uses log10(raw UMI + 1); True uses X as supplied. Correlations between matched replicate wells are descriptive measures of within-plate repeatability. Correlations of fitted treatment effects across plates instead describe cross-plate treatment-effect concordance.
 
 ### `summarise_within_plate_repeatability`
 
@@ -1327,6 +1329,8 @@ ds.compute_cross_plate_reproducibility(dsd, plate_col='plate_id', group_col='com
 ```
 
 Returns a dictionary containing summary, plate_results, gene_results and config. Does not store these results in the input object.
+
+**Terminology:** this public function name is preserved for API compatibility. Its output describes cross-plate treatment-effect concordance; using it does not establish experimental reproducibility. Same-batch plates provide evidence of between-plate consistency under their shared conditions. See the [terminology guide](input-preparation.md#repeatability-and-concordance).
 
 Fits DE separately on each plate. Every requested treatment needs adequate replication and controls on each plate. The normalized-expression fields use X as supplied, so normalize first. Gene-level correlations can be undefined for constant profiles.
 
@@ -1454,7 +1458,7 @@ ds.plot_comparison_volcano(dsd, contrast=None, method=None, lfc_threshold=0.5, f
 ds.plot_enrichment_dotplot(dsd, contrast=None, libraries=None, direction='up', mode='ora', n_terms=20, figsize=None)
 ```
 
-For `plot_plate_logfc_concordance`, `value_type="normalized"` uses the X values present when reproducibility was computed. Use `value_type="log2fc"` to compare treatment effects. Plotting cutoffs should match the DE run.
+For `plot_plate_logfc_concordance`, `value_type="normalized"` uses the X values present when the cross-plate concordance result was computed. Use `value_type="log2fc"` to compare treatment effects. Plotting cutoffs should match the DE run.
 
 ---
 

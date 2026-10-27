@@ -213,7 +213,47 @@ dsd.obs["sample_id"] = dsd.obs_names
 assert dsd.obs_names.is_unique
 </code></pre>
 <p>The merge function rejects duplicate observation IDs. It uses the union of features and fills missing features with zeros, so verify that the samples used compatible gene annotations before merging. A gene absent from a reference is not evidence that it was biologically unexpressed. For a controlled comparison, explicitly reconcile feature IDs and inspect the shared feature set first.</p>
-<h2 id="6-keep-comparisons-and-reports-reproducible">6. Keep comparisons and reports reproducible</h2>
+<p><a id="repeatability-and-concordance"></a></p>
+<h2 id="6-use-terminology-that-matches-the-experimental-design">6. Use terminology that matches the experimental design</h2>
+<div aria-label="Scrollable data table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning and use in these tutorials</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Within-plate repeatability</strong></td>
+<td>Descriptive consistency of matched wells measured under the same documented plate conditions. Profile correlations are one diagnostic, not a complete estimate of measurement precision.</td>
+</tr>
+<tr>
+<td><strong>Between-plate consistency within one batch</strong></td>
+<td>The scope of the measured Drug-seq case: matched conditions on three plates sharing a cell-preparation batch and repeated spatial layout.</td>
+</tr>
+<tr>
+<td><strong>Cross-plate treatment-effect concordance</strong></td>
+<td>Agreement of separately fitted treatment-versus-control effect vectors, assessed with correlation, direction and magnitude, and DEG overlap. It does not establish which experimental conditions were varied.</td>
+</tr>
+<tr>
+<td><strong>Experimental reproducibility</strong></td>
+<td>Consistency under specified changed measurement or experimental conditions. The claim must identify the conditions varied and the independent experimental units.</td>
+</tr>
+<tr>
+<td><strong>Intermediate precision</strong></td>
+<td>Within-laboratory precision across an extended period and specified changes such as runs, operators, or calibrations. Do not infer this solely from the presence of several plates.</td>
+</tr>
+<tr>
+<td><strong>Computational reproducibility</strong></td>
+<td>Obtaining consistent numerical results from the same inputs, analysis code, configuration, seeds, and compatible software environment. This does not establish experimental reproducibility.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The measurement definitions distinguish repeatability under a specified stable setup, intermediate precision within a laboratory, and reproducibility under documented changed conditions. See the <a href="https://jcgm.bipm.org/vim/en/2.20.html">VIM repeatability definition</a>, <a href="https://jcgm.bipm.org/vim/en/2.22.html">intermediate-precision definition</a>, and <a href="https://jcgm.bipm.org/vim/en/2.24.html">reproducibility definition</a>.</p>
+<p>For the measured case, the three plates share one cell-preparation batch, and biological independence of individual wells is not established. We therefore describe <strong>within-plate repeatability</strong> and <strong>between-plate treatment-effect consistency within one batch</strong>. Separately fitting models on those plates does not turn them into independent biological preparations. High correlation alone does not establish equal measurements, treatment causality, or reproducibility under changed conditions.</p>
+<p>The package API names <code>compute_cross_plate_reproducibility()</code> and <code>plot_cross_plate_reproducibility()</code> are retained so code remains runnable. In tutorial prose their outputs are called <em>cross-plate treatment-effect concordance</em>. Reference signatures also retain the real argument names. Statements about reproducible code, seeds, or numerical results refer to computational reproducibility.</p>
+<p><a id="6-keep-comparisons-and-reports-reproducible"></a></p>
+<h2 id="7-keep-analysis-inputs-and-computational-results-reproducible">7. Keep analysis inputs and computational results reproducible</h2>
 <ul>
 <li><strong>Record inclusion separately from QC flags.</strong> Save the initial well set, upstream filtered status, your quality rule, and each exclusion reason. Write <code>AND</code> or <code>OR</code> explicitly when combining UMI and detected-gene cutoffs. A flag alone does not authorize exclusion.</li>
 <li><strong>State what each count measures.</strong> Input read pairs, barcode-matched reads, deduplicated UMIs, and detected features are different quantities. Save the denominator of every percentage. If reporting only symbol-annotated genes, label that subset separately from all detected features.</li>
@@ -227,4 +267,4 @@ assert dsd.obs_names.is_unique
 </article>
 <nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="getting-started.html"><small>Previous</small>Getting started</a><a href="qc-workflow.html"><small>Next</small>Quality control →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="input-preparation.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
-<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#1-keep-the-matrix-and-metadata-together">1. Keep the matrix and metadata together</a><a href="#2-describe-the-experimental-design-explicitly">2. Describe the experimental design explicitly</a><a href="#3-check-identity-before-importing">3. Check identity before importing</a><a href="#4-verify-physical-plate-positions">4. Verify physical plate positions</a><a href="#5-make-observation-ids-unique-before-merging">5. Make observation IDs unique before merging</a><a href="#6-keep-comparisons-and-reports-reproducible">6. Keep comparisons and reports reproducible</a></nav></aside></div></body></html>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#1-keep-the-matrix-and-metadata-together">1. Keep the matrix and metadata together</a><a href="#2-describe-the-experimental-design-explicitly">2. Describe the experimental design explicitly</a><a href="#3-check-identity-before-importing">3. Check identity before importing</a><a href="#4-verify-physical-plate-positions">4. Verify physical plate positions</a><a href="#5-make-observation-ids-unique-before-merging">5. Make observation IDs unique before merging</a><a href="#6-use-terminology-that-matches-the-experimental-design">6. Use terminology that matches the experimental design</a><a href="#7-keep-analysis-inputs-and-computational-results-reproducible">7. Keep analysis inputs and computational results reproducible</a></nav></aside></div></body></html>

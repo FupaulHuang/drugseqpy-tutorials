@@ -3717,7 +3717,8 @@
 </table></div>
 <p><strong>Returns / side effects:</strong> A list of figure paths plus CSV tables: per-well metrics, summaries, concordance counts, contamination-by-base data, audit candidates, and a figure manifest.</p>
 <p>Set <code>expected_col='expected_species'</code> after <code>assign_well_species()</code> to make the intended species and off-target direction explicit and reproducible.</p>
-<h2 id="comparison-batch-effects-and-reproducibility">Comparison, batch effects and reproducibility</h2>
+<p><a id="comparison-batch-effects-and-reproducibility"></a></p>
+<h2 id="comparison-batch-effects-repeatability-and-concordance">Comparison, batch effects, repeatability and concordance</h2>
 <p>Use these functions in the <a href="single-plate-comparison.html">single-plate</a>, <a href="multi-plate-comparison.html">multi-plate</a>, and <a href="well-to-well-repeatability.html">well-repeatability</a> chapters. The <a href="bulk-rnaseq-comparison.html#run">bulk comparison script</a> is a separate tutorial helper, not a package API.</p>
 <h3 id="normalize_counts"><code>normalize_counts</code></h3>
 <pre><code class="language-python">ds.normalize_counts(dsd, method='limma_voom', log_transform=True, prior_count=1.0, target_sum=1000000.0, inplace=True)
@@ -3757,7 +3758,7 @@
 <pre><code class="language-python">ds.run_umap(dsd, dims=20, n_neighbors=15, min_dist=0.3, metric='euclidean', use_rep='X_pca', random_state=42, inplace=True)
 </code></pre>
 <p>With inplace=True, returns None; otherwise returns a copy. Writes X_umap and the Scanpy neighbor graph.</p>
-<p>Requires a precomputed representation, normally X_pca. A fixed random_state helps reproducibility; the embedding is exploratory.</p>
+<p>Requires a precomputed representation, normally X_pca. A fixed random_state helps computational reproducibility; the embedding is exploratory.</p>
 <h3 id="run_tsne"><code>run_tsne</code></h3>
 <pre><code class="language-python">ds.run_tsne(dsd, dims=20, perplexity=30.0, use_rep='X_pca', random_state=42, inplace=True)
 </code></pre>
@@ -3767,7 +3768,7 @@
 <pre><code class="language-python">ds.compute_within_plate_repeatability(dsd, plate_col='plate_id', group_col='compound', min_replicates=2, use_norm=False, method='pearson')
 </code></pre>
 <p>Returns a pandas DataFrame of within-plate, within-treatment replicate-pair correlations. Does not mutate the object.</p>
-<p>use_norm=False uses log10(raw UMI + 1); True uses X as supplied. Correlations between replicate wells measure repeatability, not treatment-effect reproducibility.</p>
+<p>use_norm=False uses log10(raw UMI + 1); True uses X as supplied. Correlations between matched replicate wells are descriptive measures of within-plate repeatability. Correlations of fitted treatment effects across plates instead describe cross-plate treatment-effect concordance.</p>
 <h3 id="summarise_within_plate_repeatability"><code>summarise_within_plate_repeatability</code></h3>
 <pre><code class="language-python">ds.summarise_within_plate_repeatability(repeatability, plate_col='plate_id', group_col='compound', value_col='correlation')
 </code></pre>
@@ -3777,6 +3778,7 @@
 <pre><code class="language-python">ds.compute_cross_plate_reproducibility(dsd, plate_col='plate_id', group_col='compound', reference='DMSO', exclude_levels=('water',), method='limma_voom', min_replicates=2, fdr_threshold=0.05, lfc_threshold=0.5)
 </code></pre>
 <p>Returns a dictionary containing summary, plate_results, gene_results and config. Does not store these results in the input object.</p>
+<p><strong>Terminology:</strong> this public function name is preserved for API compatibility. Its output describes cross-plate treatment-effect concordance; using it does not establish experimental reproducibility. Same-batch plates provide evidence of between-plate consistency under their shared conditions. See the <a href="input-preparation.html#repeatability-and-concordance">terminology guide</a>.</p>
 <p>Fits DE separately on each plate. Every requested treatment needs adequate replication and controls on each plate. The normalized-expression fields use X as supplied, so normalize first. Gene-level correlations can be undefined for constant profiles.</p>
 <h3 id="run_comparison"><code>run_comparison</code></h3>
 <pre><code class="language-python">ds.run_comparison(dsd, case, control, group_col='compound', method='limma_voom', batch_cols=None, within_plate=True, min_replicates=2, fdr_threshold=0.05, lfc_threshold=0.5, contrast_name=None)
@@ -3840,10 +3842,10 @@
 </code></pre>
 <pre><code class="language-python">ds.plot_enrichment_dotplot(dsd, contrast=None, libraries=None, direction='up', mode='ora', n_terms=20, figsize=None)
 </code></pre>
-<p>For <code>plot_plate_logfc_concordance</code>, <code>value_type="normalized"</code> uses the X values present when reproducibility was computed. Use <code>value_type="log2fc"</code> to compare treatment effects. Plotting cutoffs should match the DE run.</p>
+<p>For <code>plot_plate_logfc_concordance</code>, <code>value_type="normalized"</code> uses the X values present when the cross-plate concordance result was computed. Use <code>value_type="log2fc"</code> to compare treatment effects. Plotting cutoffs should match the DE run.</p>
 <hr/>
 <p><a href="bulk-rnaseq-comparison.html">← Previous chapter</a> · <a href="troubleshooting.html">Next chapter →</a></p>
 </article>
 <nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="bulk-rnaseq-comparison.html"><small>Previous</small>Bulk RNA-seq comparison</a><a href="troubleshooting.html"><small>Next</small>Troubleshooting →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="api-reference.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
-<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#read-the-data-object">Read the data object</a><a href="#input-and-data-objects">Input and data objects</a><a href="#quality-control-metrics">Quality-control metrics</a><a href="#subsetting-and-filtering">Subsetting and filtering</a><a href="#plate-layouts-1">Plate layouts</a><a href="#qc-report-figures">QC report figures</a><a href="#mix-species-analysis">Mix-species analysis</a><a href="#comparison-batch-effects-and-reproducibility">Comparison, batch effects and reproducibility</a></nav></aside></div></body></html>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#read-the-data-object">Read the data object</a><a href="#input-and-data-objects">Input and data objects</a><a href="#quality-control-metrics">Quality-control metrics</a><a href="#subsetting-and-filtering">Subsetting and filtering</a><a href="#plate-layouts-1">Plate layouts</a><a href="#qc-report-figures">QC report figures</a><a href="#mix-species-analysis">Mix-species analysis</a><a href="#comparison-batch-effects-repeatability-and-concordance">Comparison, batch effects, repeatability and concordance</a></nav></aside></div></body></html>

@@ -180,7 +180,28 @@ assert dsd.obs_names.is_unique
 
 The merge function rejects duplicate observation IDs. It uses the union of features and fills missing features with zeros, so verify that the samples used compatible gene annotations before merging. A gene absent from a reference is not evidence that it was biologically unexpressed. For a controlled comparison, explicitly reconcile feature IDs and inspect the shared feature set first.
 
-## 6. Keep comparisons and reports reproducible
+<a id="repeatability-and-concordance"></a>
+
+## 6. Use terminology that matches the experimental design
+
+| Term | Meaning and use in these tutorials |
+| --- | --- |
+| **Within-plate repeatability** | Descriptive consistency of matched wells measured under the same documented plate conditions. Profile correlations are one diagnostic, not a complete estimate of measurement precision. |
+| **Between-plate consistency within one batch** | The scope of the measured Drug-seq case: matched conditions on three plates sharing a cell-preparation batch and repeated spatial layout. |
+| **Cross-plate treatment-effect concordance** | Agreement of separately fitted treatment-versus-control effect vectors, assessed with correlation, direction and magnitude, and DEG overlap. It does not establish which experimental conditions were varied. |
+| **Experimental reproducibility** | Consistency under specified changed measurement or experimental conditions. The claim must identify the conditions varied and the independent experimental units. |
+| **Intermediate precision** | Within-laboratory precision across an extended period and specified changes such as runs, operators, or calibrations. Do not infer this solely from the presence of several plates. |
+| **Computational reproducibility** | Obtaining consistent numerical results from the same inputs, analysis code, configuration, seeds, and compatible software environment. This does not establish experimental reproducibility. |
+
+The measurement definitions distinguish repeatability under a specified stable setup, intermediate precision within a laboratory, and reproducibility under documented changed conditions. See the [VIM repeatability definition](https://jcgm.bipm.org/vim/en/2.20.html), [intermediate-precision definition](https://jcgm.bipm.org/vim/en/2.22.html), and [reproducibility definition](https://jcgm.bipm.org/vim/en/2.24.html).
+
+For the measured case, the three plates share one cell-preparation batch, and biological independence of individual wells is not established. We therefore describe **within-plate repeatability** and **between-plate treatment-effect consistency within one batch**. Separately fitting models on those plates does not turn them into independent biological preparations. High correlation alone does not establish equal measurements, treatment causality, or reproducibility under changed conditions.
+
+The package API names `compute_cross_plate_reproducibility()` and `plot_cross_plate_reproducibility()` are retained so code remains runnable. In tutorial prose their outputs are called *cross-plate treatment-effect concordance*. Reference signatures also retain the real argument names. Statements about reproducible code, seeds, or numerical results refer to computational reproducibility.
+
+<a id="6-keep-comparisons-and-reports-reproducible"></a>
+
+## 7. Keep analysis inputs and computational results reproducible
 
 - **Record inclusion separately from QC flags.** Save the initial well set, upstream filtered status, your quality rule, and each exclusion reason. Write `AND` or `OR` explicitly when combining UMI and detected-gene cutoffs. A flag alone does not authorize exclusion.
 - **State what each count measures.** Input read pairs, barcode-matched reads, deduplicated UMIs, and detected features are different quantities. Save the denominator of every percentage. If reporting only symbol-annotated genes, label that subset separately from all detected features.

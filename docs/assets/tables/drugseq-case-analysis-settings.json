@@ -71,5 +71,11 @@
     "numpy": "2.2.6",
     "pandas": "2.3.3",
     "scipy": "1.15.3"
+  },
+  "terminology": {
+    "within_plate": "within-plate repeatability",
+    "between_plate": "between-plate consistency within one cell-preparation batch",
+    "effect_comparison": "cross-plate treatment-effect concordance",
+    "experimental_reproducibility": "not established under changed experimental conditions"
   }
 }

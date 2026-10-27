@@ -14,7 +14,7 @@ These tutorials are written for new users. Each chapter explains the inputs, sho
 | 4 | [Mixed-species analysis](mix-species-workflow.md) | Assign intended species and inspect purity, discordance, and reciprocal off-target signal. |
 | 5 | [Well-to-well repeatability](well-to-well-repeatability.md) | Read well-correlation heatmaps and inspect treatment-matched replicate scatter plots. |
 | 6 | [Single-plate comparison](single-plate-comparison.md) | Audit controls and estimate treatment effects within one plate. |
-| 7 | [Multi-plate comparison](multi-plate-comparison.md) | Audit controls, diagnose batch effects, measure reproducibility, and fit plate-adjusted treatment effects. |
+| 7 | [Multi-plate comparison](multi-plate-comparison.md) | Audit controls, diagnose batch effects, assess treatment-effect concordance, and fit plate-adjusted treatment effects. |
 | 8 | [Drug-seq worked case](drugseq-case-study.md) | Analyze a selected real Drug-seq experiment from one plate to three matched plates. |
 | 9 | [Bulk RNA-seq comparison](bulk-rnaseq-comparison.md) | Align features, compare matched reference profiles, and respect study and plate structure. |
 | 10 | [API reference](api-reference.md) | Find function signatures, parameters, returns, and related workflow steps. |

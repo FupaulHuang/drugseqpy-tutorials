@@ -110,7 +110,7 @@ for number in (3, 4):
 
 dsd = ds.merge_drugseq_objects(*objects, batch_key="source_plate")
 assert dsd.obs_names.is_unique
-for folder in ("qc", "species", "batch", "reproducibility", "comparison"):
+for folder in ("qc", "species", "batch", "concordance", "comparison"):
     (Path("results") / folder).mkdir(parents=True, exist_ok=True)
 print(dsd)
 ```
@@ -800,7 +800,7 @@ for number in (3, 4):
 
 dsd = ds.merge_drugseq_objects(*objects, batch_key="source_plate")
 assert dsd.obs_names.is_unique
-for folder in ("qc", "species", "batch", "reproducibility", "comparison"):
+for folder in ("qc", "species", "batch", "concordance", "comparison"):
     (Path("results") / folder).mkdir(parents=True, exist_ok=True)
 print(dsd)
 

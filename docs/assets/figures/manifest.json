@@ -447,7 +447,7 @@
     "chapter": "multi-plate-comparison",
     "index": 30,
     "asset": "assets/figures/comparison-30.png",
-    "alt": "Cross-plate treatment-effect reproducibility"
+    "alt": "Cross-plate treatment-effect concordance"
   },
   {
     "chapter": "multi-plate-comparison",
@@ -561,7 +561,7 @@
     "chapter": "drugseq-case-study",
     "index": 12,
     "asset": "assets/figures/drugseq-case-10.png",
-    "alt": "Drug-seq significant-feature counts from three independent plate fits and one combined model"
+    "alt": "Drug-seq significant-feature counts from three separately fitted plates and one combined model"
   },
   {
     "chapter": "drugseq-case-study",

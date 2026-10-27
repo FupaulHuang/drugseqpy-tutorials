@@ -30,7 +30,7 @@ The synthetic practice bundles contain count matrices, not read alignments or re
 
 ## I have only one plate
 
-Use the [single-plate comparison](single-plate-comparison.md) and run `python scripts/run_tutorial.py single-plate`. It compares treatments against controls on Sample 1 with `batch_cols=None` and `within_plate=False`. One plate cannot establish between-plate effects or cross-plate reproducibility.
+Use the [single-plate comparison](single-plate-comparison.md) and run `python scripts/run_tutorial.py single-plate`. It compares treatments against controls on Sample 1 with `batch_cols=None` and `within_plate=False`. One plate cannot establish between-plate effects or cross-plate treatment-effect concordance.
 
 ## Batch correction fails or removes treatment separation
 
@@ -43,6 +43,10 @@ Check exact DMSO spelling, sample counts per condition and plate, the reference 
 ## Enrichment is empty or GMT files are missing
 
 The first-run practice workflow skips enrichment. For an optional enrichment run, provide local GMT paths whose species and identifiers match the tested genes. Check gene-set overlap and the tested-gene background. An empty upregulated or downregulated result can be valid. Keep the library version and analysis parameters with your results. No gene-set download is performed by default.
+
+## Which term should I use for repeated measurements?
+
+Use **within-plate repeatability** for matched wells, **between-plate consistency within one batch** for the measured Drug-seq case, and **cross-plate treatment-effect concordance** for correlations of separately fitted log2 fold changes. Experimental reproducibility requires explicitly changed conditions; merely fitting several plates does not demonstrate it. API names containing `reproducibility` remain valid function names. [See the terminology guide](input-preparation.md#repeatability-and-concordance).
 
 ## Numbers differ from the figures
 

@@ -22,7 +22,7 @@ For the replicate-pair table and scatter plots, wells must share **plate, compou
 
 For a condition with `n` wells, the script evaluates all `n × (n − 1) / 2` unordered pairs. A condition with one well has no replicate pair. It still appears in the all-well heatmap and the condition index.
 
-**The experimental unit still matters.** Technical wells may share one biological preparation. Gene dots are features, not independent biological replicates; pairwise correlations also share wells. Do not treat the number of genes or pair combinations as the biological sample size, and do not use these descriptive correlations to claim a treatment effect. Cross-plate reproducibility requires the [multi-plate workflow](multi-plate-comparison.md).
+**The experimental unit still matters.** Technical wells may share one biological preparation. Gene dots are features, not independent biological replicates; pairwise correlations also share wells. Do not treat the number of genes or pair combinations as the biological sample size, and do not use these descriptive correlations to claim a treatment effect. Use the [multi-plate workflow](multi-plate-comparison.md) to assess cross-plate treatment-effect concordance. For plates from one batch, describe this as between-plate consistency; it does not establish experimental reproducibility under changed conditions. See the [terminology guide](input-preparation.md#repeatability-and-concordance).
 
 <a id="method"></a>
 

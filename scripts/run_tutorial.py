@@ -289,13 +289,14 @@ def comparison_workflow(dsd, output: Path, full_embeddings: bool, gene_sets: dic
     )
     check_comparison_result(result)
     plt.close("all")
-    reproduction = ds.compute_cross_plate_reproducibility(analysis, exclude_levels=())
-    reproduction["summary"].to_csv(output / "cross_plate_summary.csv", index=False)
-    for (plate, compound), table in reproduction["plate_results"].items():
+    # Public API name retained; results describe cross-plate effect concordance.
+    concordance = ds.compute_cross_plate_reproducibility(analysis, exclude_levels=())
+    concordance["summary"].to_csv(output / "cross_plate_summary.csv", index=False)
+    for (plate, compound), table in concordance["plate_results"].items():
         filename = re.sub(r"[^A-Za-z0-9_-]+", "_", f"{plate}_{compound}")
         table.to_csv(output / f"{filename}_de.csv", index=False)
-    save_figure(ds.plot_cross_plate_reproducibility(reproduction["summary"]), output / "cross_plate_reproducibility.png")
-    save_figure(ds.plot_plate_logfc_concordance(reproduction), output / "cross_plate_logfc.png")
+    save_figure(ds.plot_cross_plate_reproducibility(concordance["summary"]), output / "cross_plate_concordance.png")
+    save_figure(ds.plot_plate_logfc_concordance(concordance), output / "cross_plate_logfc.png")
 
 
 def main():

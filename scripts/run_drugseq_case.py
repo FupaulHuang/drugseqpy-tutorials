@@ -246,12 +246,13 @@ def main():
     assert count_digest(single) == single_digest and count_digest(analysis) == analysis_digest
     # Independent per-plate DE uses the same retained feature universe and raw counts.
     ds.normalize_counts(analysis, method="limma_voom", inplace=True)
-    reproduction = ds.compute_cross_plate_reproducibility(analysis, group_col="condition", reference="DMSO",
+    # Public API name retained; results describe cross-plate effect concordance.
+    concordance = ds.compute_cross_plate_reproducibility(analysis, group_col="condition", reference="DMSO",
         exclude_levels=(), method="limma_voom", min_replicates=2, fdr_threshold=.05, lfc_threshold=.5)
     assert count_digest(analysis) == analysis_digest
-    reproduction["summary"].to_csv(tables_dir / "cross-plate-summary.csv", index=False)
+    concordance["summary"].to_csv(tables_dir / "cross-plate-summary.csv", index=False)
     per_plate = []
-    for (plate, condition), table in reproduction["plate_results"].items():
+    for (plate, condition), table in concordance["plate_results"].items():
         path = output / "de" / re.sub(r"\W+", "_", plate); path.mkdir(parents=True, exist_ok=True)
         table.to_csv(path / f"{condition}.csv", index=False)
         significant = (table.padj < .05) & (table.logFC.abs() >= .5)
@@ -278,9 +279,9 @@ def main():
         fig = ds.plot_comparison_volcano(fitted, contrast=priority, n_label=0, figsize=(7.5, 6))
         fig.axes[0].set_title(f"{title}: {priority} vs DMSO\nExploratory contrast selected by combined DE feature count")
         save(fig, figures / f"drugseq-case-{number:02}.png")
-    save(ds.plot_plate_logfc_concordance(reproduction, compounds=[priority], max_panels=3,
+    save(ds.plot_plate_logfc_concordance(concordance, compounds=[priority], max_panels=3,
         value_type="log2fc", figsize=(12, 10)), figures / "drugseq-case-13.png")
-    cross = reproduction["summary"].copy()
+    cross = concordance["summary"].copy()
     cross["pair"] = cross.plate_a + " / " + cross.plate_b
     heat = cross.pivot(index="compound", columns="pair", values="pearson_logfc")
     fig, ax = plt.subplots(figsize=(9.5, 6.5)); im = ax.imshow(heat.to_numpy(), vmin=-1, vmax=1, cmap="RdBu_r")
@@ -310,6 +311,12 @@ def main():
             "selection": "first condition in lexical order; no correlation-based selection", "gene_universe": "all retained filtered genes, including shared zeros"},
         "counts_preserved": True, "filtered_counts_sha256": analysis_digest,
         "independent_first_plate_refit_agrees": True,
+        "terminology": {
+            "within_plate": "within-plate repeatability",
+            "between_plate": "between-plate consistency within one cell-preparation batch",
+            "effect_comparison": "cross-plate treatment-effect concordance",
+            "experimental_reproducibility": "not established under changed experimental conditions",
+        },
         "qc_scope": "selected wells only; total UMI/detected features include ERCC; biological_umi excludes ERCC-",
         "qc_annotation": "mitochondrial MT- and ribosomal-associated RPL/RPS symbol prefixes",
         "control_review_score": "outlier scores computed across all selected wells, including treatments; threshold 5 is only a review heuristic",

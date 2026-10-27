@@ -22,7 +22,7 @@ The subset was chosen from plate and treatment metadata before inspecting differ
 
 Each plate contains other experimental wells outside this teaching subset. They are not counted as failed wells and do not enter the selected analysis. The displayed plate maps therefore show deliberate gaps. The three plates use the same layout: repeating it does not eliminate spatial confounding. Dose groups occupy different rows, and control wells have a structured placement. Interpret spatial maps together with the modeled treatment effects.
 
-The metadata identify plate replicates and matched well conditions, but do not establish that each well represents an independently prepared biological replicate. Inference is conditional on the replicate assumptions. These same-batch plates provide a limited repeatability/reproducibility demonstration, not independent-batch validation or a universal statement about Drug-seq performance.
+The metadata identify plate replicates and matched well conditions, but do not establish that each well represents an independently prepared biological replicate. Inference is conditional on the replicate assumptions. This case evaluates within-plate repeatability and between-plate treatment-effect consistency within a single cell-preparation batch. It does not establish experimental reproducibility under changed conditions, independent-batch validation, or a universal statement about Drug-seq performance. See the [terminology guide](input-preparation.md#repeatability-and-concordance).
 
 ## Keep raw counts and align features explicitly
 
@@ -162,7 +162,9 @@ The raw-count combined DE model includes plate directly. It does not run DE on t
 **Combined example.** Drug2 at 1.00144 µM has 2,860 significant features in the plate-adjusted fit. This model contains Sample 1 as part of its input; the larger count is not an external confirmation of the Sample 1 result.
 
 
-## Compare estimates without treating the pooled model as independent validation
+<a id="compare-estimates-without-treating-the-pooled-model-as-independent-validation"></a>
+
+## Compare treatment-effect concordance without treating the pooled model as independent validation
 
 The significant-feature totals below use the same thresholds and feature universe. Counts can increase in the combined model because it has more well observations and a different fitted variance structure. The repeated layout and shared cell-preparation batch remain limitations.
 
@@ -175,13 +177,13 @@ The significant-feature totals below use the same thresholds and feature univers
 | Drug3_0.10029uM | 0 | 0 | 0 | 1 |
 | Drug3_1.00144uM | 9 | 15 | 34 | 191 |
 
-![Drug-seq significant-feature counts from three independent plate fits and one combined model](assets/figures/drugseq-case-10.png)
+![Drug-seq significant-feature counts from three separately fitted plates and one combined model](assets/figures/drugseq-case-10.png)
 
 **Compare all conditions.** Drug2 has a large modeled response at both concentrations. Drug1 has little evidence at the declared combined threshold, and Drug3 varies by dose. Do not change the thresholds solely to obtain a nonempty list.
 
 ### Fit each plate separately to compare effect vectors
 
-The three plate-specific fits are computed independently, then each pair of plates is compared using its full vector of treatment-versus-DMSO log2 fold changes. The separately refitted Sample 1 coefficients and adjusted p-values agree with the one-plate branch. The table reports Pearson correlation across the retained features, not a correlation of raw well profiles.
+The three plate-specific models are fitted separately, then each pair of plates is compared using its full vector of treatment-versus-DMSO log2 fold changes. We call this **cross-plate treatment-effect concordance**. Separate model fitting does not make the wells or plates independent biological preparations. The separately refitted Sample 1 coefficients and adjusted p-values agree with the one-plate branch. The table reports Pearson correlation across the retained features, not a correlation of raw well profiles.
 
 | Condition | Sample 1 / 2 | Sample 1 / 3 | Sample 2 / 3 |
 | --- | --- | --- | --- |
@@ -213,7 +215,7 @@ python scripts/run_drugseq_case.py \
   --output-dir results/drugseq-case
 ```
 
-The first sample number selects the one-plate branch. The same command then runs the combined analysis, independent per-plate comparisons, QC, repeatability, PCA diagnostics, and result export. `--sample-numbers` can select a different prepared set with at least two plates. The case helper expects one shared exposure, consistent dose units, DMSO controls, a full-rank matched condition design, and explicit 16 × 24 physical coordinates.
+The first sample number selects the one-plate branch. The same command then runs the combined analysis, separate per-plate estimates, QC, within-plate repeatability, cross-plate treatment-effect concordance, PCA diagnostics, and result export. `--sample-numbers` can select a different prepared set with at least two plates. The case helper expects one shared exposure, consistent dose units, DMSO controls, a full-rank matched condition design, and explicit 16 × 24 physical coordinates.
 
 The script retains all wells by default. To apply an independently reviewed exclusion list, add `--exclude-samples reviewed_exclusions.csv`; that file must contain unique `sample_id` values and may include a reason. The helper records the exclusions and rechecks the condition design. Reruns overwrite matching output filenames, so use a fresh directory for any analysis you need to retain.
 

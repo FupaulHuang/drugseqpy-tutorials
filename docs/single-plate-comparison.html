@@ -44,7 +44,7 @@
 </tr>
 <tr>
 <td>Can results generalize across runs?</td>
-<td>One plate cannot establish this. Independently processed plates are needed for empirical reproducibility.</td>
+<td>One plate cannot establish this. Additional plates allow cross-plate concordance checks; broader experimental reproducibility requires documented changes in experimental conditions and appropriate independent replication.</td>
 </tr>
 </tbody>
 </table></div>
@@ -568,7 +568,8 @@ print(model_status)
 <p><strong>Batch regression</strong> — A model-based adjustment of normalized expression for an estimable batch effect. This chapter has only one plate and does not perform it.</p>
 <p><strong>ORA</strong> — Over-representation analysis of a selected gene list against a defined tested-gene background.</p>
 <p><strong>Repeatability</strong> — Agreement among replicate wells measured under the same plate conditions.</p>
-<p><strong>Reproducibility</strong> — Agreement of independently estimated treatment effects across plates or runs.</p>
+<p><strong>Cross-plate treatment-effect concordance</strong> — Similarity of treatment-versus-control effects estimated separately on different plates.</p>
+<p><strong>Experimental reproducibility</strong> — Consistency evaluated under explicitly changed experimental conditions. A single plate cannot establish this; simply adding plate labels does not establish it either. See the <a href="input-preparation.html#repeatability-and-concordance">terminology guide</a>.</p>
 <p><strong>Within-plate support</strong> — Presence of both treatment and control wells on the same plate, needed for a within-plate contrast.</p>
 <p><a id="troubleshooting"></a></p>
 <h2 id="troubleshooting-1">Troubleshooting</h2>
@@ -578,7 +579,8 @@ print(model_status)
 <p><strong>No enrichment is returned.</strong> Check that local GMT files exist, gene symbols overlap those libraries, significant DEGs exist in the requested direction, and the tested-gene background is appropriate. The synthetic inputs demonstrate the workflow; their artificial identifiers need not reproduce meaningful biological enrichment.</p>
 <p><strong>The numbers differ from the tables above.</strong> The tables and figures are historical worked results. Synthetic practice inputs, reviewed exclusions, filtering choices, model settings, and library versions determine the output of your own run.</p>
 <p><a id="complete-report"></a></p>
-<h2 id="10-complete-reproducible-run">10. Complete reproducible run</h2>
+<p><a id="10-complete-reproducible-run"></a></p>
+<h2 id="10-complete-runnable-workflow">10. Complete runnable workflow</h2>
 <p>For a complete practice run from the repository root:</p>
 <pre><code class="language-bash">python scripts/run_tutorial.py single-plate --data-dir data --output-dir results
 </code></pre>
@@ -588,4 +590,4 @@ print(model_status)
 </article>
 <nav class="chapter-neighbors" aria-label="Previous and next chapters"><a href="well-to-well-repeatability.html"><small>Previous</small>Well-to-well repeatability</a><a href="multi-plate-comparison.html"><small>Next</small>Multi-plate comparison →</a></nav>
 <footer>drugseqpy tutorials · Worked examples and separate synthetic practice inputs.<br><a href="index.html">Learning path</a> · <a href="single-plate-comparison.md">Read Markdown</a> · <a href="#main">Back to top ↑</a></footer></main>
-<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#overview-1">Overview</a><a href="#1-when-to-use-one-plate">1. When to use one plate</a><a href="#2-input-and-metadata">2. Input and metadata</a><a href="#3-essential-qc">3. Essential QC</a><a href="#4-audit-controls-and-exclusions">4. Audit controls and exclusions</a><a href="#5-filter-genes-and-normalize">5. Filter genes and normalize</a><a href="#6-differential-expression">6. Differential expression</a><a href="#7-directional-deg-enrichment">7. Directional DEG enrichment</a><a href="#8-saved-outputs">8. Saved outputs</a><a href="#9-important-notes">9. Important notes</a><a href="#glossary-1">Glossary</a><a href="#troubleshooting-1">Troubleshooting</a><a href="#10-complete-reproducible-run">10. Complete reproducible run</a></nav></aside></div></body></html>
+<aside class="toc"><p class="nav-label">ON THIS PAGE</p><nav aria-label="On this page"><a href="#overview-1">Overview</a><a href="#1-when-to-use-one-plate">1. When to use one plate</a><a href="#2-input-and-metadata">2. Input and metadata</a><a href="#3-essential-qc">3. Essential QC</a><a href="#4-audit-controls-and-exclusions">4. Audit controls and exclusions</a><a href="#5-filter-genes-and-normalize">5. Filter genes and normalize</a><a href="#6-differential-expression">6. Differential expression</a><a href="#7-directional-deg-enrichment">7. Directional DEG enrichment</a><a href="#8-saved-outputs">8. Saved outputs</a><a href="#9-important-notes">9. Important notes</a><a href="#glossary-1">Glossary</a><a href="#troubleshooting-1">Troubleshooting</a><a href="#10-complete-runnable-workflow">10. Complete runnable workflow</a></nav></aside></div></body></html>

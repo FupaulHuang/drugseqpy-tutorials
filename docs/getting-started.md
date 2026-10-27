@@ -102,7 +102,7 @@ For reviewed exclusions, optional embeddings, local GMT enrichment, species mapp
 python scripts/run_tutorial.py --help
 ```
 
-The [single-plate workflow](single-plate-comparison.md) fits treatment effects within Sample 1 and does not estimate between-plate effects. The [multi-plate workflow](multi-plate-comparison.md) adds batch diagnostics, repeatability, cross-plate reproducibility, and plate-adjusted differential expression. Add `--full-embeddings` for UMAP and t-SNE. Enrichment and STARsolo read-level statistics are not required for the first successful run.
+The [single-plate workflow](single-plate-comparison.md) fits treatment effects within Sample 1 and does not estimate between-plate effects. The [multi-plate workflow](multi-plate-comparison.md) adds batch diagnostics, repeatability, cross-plate treatment-effect concordance, and plate-adjusted differential expression. Add `--full-embeddings` for UMAP and t-SNE. Enrichment and STARsolo read-level statistics are not required for the first successful run.
 
 ## 5. Bring your own inputs
 

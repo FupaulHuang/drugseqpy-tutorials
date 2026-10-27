@@ -27,7 +27,7 @@ Use this workflow when the case and control wells were processed together. With 
 | Are treatment and control on the same plate? | Required for every contrast in this workflow. |
 | Should batch correction be run? | No separate plate effect can be estimated from one plate. |
 | Can row and column effects be reviewed? | Yes. Inspect physical maps and consider prespecified covariates when the design supports them. |
-| Can results generalize across runs? | One plate cannot establish this. Independently processed plates are needed for empirical reproducibility. |
+| Can results generalize across runs? | One plate cannot establish this. Additional plates allow cross-plate concordance checks; broader experimental reproducibility requires documented changes in experimental conditions and appropriate independent replication. |
 
 **A well is not automatically a biological replicate.** Several wells from the same culture or preparation may be technical replicates. Identify the independent experimental unit before interpreting uncertainty; treating dependent wells as independent can overstate evidence. The package's minimum well count does not validate the biological design.
 
@@ -459,7 +459,9 @@ Keep the reviewed exclusion table, filtering thresholds, condition definitions, 
 
 **Repeatability** — Agreement among replicate wells measured under the same plate conditions.
 
-**Reproducibility** — Agreement of independently estimated treatment effects across plates or runs.
+**Cross-plate treatment-effect concordance** — Similarity of treatment-versus-control effects estimated separately on different plates.
+
+**Experimental reproducibility** — Consistency evaluated under explicitly changed experimental conditions. A single plate cannot establish this; simply adding plate labels does not establish it either. See the [terminology guide](input-preparation.md#repeatability-and-concordance).
 
 **Within-plate support** — Presence of both treatment and control wells on the same plate, needed for a within-plate contrast.
 
@@ -479,7 +481,9 @@ Keep the reviewed exclusion table, filtering thresholds, condition definitions, 
 
 <a id="complete-report"></a>
 
-## 10. Complete reproducible run
+<a id="10-complete-reproducible-run"></a>
+
+## 10. Complete runnable workflow
 
 For a complete practice run from the repository root:
 

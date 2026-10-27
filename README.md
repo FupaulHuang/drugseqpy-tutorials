@@ -26,6 +26,8 @@ The [Drug-seq worked case](docs/drugseq-case-study.md) adds a separate real-data
 
 In the original example cohort, Sample 1 is the single-plate treatment example; Sample 1 and Sample 2 together demonstrate multi-plate comparison. Sample 3 and Sample 4 are mixed-species plate datasets. Each observation inside a dataset is one well.
 
+**Terminology:** matched-well analyses assess within-plate repeatability. Cross-plate effect plots show treatment-effect concordance; the real Drug-seq case assesses between-plate consistency within one cell-preparation batch. These are not claims of experimental reproducibility under changed conditions. [Read the terminology guide](docs/input-preparation.md#repeatability-and-concordance).
+
 ## Run the practice workflow
 
 Install a compatible drugseqpy build following [Getting started](docs/getting-started.md), then run from this repository's root:
